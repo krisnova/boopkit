@@ -46,11 +46,12 @@ int main(int argc, char **argv) {
     struct bpf_object *loader_obj;
     if (bpf_prog_load(path, BPF_PROG_TYPE_TRACEPOINT, &loader_obj, &loader_fd) != 0){
         printf("Unable to load persistent eBPF probe: %s\n", path);
-        return;
+        return 1;
     }
     if (loader_fd < 1) {
         printf("Unable to start eBPF probe: %s\n", path);
-        return;
+        return 1;
     }
     printf("Started eBPF probe: %s\n", path);
+    return 0;
 }
