@@ -53,5 +53,6 @@ int main(int argc, char **argv) {
         return 1;
     }
     printf("Started eBPF probe: %s\n", path);
+    while(1){}
     return 0;
 }

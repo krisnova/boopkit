@@ -68,7 +68,7 @@ int tcp_probe(struct tcp_probe_args_t  *args){
 
     // Send out on the perf event map
     bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
-
+    bpf_printk("*KERNEL BACKDOOR HACKING HERE*");
 //    if (DEBUG) bpf_printk("---tracepoint/sock/inet_sock_set_state---");
     return 0;
 }
