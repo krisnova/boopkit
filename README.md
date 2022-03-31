@@ -2,6 +2,8 @@
 
 Linux eBPF backdoor (TCP/UDP) for spawning reverse shells. Less Honkin. More Tonkin. 
 
+This is a research project, that is currently under active development. I will publish a release once the code is well vetted. 
+
 ### Compile Time Dependencies 
 
  - 'clang'

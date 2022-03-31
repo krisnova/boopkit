@@ -1,5 +1,6 @@
 
 #include <linux/bpf.h>
+#include <unistd.h>
 #include <bpf/bpf_helpers.h>
 
 struct {
@@ -10,6 +11,14 @@ struct {
 
 struct tcp_probe_args_t {
     __u64 _unused;
+    __u16 sport;
+    __u16 dport;
+    __u16 family;
+    __u16 data_len;
+    __u8 saddr[4];
+    __u8 daddr[4];
+    __u8 saddr_v6[16];
+    __u8 daddr_v6[16];
 };
 
 struct tcp_probe_data_t {
@@ -18,6 +27,7 @@ struct tcp_probe_data_t {
     __u16 sport;
     __u16 dport;
     __u16 family;
+    __u16 data_len;
     __u8 saddr[4];
     __u8 daddr[4];
     __u8 saddr_v6[16];
@@ -52,24 +62,14 @@ struct tcp_probe_data_t {
 //print fmt: "family=%s src=%pISpc dest=%pISpc mark=%#x data_len=%d snd_nxt=%#x snd_una=%#x snd_cwnd=%u ssthresh=%u snd_wnd=%u srtt=%u rcv_wnd=%u sock_cookie=%llx", __print_symbolic(REC->family, { 2, "AF_INET" }, { 10, "AF_INET6" }), REC->saddr, REC->daddr, REC->mark, REC->data_len, REC->snd_nxt, REC->snd_una, REC->snd_cwnd, REC->ssthresh, REC->snd_wnd, REC->srtt, REC->rcv_wnd, REC->sock_cookie
 SEC("tracepoint/tcp/tcp_probe")
 int tcp_probe(struct tcp_probe_args_t  *args){
-    //struct tcp_probe_data_t data = {};
+    struct tcp_probe_data_t data = {};
 
-//    data.oldstate = args->oldstate;
-//    data.newstate = args->newstate;
-//    data.sport = args->sport;
-//    data.dport = args->dport;
-//    data.family = args->family;
-//    data.protocol = args->protocol;
-//    memcpy(data.saddr, args->saddr, sizeof(args->saddr));
-//    memcpy(data.daddr, args->daddr, sizeof(args->daddr));
-//    memcpy(data.saddr_v6, args->saddr_v6, sizeof(args->saddr_v6));
-//    memcpy(data.daddr_v6, args->daddr_v6, sizeof(args->daddr_v6));
-//
-    bpf_printk("*KERNEL BACKDOOR HACKING HERE*");
+    bpf_printk("src: %pI4\n", args->saddr);
 
-    // Send out on the perf event map
-    //bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
-//    if (DEBUG) bpf_printk("---tracepoint/sock/inet_sock_set_state---");
+    bpf_printk("dst: %pI4\n", args->daddr);
+    bpf_printk("data_len: %d\n", args->data_len);
+    bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
+
     return 0;
 }
 
