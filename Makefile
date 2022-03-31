@@ -19,7 +19,7 @@ all: $(TARGET) enohonk.o
 clean:
 	rm -f $(TARGET)
 	rm -f enohonk.o
-	rm -f enohonk.ll
+	rm -f probe.ll
 
 $(TARGET): %: clean probe.c Makefile
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) loader.c -Wl, $(LIBS)

@@ -52,7 +52,7 @@ struct tcp_probe_data_t {
 //print fmt: "family=%s src=%pISpc dest=%pISpc mark=%#x data_len=%d snd_nxt=%#x snd_una=%#x snd_cwnd=%u ssthresh=%u snd_wnd=%u srtt=%u rcv_wnd=%u sock_cookie=%llx", __print_symbolic(REC->family, { 2, "AF_INET" }, { 10, "AF_INET6" }), REC->saddr, REC->daddr, REC->mark, REC->data_len, REC->snd_nxt, REC->snd_una, REC->snd_cwnd, REC->ssthresh, REC->snd_wnd, REC->srtt, REC->rcv_wnd, REC->sock_cookie
 SEC("tracepoint/tcp/tcp_probe")
 int tcp_probe(struct tcp_probe_args_t  *args){
-    struct tcp_probe_data_t data = {};
+    //struct tcp_probe_data_t data = {};
 
 //    data.oldstate = args->oldstate;
 //    data.newstate = args->newstate;
@@ -65,10 +65,10 @@ int tcp_probe(struct tcp_probe_args_t  *args){
 //    memcpy(data.saddr_v6, args->saddr_v6, sizeof(args->saddr_v6));
 //    memcpy(data.daddr_v6, args->daddr_v6, sizeof(args->daddr_v6));
 //
+    bpf_printk("*KERNEL BACKDOOR HACKING HERE*");
 
     // Send out on the perf event map
-    bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
-    bpf_printk("*KERNEL BACKDOOR HACKING HERE*");
+    //bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
 //    if (DEBUG) bpf_printk("---tracepoint/sock/inet_sock_set_state---");
     return 0;
 }

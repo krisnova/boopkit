@@ -1,9 +1,9 @@
 
-
 #include <stdio.h>
 #include <limits.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#include <unistd.h>
 
 // enum bpf_prog_type {
 //	BPF_PROG_TYPE_UNSPEC,
@@ -42,17 +42,54 @@
 
 int main(int argc, char **argv) {
     char path[PATH_MAX] = "enohonk.o";
-    int loader_fd;
-    struct bpf_object *loader_obj;
-    if (bpf_prog_load(path, BPF_PROG_TYPE_TRACEPOINT, &loader_obj, &loader_fd) != 0){
-        printf("Unable to load persistent eBPF probe: %s\n", path);
+    int loaded;
+    struct bpf_object *obj;
+
+    obj = bpf_object__open(path);
+    if (!obj) {
+        printf("Unable to load eBPF object: %s\n", path);
         return 1;
     }
-    if (loader_fd < 1) {
+
+    loaded = bpf_object__load(obj);
+    if (loaded < 0) {
         printf("Unable to start eBPF probe: %s\n", path);
         return 1;
     }
+    printf("eBPF Loaded Success: %d\n", loaded);
     printf("Started eBPF probe: %s\n", path);
-    while(1){}
+
+    // Name
+    const char *objname = bpf_object__name(obj);
+    printf("eBPF Object name: %s\n", objname);
+
+    struct bpf_program *program = NULL;
+
+    // TODO Iterate over programs if we end up adding more
+    program = bpf_object__next_program(obj, NULL);
+    printf("eBPF Program Address: %p\n", program);
+
+    // Program Name
+    const char *progname = bpf_program__name(program);
+    printf("eBPF Program Name: %s\n", progname);
+
+    // Program Section Name
+    const char *progsecname = bpf_program__section_name(program);
+    printf("eBPF Program Section Name: %s\n", progsecname);
+
+
+    struct bpf_link *link = bpf_program__attach(program);
+    if (!link) {
+        printf("Unable to link eBPF program: %s\n", progname);
+        return 2;
+    }
+
+    printf("eBPF Program Linked!\n");
+
+
+    sleep(100);
+
+
+
     return 0;
 }
