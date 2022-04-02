@@ -65,7 +65,6 @@ int tcp_probe(struct tcp_probe_args_t  *args){
     struct tcp_probe_data_t data = {};
 
     bpf_printk("src: %pI4\n", args->saddr);
-
     bpf_printk("dst: %pI4\n", args->daddr);
     bpf_printk("data_len: %d\n", args->data_len);
     bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
@@ -73,5 +72,6 @@ int tcp_probe(struct tcp_probe_args_t  *args){
     return 0;
 }
 
-
+// The following code is GPL licensed
 char LICENSE[] SEC("license") = "GPL";
+// The prior code is GPL licensed
