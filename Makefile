@@ -1,25 +1,20 @@
 TARGET := enohonk
 
-#SRC_DIR = $(shell realpath .)
-#LIBBPF_DIR = $(SRC_DIR)/../libbpf/src/
-
 CFLAGS ?= -I/usr/local/include
-#CFLAGS ?= -I$(LIBBPF_DIR)/root/usr/include/
-
 LDFLAGS ?= ""
-#LDFLAGS ?= -L$(LIBBPF_DIR)
-
-#LIBS = ""
 LIBS = -lbpf -lelf
 
 all: $(TARGET) enohonk.o
 
 .PHONY: clean
-
 clean:
 	rm -f $(TARGET)
 	rm -f enohonk.o
 	rm -f probe.ll
+
+.PHONY: remote
+remote:
+	cd remote && make
 
 $(TARGET): %: clean probe.c Makefile
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) loader.c -Wl, $(LIBS)

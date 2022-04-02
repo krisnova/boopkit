@@ -45,13 +45,5 @@ echo 5 > /proc/sys/net/ipv4/tcp_synack_retries
  - TCP Handshake encapsulation (RCE with TCP retransmission)
  - Deep packet content filtering. EG: Trigger on packet contents
 
-### Authoring
-
-Option 1) C
-
-Option 2) Rust
-
-Option 3) Go
-
 
 
