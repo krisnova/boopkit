@@ -2,3 +2,4 @@
 enohonk
 *.o
 *.ll
+remote/remote
