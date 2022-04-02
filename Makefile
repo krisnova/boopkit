@@ -13,8 +13,9 @@ clean:
 	rm -f probe.ll
 
 .PHONY: remote
-remote:
+remote: remote/remote.c
 	cd remote && make
+
 
 $(TARGET): %: clean probe.c Makefile
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) loader.c -Wl, $(LIBS)

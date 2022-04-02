@@ -1,6 +1,10 @@
-TARGET := remote
+default: remote
 
+clean:
+	rm -f remote
 
-remote:
+remote: clean
 	clang -o remote \
 		remote.c
+
+

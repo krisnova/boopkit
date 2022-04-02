@@ -2,6 +2,8 @@
 
 This is a tool that can be used to trigger the eBPF probe on the remote end.
 
+GNU licensed and forked from [](https://github.com/MaxXor/raw-sockets-example/blob/master/rawsockets.c)
+
 ### TCP Retransmission 
 
 The eBPF probe is triggered when the kernel will retransmit a `SYNACK` packet. 
@@ -45,5 +47,7 @@ echo 5 > /proc/sys/net/ipv4/tcp_synack_retries
  - TCP Handshake encapsulation (RCE with TCP retransmission)
  - Deep packet content filtering. EG: Trigger on packet contents
 
+### Resources
 
+- [Raw TCP sockets example](https://github.com/MaxXor/raw-sockets-example/blob/master/rawsockets.c)
 
