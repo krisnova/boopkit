@@ -2,4 +2,4 @@
 enohonk
 *.o
 *.ll
-remote/remote
+remote/trigger

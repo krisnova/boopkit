@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
+#include <stdio.h>
 #include "tcp.h"
 
 unsigned short checksum(const char *buf, unsigned size)
@@ -276,7 +277,9 @@ void create_rst_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t
   free(pseudogram);
 }
 
-void create_bad_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t seq, int32_t ack_seq, char** out_packet, int* out_packet_len)
+
+
+void create_bad_syn_packet(struct sockaddr_in* src, struct sockaddr_in* dst, char** out_packet, int* out_packet_len)
 {
   char *datagram = calloc(DATAGRAM_LEN, sizeof(char));
   struct iphdr *iph = (struct iphdr*)datagram;
@@ -299,12 +302,12 @@ void create_bad_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t
   // TCP header configuration
   tcph->source = src->sin_port;
   tcph->dest = dst->sin_port;
-  tcph->seq = htonl(seq);
-  tcph->ack_seq = htonl(ack_seq);
+  tcph->seq = htonl(rand() % 4294967295);
+  tcph->ack_seq = htonl(0);
   tcph->doff = 10; // tcp header size
   tcph->fin = 0;
-  tcph->syn = 0;
-  tcph->rst = 1;
+  tcph->syn = 1;
+  tcph->rst = 0;
   tcph->psh = 0;
   tcph->ack = 0;
   tcph->urg = 0;
@@ -324,13 +327,60 @@ void create_bad_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t
   memcpy(pseudogram, (char*)&psh, sizeof(struct pseudo_header));
   memcpy(pseudogram + sizeof(struct pseudo_header), tcph, sizeof(struct tcphdr) + OPT_SIZE);
 
-  // We trigger the "bad checksum" eBPF tracepoint in the library
-  // so we do not calculate the checksum for "bad" packet.
+  // TCP options are only set in the SYN packet
+  // ---- set mss ----
+  datagram[40] = 0x02;
+  datagram[41] = 0x04;
+  int16_t mss = htons(48); // mss value
+  memcpy(datagram + 42, &mss, sizeof(int16_t));
+  // ---- enable SACK ----
+  datagram[44] = 0x04;
+  datagram[45] = 0x02;
+  // do the same for the pseudo header
+  pseudogram[32] = 0x02;
+  pseudogram[33] = 0x04;
+  memcpy(pseudogram + 34, &mss, sizeof(int16_t));
+  pseudogram[36] = 0x04;
+  pseudogram[37] = 0x02;
 
+  // create a bad (malformed) SYN packet without a checksum.
   //tcph->check = checksum((const char*)pseudogram, psize);
   //iph->check = checksum((const char*)datagram, iph->tot_len);
 
   *out_packet = datagram;
   *out_packet_len = iph->tot_len;
   free(pseudogram);
+}
+
+
+void read_seq_and_ack(const char* packet, uint32_t* seq, uint32_t* ack)
+{
+    // read sequence number
+    uint32_t seq_num;
+    memcpy(&seq_num, packet + 24, 4);
+    // read acknowledgement number
+    uint32_t ack_num;
+    memcpy(&ack_num, packet + 28, 4);
+    // convert network to host byte order
+    *seq = ntohl(seq_num);
+    *ack = ntohl(ack_num);
+    printf("sequence number: %lu\n", (unsigned long)*seq);
+    printf("acknowledgement number: %lu\n", (unsigned long)*seq);
+}
+
+int receive_from(int sock, char* buffer, size_t buffer_length, struct sockaddr_in *dst)
+{
+    unsigned short dst_port;
+    int received;
+    do
+    {
+        received = recvfrom(sock, buffer, buffer_length, 0, NULL, NULL);
+        if (received < 0)
+            break;
+        memcpy(&dst_port, buffer + 22, sizeof(dst_port));
+    }
+    while (dst_port != dst->sin_port);
+    printf("received bytes: %d\n", received);
+    printf("destination port: %d\n", ntohs(dst->sin_port));
+    return received;
 }

@@ -1,10 +1,10 @@
 default: remote
 
 clean:
-	rm -f remote
+	rm -f trigger
 
 remote: clean
-	clang -Wall -o remote \
+	clang -Wall -o trigger \
 		tcp.c \
 		remote.c
 

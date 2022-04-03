@@ -1,0 +1,9 @@
+#!/bin/bash
+
+trigger(){
+    sleep 1
+    ./trigger 127.0.0.1 127.0.0.1 8080
+}
+
+trigger &
+ncat -lvp 3535
