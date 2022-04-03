@@ -2,20 +2,31 @@
 #include <bpf/bpf_helpers.h>
 #include <string.h>
 #include <netinet/in.h>
-#include "honk.h"
+#include "proto.h"
 
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 128);
   __type(key, int);
-  __type(value, struct tcp_honk);
+  __type(value, struct tcp_return);
 } events SEC(".maps");
 
 struct tcp_bad_csum_args_t {
-    __u64 _unused;
-    __u64 _unused2;
-    __u8 saddr[sizeof(struct sockaddr_in6)];
-    __u8 daddr[sizeof(struct sockaddr_in6)];
+
+    // Here be dragons
+    //
+    // The padding here is to offset the embedded IPv4 address
+    // inside the IPv6 address block. We had to manually buffer
+    // the struct to get the memory allocation correct for saddr.
+    //
+    // We can use various paddings to pull the IPv4 out of the
+    // fields in memory. Not how the size of sizeof(struct sockaddr_in6)
+    // in the eBPF format file!
+    //
+    //
+    __u8 headerpadding[16];
+    __u8 pad1[4];
+    __u8 saddr[4];
 };
 
 // name: tcp_bad_csum
@@ -33,17 +44,12 @@ struct tcp_bad_csum_args_t {
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
 SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
-    // Only element on the eBPF map is going to be our "source address"
+    bpf_printk("tcp_bad_csum saddr=%pI4", args->saddr);
     int saddrkey = 1;
-    struct tcp_honk honk;
-    bpf_printk("Bad checksum");
-    bpf_printk("FOXY HACKS HERE");
-    bpf_printk("Bad checksum src=%pISpc", args->saddr);
-    memcpy(honk.saddr, args->saddr, sizeof(args->saddr));
-    bpf_map_update_elem(&events, &saddrkey, &honk, 1);
+    struct tcp_return ret;
+    memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
+    bpf_map_update_elem(&events, &saddrkey, &ret, 1);
     return 0;
 }
 
-// The following code is GPL licensed
 char LICENSE[] SEC("license") = "GPL";
-// The prior code is GPL licensed
