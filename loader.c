@@ -3,7 +3,9 @@
 #include <limits.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+#include "honk.h"
 
 int main(int argc, char **argv) {
     char path[PATH_MAX] = "enohonk.o";
@@ -61,18 +63,23 @@ int main(int argc, char **argv) {
     printf("-----------------------------------------------\n");
 
     int lookup_key = 0, next_key;
-    int ev, err;
+    struct tcp_honk h;
+    //int h;
+    int err;
 
     printf("1\n");
 
     while(1) {
       while (!bpf_map_get_next_key(fd, &lookup_key, &next_key)) {
-        err = bpf_map_lookup_elem(fd, &next_key, &ev);
+        err = bpf_map_lookup_elem(fd, &next_key, &h);
         if (err < 0) {
           //        fprintf(stderr, "failed to lookup exec: %d\n", err);
           return -1;
         }
-        printf("Returned from bpf map: %d\n", ev);
+
+        char addrbuf[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &h.saddr, addrbuf, sizeof (addrbuf));
+        printf("Returned from bpf map: %s\n", addrbuf);
         err = bpf_map_delete_elem(fd, &next_key);
         if (err < 0) {
           //        fprintf(stderr, "failed to cleanup execs : %d\n", err);

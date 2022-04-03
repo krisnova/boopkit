@@ -1,13 +1,14 @@
 
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
-#include "string.h"
+#include <string.h>
+#include "honk.h"
 
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
+  __uint(max_entries, 128);
   __type(key, int);
-  __type(value, int);
-  __uint(max_entries, 64);
+  __type(value, struct tcp_honk);
 } events SEC(".maps");
 
 struct tcp_bad_csum_args_t {
@@ -33,8 +34,9 @@ SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
     // Only element on the eBPF map is going to be our "source address"
     int saddrkey = 1;
-    int val = 1;
-    bpf_map_update_elem(&events, &saddrkey, &val, 1);
+    struct tcp_honk honk;
+    memcpy(honk.saddr, args->saddr, sizeof(args->saddr));
+    bpf_map_update_elem(&events, &saddrkey, &honk, 1);
     return 0;
 }
 
