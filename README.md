@@ -8,6 +8,7 @@ This is a research project, that is currently under active development. I will p
 
  - 'clang'
  - 'linux-headers'
+ - 'llvm'
 
 ### eBPF Tracepoint Selection
 

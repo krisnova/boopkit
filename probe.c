@@ -1,4 +1,3 @@
-
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 #include <string.h>
@@ -14,6 +13,7 @@ struct {
 
 struct tcp_bad_csum_args_t {
     __u64 _unused;
+    __u64 _unused2;
     __u8 saddr[sizeof(struct sockaddr_in6)];
     __u8 daddr[sizeof(struct sockaddr_in6)];
 };
@@ -35,8 +35,9 @@ SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
     // Only element on the eBPF map is going to be our "source address"
     int saddrkey = 1;
-
     struct tcp_honk honk;
+    bpf_printk("Bad checksum");
+    bpf_printk("FOXY HACKS HERE");
     bpf_printk("Bad checksum src=%pISpc", args->saddr);
     memcpy(honk.saddr, args->saddr, sizeof(args->saddr));
     bpf_map_update_elem(&events, &saddrkey, &honk, 1);
