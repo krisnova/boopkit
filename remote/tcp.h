@@ -1,6 +1,4 @@
-//
-// Created by nova on 4/2/22.
-//
+// SPDX-License-Identifier: GPL-2.0
 
 #ifndef ENOHONK_TCP_H
 #define ENOHONK_TCP_H

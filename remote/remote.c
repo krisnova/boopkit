@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -6,7 +8,6 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include "tcp.h"
-
 
 int main(int argc, char** argv){
     srand(time(NULL));
@@ -40,10 +41,6 @@ int main(int argc, char** argv){
         printf("source IP configuration failed\n");
         return 1;
     }
-
-    //printf("selected source port number: %d\n", ntohs(saddr.sin_port));
-    //printf("saddr: %s\n", argv[1]);
-    //printf("daddr: %s\n", argv[2]);
 
     // Socket connection
     int one = 1;
