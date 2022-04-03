@@ -19,7 +19,7 @@ make
 sudo ./boopkit > /var/log/boop.log &
 ```
 
-Trigger a reverse shell over an existing TCP service. 
+Trigger a reverse shell over an existing TCP service. Edit the `remote` launcher script and point it at any TCP server running on the exploited machine!
 
 ```
 # edit ./remote/remote as needed
