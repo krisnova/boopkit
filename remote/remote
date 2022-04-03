@@ -7,7 +7,7 @@
 # installed is also listening on ANY tcp connect, we
 # can point this file at the server to run an RCE.
 DST_ADDR="127.0.0.1"
-DST_PORT="1313"
+DST_PORT="8080"
 
 # Source address.
 #
