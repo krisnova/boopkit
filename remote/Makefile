@@ -4,7 +4,8 @@ clean:
 	rm -f remote
 
 remote: clean
-	clang -o remote \
+	clang -Wall -o remote \
+		tcp.c \
 		remote.c
 
 

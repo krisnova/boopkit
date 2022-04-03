@@ -1,64 +1,40 @@
 
 #include <linux/bpf.h>
-#include <unistd.h>
 #include <bpf/bpf_helpers.h>
+#include "string.h"
 
 struct {
-    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
-    __uint(key_size, sizeof(__u32));
-    __uint(value_size, sizeof(__u32));
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __type(key, int);
+  __type(value, int);
+  __uint(max_entries, 64);
 } events SEC(".maps");
 
-struct tcp_retransmit_synack_args_t {
+struct tcp_bad_csum_args_t {
     __u64 _unused;
-    __u16 sport;
-    __u16 dport;
-    __u16 family;
     __u8 saddr[4];
     __u8 daddr[4];
-    __u8 saddr_v6[16];
-    __u8 daddr_v6[16];
 };
 
-struct tcp_retransmit_synack_data_t {
-    int oldstate;
-    int newstate;
-    __u16 sport;
-    __u16 dport;
-    __u16 family;
-    __u8 saddr[4];
-    __u8 daddr[4];
-    __u8 saddr_v6[16];
-    __u8 daddr_v6[16];
-};
-
-// name: tcp_retransmit_synack
-//ID: 1365
-//format:
-//        field:unsigned short common_type;       offset:0;       size:2; signed:0;
-//        field:unsigned char common_flags;       offset:2;       size:1; signed:0;
-//        field:unsigned char common_preempt_count;       offset:3;       size:1; signed:0;
-//        field:int common_pid;   offset:4;       size:4; signed:1;
+// name: tcp_bad_csum
+// ID: 1363
+// format:
+// field:unsigned short common_type;       offset:0;       size:2; signed:0;
+// field:unsigned char common_flags;       offset:2;       size:1; signed:0;
+// field:unsigned char common_preempt_count;       offset:3;       size:1; signed:0;
+// field:int common_pid;   offset:4;       size:4; signed:1;
 //
-//        field:const void * skaddr;      offset:8;       size:8; signed:0;
-//        field:const void * req; offset:16;      size:8; signed:0;
-//        field:__u16 sport;      offset:24;      size:2; signed:0;
-//        field:__u16 dport;      offset:26;      size:2; signed:0;
-//        field:__u16 family;     offset:28;      size:2; signed:0;
-//        field:__u8 saddr[4];    offset:30;      size:4; signed:0;
-//        field:__u8 daddr[4];    offset:34;      size:4; signed:0;
-//        field:__u8 saddr_v6[16];        offset:38;      size:16;        signed:0;
-//        field:__u8 daddr_v6[16];        offset:54;      size:16;        signed:0;
+// field:const void * skbaddr;     offset:8;       size:8; signed:0;
+// field:__u8 saddr[sizeof(struct sockaddr_in6)];  offset:16;      size:28;   signed:0;
+// field:__u8 daddr[sizeof(struct sockaddr_in6)];  offset:44;      size:28;   signed:0;
 //
-//print fmt: "family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c", __print_symbolic(REC->family, { 2, "AF_INET" }, { 10, "AF_INET6" }), REC->sport, REC->dport, REC->saddr, REC->daddr, REC->saddr_v6, REC->daddr_v6
-SEC("tracepoint/tcp/tcp_retransmit_synack")
-int tcp_retransmit_synack(struct tcp_retransmit_synack_args_t  *args){
-    struct tcp_retransmit_synack_data_t data = {};
-    bpf_printk("src: %pI4\n", args->saddr);
-    bpf_printk("dst: %pI4\n", args->daddr);
-    bpf_printk("* HACKED THE PLANET *");
-    bpf_perf_event_output(args, &events, BPF_F_CURRENT_CPU, &data, sizeof(data));
-
+// print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
+SEC("tracepoint/tcp/tcp_bad_csum")
+int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
+    // Only element on the eBPF map is going to be our "source address"
+    int saddrkey = 1;
+    int val = 1;
+    bpf_map_update_elem(&events, &saddrkey, &val, 1);
     return 0;
 }
 

@@ -49,12 +49,39 @@ int main(int argc, char **argv) {
         return 2;
     }
 
+    // TODO We probably want to "pin" the eBPF probe so that it will persist
+
+    struct bpf_map *map = bpf_object__next_map(obj, NULL);
+    const char *mapname = bpf_map__name(map);
+    printf("eBPF Map Name: %s\n", mapname);
+    int fd = bpf_map__fd(map);
+
     printf("eBPF Program Linked!\n");
     printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
     printf("-----------------------------------------------\n");
 
-    // TODO We probably want to "pin" the eBPF probe so that it will persist
-    while(1){}
+    int lookup_key = 0, next_key;
+    int ev, err;
+
+    printf("1\n");
+
+    while(1) {
+      while (!bpf_map_get_next_key(fd, &lookup_key, &next_key)) {
+        err = bpf_map_lookup_elem(fd, &next_key, &ev);
+        if (err < 0) {
+          //        fprintf(stderr, "failed to lookup exec: %d\n", err);
+          return -1;
+        }
+        printf("Returned from bpf map: %d\n", ev);
+        err = bpf_map_delete_elem(fd, &next_key);
+        if (err < 0) {
+          //        fprintf(stderr, "failed to cleanup execs : %d\n", err);
+          return -1;
+        }
+        lookup_key = next_key;
+      }
+    }
+    printf("2\n");
 
     return 0;
 }
