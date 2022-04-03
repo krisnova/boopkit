@@ -59,7 +59,8 @@ The `remote` script wraps the `trigger` and will use `netcat` to listen for a re
  - 'clang'
  - 'linux-headers'
  - 'llvm'
- - `libbpf`
+ - 'libbpf'
+ - 'lib32-glibc'
 
 ### Boopkit runtime dependencies 
 
