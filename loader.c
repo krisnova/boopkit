@@ -78,8 +78,10 @@ int main(int argc, char **argv) {
         }
 
         char addrbuf[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &h.saddr, addrbuf, sizeof (addrbuf));
-        printf("Returned from bpf map: %s\n", addrbuf);
+        //inet_ntop(AF_INET, &h.saddr, addrbuf, sizeof (addrbuf));
+        printf("boops!\n");
+        printf("Returned from bpf map: %p\n", h.saddr);
+        //printf("3Returned from bpf map: %pISpc", &h.saddr);
         err = bpf_map_delete_elem(fd, &next_key);
         if (err < 0) {
           //        fprintf(stderr, "failed to cleanup execs : %d\n", err);
