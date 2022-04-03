@@ -7,5 +7,4 @@ struct tcp_return {
   __u8 saddr[4];
 };
 
-
 #endif // ENOHONK_PROTO_H

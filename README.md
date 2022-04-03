@@ -34,3 +34,40 @@ The `remote` script wraps the `trigger` and will use `netcat` to listen for a re
  - 'linux-headers'
  - 'llvm'
 
+### Boopkit runtime dependencies 
+
+ - Linux kernel with eBPF enabled/supported
+ - Ncat running on the server
+ - Root access :) 
+
+### Reverse Shell Stabilization
+
+After a successful `/remote` the shell will be very unsightly. 
+
+Select one of the commands to run in order to start a cleaner shell.
+
+```bash
+python -c "import pty; pty.spawn('/bin/bash')"
+ruby -e "exec '/bin/bash'"
+perl -e "exec '/bin/bash';"
+```
+
+Next move the newly created shell to the background on your local terminal.
+
+```
+Ctrl + z
+```
+
+Update the stty locally. 
+
+```bash
+stty raw -echo && fg
+```
+
+Finally, reconfigure the terminal! 
+
+```bash
+export TERM=xterm-256-color
+```
+
+Source: [jasonturley.xyz](https://jasonturley.xyz/how-to-stabilize-a-reverse-shell/)

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include "proto.h"
 
-
+// PORT must match the ${SRC_PORT} in the /remote script!
 #define PORT 3535
 
 int main(int argc, char **argv) {
