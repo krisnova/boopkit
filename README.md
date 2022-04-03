@@ -7,7 +7,6 @@ A research project to demonstrate remote code injection over TCP with a maliciou
 | eBPF Probe | Malicious Userspace Program                           | Remote Trigger                                              |
 |------------|-------------------------------------------------------|-------------------------------------------------------------|
 | Responsible for sending `tracepoint/tcp/tcp_bad_sum` events to userspace | Persistent process in Linux, that does the dirty work | Remote way to trigger the RCE over a network and TCP server |
-| |                                                       |
 
 
 ### eBPF Probe
