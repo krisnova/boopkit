@@ -1,15 +1,15 @@
-TARGET := enohonk
+TARGET := boopkit
 
 CFLAGS ?= -I/usr/local/include
 LDFLAGS ?= ""
 LIBS = -lbpf -lelf
 
-all: $(TARGET) enohonk.o
+all: $(TARGET) boopkit.o
 
 .PHONY: clean
 clean:
 	rm -f $(TARGET)
-	rm -f enohonk.o
+	rm -f boopkit.o
 	rm -f probe.ll
 
 .PHONY: remote
@@ -20,7 +20,7 @@ remote: remote/remote.c
 $(TARGET): %: clean probe.c Makefile
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) loader.c -Wl, $(LIBS)
 
-enohonk.o: probe.c
+boopkit.o: probe.c
 	clang -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
@@ -28,5 +28,5 @@ enohonk.o: probe.c
 	    -Wall \
 	    -Werror \
 	    -O2 -emit-llvm -c -g probe.c
-	llc -march=bpf -filetype=obj -o enohonk.o probe.ll
+	llc -march=bpf -filetype=obj -o boopkit.o probe.ll
 

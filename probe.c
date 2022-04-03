@@ -44,7 +44,7 @@ struct tcp_bad_csum_args_t {
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
 SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
-    bpf_printk("tcp_bad_csum saddr=%pI4", args->saddr);
+    //bpf_printk("tcp_bad_csum saddr=%pI4", args->saddr);
     int saddrkey = 1;
     struct tcp_return ret;
     memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
