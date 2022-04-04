@@ -2,6 +2,8 @@
 
 A research project to demonstrate remote code injection over TCP with a malicious eBPF probe.
 
+This is **NOT** an exploit! This requires prior priviliged access on a server in order to work!
+
 ### Disclaimer
 
 I am a professional security researcher. These are white hat tools used for research purposes only.
