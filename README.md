@@ -73,9 +73,9 @@ The `remote` script wraps the `trigger` and will use `netcat` to listen for a re
  - Ncat running on the server
  - Root access :) 
 
-### Reverse Shell Stabilization
+# Reverse Shell Stabilization
 
-After a successful `/remote` the shell will be very unsightly. 
+After a successful `/remote` the shell will be very unsightly. It is possible to use [JasonTurley.xyz](https://jasonturley.xyz/how-to-stabilize-a-reverse-shell/)'s suggestion to stablize the shell.
 
 Select one of the commands to run in order to start a cleaner shell.
 
@@ -103,4 +103,3 @@ Finally, reconfigure the terminal!
 export TERM=xterm-256-color
 ```
 
-Source: [jasonturley.xyz](https://jasonturley.xyz/how-to-stabilize-a-reverse-shell/)
