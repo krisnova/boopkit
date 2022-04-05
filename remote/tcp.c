@@ -222,6 +222,62 @@ void create_ack_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t
   free(pseudogram);
 }
 
+void create_ack_rst_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t seq, int32_t ack_seq, char** out_packet, int* out_packet_len)
+{
+  char *datagram = calloc(DATAGRAM_LEN, sizeof(char));
+  struct iphdr *iph = (struct iphdr*)datagram;
+  struct tcphdr *tcph = (struct tcphdr*)(datagram + sizeof(struct iphdr));
+  struct pseudo_header psh;
+
+  // IP header configuration
+  iph->ihl = 5;
+  iph->version = 4;
+  iph->tos = 0;
+  iph->tot_len = sizeof(struct iphdr) + sizeof(struct tcphdr) + OPT_SIZE;
+  iph->id = htonl(rand() % 65535); // id of this packet
+  iph->frag_off = 0;
+  iph->ttl = 64;
+  iph->protocol = IPPROTO_TCP;
+  iph->check = 0; // correct calculation follows later
+  iph->saddr = src->sin_addr.s_addr;
+  iph->daddr = dst->sin_addr.s_addr;
+
+  // TCP header configuration
+  tcph->source = src->sin_port;
+  tcph->dest = dst->sin_port;
+  tcph->seq = htonl(seq);
+  tcph->ack_seq = htonl(ack_seq);
+  tcph->doff = 10; // tcp header size
+  tcph->fin = 0;
+  tcph->syn = 0;
+  tcph->rst = 1;
+  tcph->psh = 0;
+  tcph->ack = 1;
+  tcph->urg = 0;
+  tcph->check = 0; // correct calculation follows later
+  tcph->window = htons(5840); // window size
+  tcph->urg_ptr = 0;
+
+  // TCP pseudo header for checksum calculation
+  psh.source_address = src->sin_addr.s_addr;
+  psh.dest_address = dst->sin_addr.s_addr;
+  psh.placeholder = 0;
+  psh.protocol = IPPROTO_TCP;
+  psh.tcp_length = htons(sizeof(struct tcphdr) + OPT_SIZE);
+  int psize = sizeof(struct pseudo_header) + sizeof(struct tcphdr) + OPT_SIZE;
+  // fill pseudo packet
+  char* pseudogram = malloc(psize);
+  memcpy(pseudogram, (char*)&psh, sizeof(struct pseudo_header));
+  memcpy(pseudogram + sizeof(struct pseudo_header), tcph, sizeof(struct tcphdr) + OPT_SIZE);
+
+  tcph->check = checksum((const char*)pseudogram, psize);
+  iph->check = checksum((const char*)datagram, iph->tot_len);
+
+  *out_packet = datagram;
+  *out_packet_len = iph->tot_len;
+  free(pseudogram);
+}
+
 void create_rst_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t seq, int32_t ack_seq, char** out_packet, int* out_packet_len)
 {
   char *datagram = calloc(DATAGRAM_LEN, sizeof(char));
@@ -365,8 +421,6 @@ void read_seq_and_ack(const char* packet, uint32_t* seq, uint32_t* ack)
     // convert network to host byte order
     *seq = ntohl(seq_num);
     *ack = ntohl(ack_num);
-    printf("sequence number: %lu\n", (unsigned long)*seq);
-    printf("acknowledgement number: %lu\n", (unsigned long)*seq);
 }
 
 int receive_from(int sock, char* buffer, size_t buffer_length, struct sockaddr_in *dst)
@@ -381,7 +435,5 @@ int receive_from(int sock, char* buffer, size_t buffer_length, struct sockaddr_i
         memcpy(&dst_port, buffer + 22, sizeof(dst_port));
     }
     while (dst_port != dst->sin_port);
-    printf("received bytes: %d\n", received);
-    printf("destination port: %d\n", ntohs(dst->sin_port));
     return received;
 }

