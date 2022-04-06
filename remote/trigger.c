@@ -1,5 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
-
+// Copyright © 2022 Kris Nóva <kris@nivenly.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// ███╗   ██╗ ██████╗ ██╗   ██╗ █████╗
+// ████╗  ██║██╔═████╗██║   ██║██╔══██╗
+// ██╔██╗ ██║██║██╔██║██║   ██║███████║
+// ██║╚██╗██║████╔╝██║╚██╗ ██╔╝██╔══██║
+// ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║
+// ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,7 +46,6 @@ int main(int argc, char** argv){
         printf("USAGE %s <source-ip> <target-ip> <port>\n", argv[0]);
         return 1;
     }
-
 
     // [Vars]
     // one and oneval used for various socket options below.
@@ -68,6 +86,8 @@ int main(int argc, char** argv){
     printf("-------------------------------------------------------\n\n");
 
 
+    //
+
 
     // =========================================================================================================================================
     // 1. Bad checksum SYN SOCK_RAW
@@ -104,6 +124,8 @@ int main(int argc, char** argv){
     // =========================================================================================================================================
 
 
+    //
+
 
     // =========================================================================================================================================
     // 2. TCP SOCK_STREAM Connection
@@ -128,13 +150,20 @@ int main(int argc, char** argv){
     // =========================================================================================================================================
 
 
-
-
+    //
 
 
     // =========================================================================================================================================
     // 3. TCP Reset SOCK_RAW
     //
+    // This is the 3rd mechanism we use to boop a server.
+    // Here we complete a TCP handshake, however we also flip the RST header bit in the hopes of trigger
+    // a TCP reset via a remote TCP service.
+    //
+    // The first bad checksum approach will fail blindly due to the nature of raw sockets.
+    // This is a much more reliable boop, however it comes with more risk as it boops through an application.
+    //
+    // [Socket] SOCK_STREAM Sequenced, reliable, connection-based byte streams.
     int sock3 = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if (sock3 == -1){
       printf("Socket SOCK_RAW creation failed\n");
@@ -168,7 +197,6 @@ int main(int argc, char** argv){
     printf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
     close(sock3);
     // =========================================================================================================================================
-
 
     // ------------
     return 0;
