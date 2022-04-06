@@ -4,16 +4,11 @@ A research project to demonstrate remote code injection over TCP with a maliciou
 
 Tested on Linux 5.17
 
-Currently supported "boop" vectors:
+##### Disclaimer
 
-
-### Disclaimer
-
-This is **NOT** an exploit! This requires prior priviliged access on a server in order to work!
-
-I am a professional security researcher. These are white hat tools used for research purposes only.
-
-Seriously please use these responsibly.
+> This is **NOT** an exploit! This requires prior priviliged access on a server in order to work!
+> I am a professional security researcher. These are white hat tools used for research purposes only.
+> Use this responsibly. Never use this software illegaly.
 
 # Demo
 
