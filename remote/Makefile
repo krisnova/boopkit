@@ -6,6 +6,6 @@ clean:
 remote: clean
 	clang -Wall -o trigger \
 		tcp.c \
-		remote.c
+		trigger.c
 
 

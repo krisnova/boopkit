@@ -13,7 +13,7 @@ clean:
 	rm -f probe.ll
 
 .PHONY: remote
-remote: remote/remote.c
+remote: remote/trigger.c
 	cd remote && make
 
 

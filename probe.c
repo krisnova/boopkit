@@ -81,6 +81,12 @@ char LICENSE[] SEC("license") = "GPL";
 struct tcp_receive_reset_args_t {
   __u64 pad1;
   __u64 pad2;
+  __u16 sport;
+  __u16 dport;
+  __u16 family;
+  __u8 saddr[4];
+  __u8 daddr[4];
+  // Unused
 };
 
 // name: tcp_receive_reset
@@ -100,7 +106,7 @@ struct tcp_receive_reset_args_t {
 //
 // print fmt: "family=%s sport=%hu dport=%hu saddr=%pI4 daddr=%pI4 saddrv6=%pI6c daddrv6=%pI6c sock_cookie=%llx", __print_symbolic(REC->family, { 2, "AF_INET" }, { 10, "AF_INET6" }), REC->sport, REC->dport, REC->saddr, REC->daddr, REC->saddr_v6, REC->daddr_v6, REC->sock_cookie
 SEC("tracepoint/tcp/tcp_receive_reset")
-int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
-  bpf_printk("boopkit: tcp_receive_rest");
+int tcp_receive_reset(struct tcp_receive_reset_args_t *REC) {
+  bpf_printk("boopkit: tcp_receive_reset sport=%hu dport=%hu saddr=%pI4 daddr=%pI4", REC->sport, REC->dport, REC->saddr, REC->daddr);
   return 0;
 }
