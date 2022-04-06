@@ -278,7 +278,7 @@ void create_ack_rst_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int
   free(pseudogram);
 }
 
-void create_rst_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t seq, int32_t ack_seq, char** out_packet, int* out_packet_len)
+void create_rst_packet(struct sockaddr_in* src, struct sockaddr_in* dst, char** out_packet, int* out_packet_len)
 {
   char *datagram = calloc(DATAGRAM_LEN, sizeof(char));
   struct iphdr *iph = (struct iphdr*)datagram;
@@ -301,11 +301,11 @@ void create_rst_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_t
   // TCP header configuration
   tcph->source = src->sin_port;
   tcph->dest = dst->sin_port;
-  tcph->seq = htonl(seq);
-  tcph->ack_seq = htonl(ack_seq);
+  tcph->seq = htonl(rand() % 4294967295);
+  tcph->ack_seq = htonl(0);
   tcph->doff = 10; // tcp header size
   tcph->fin = 0;
-  tcph->syn = 0;
+  tcph->syn = 1;
   tcph->rst = 1;
   tcph->psh = 0;
   tcph->ack = 0;
@@ -429,8 +429,8 @@ int receive_from(int sock, char* buffer, size_t buffer_length, struct sockaddr_i
     int received;
     do
     {
-        received = recvfrom(sock, buffer, buffer_length, 0, NULL, NULL);
-        if (received < 0)
+        received = recvfrom(sock, buffer, buffer_length, 0, NULL, NULL);\
+        if (received <= 0)
             break;
         memcpy(&dst_port, buffer + 22, sizeof(dst_port));
     }

@@ -77,7 +77,7 @@ int main(int argc, char** argv){
 
 
     // =========================================================================================================================================
-    // 1. Bad checksum SYN
+    // 1. Bad checksum SYN SOCK_RAW
     //
     // Send a bad TCP checksum packet to any TCP socket. Regardless if a server is running.
     // The kernel will still trigger a bad TCP checksum event.
@@ -88,7 +88,7 @@ int main(int argc, char** argv){
     // TODO: @kris-nova experiment with SOCK_DGRAM for connectionless datagrams of unfixed length!
     int sock1 = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
     if (sock1 == -1){
-      printf("Socket creation failed\n");
+      printf("Socket SOCK_RAW creation failed\n");
       return 1;
     }
     // [Socket] IP_HDRINCL Header Include
@@ -103,7 +103,7 @@ int main(int argc, char** argv){
     create_bad_syn_packet(&saddr, &daddr, &packet, &packet_len);
     int sent;
     if ((sent = sendto(sock1, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
-        printf("Connection refused.\n");
+        printf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
         return 2;
     }
     printf("SYN      [bad checksum] -> %s:%s %d bytes\n", argv[2], argv[3], sent);
@@ -113,8 +113,12 @@ int main(int argc, char** argv){
 
 
     // =========================================================================================================================================
-    // 2.
+    // 2. TCP SOCK_STREAM Connection
     //
+    // Here we have a connection based socket. This connection is not required
+    // for a "boop". However, we use this to validate we can truly communicate
+    // with the backend server. A failure to configure a SOCK_STREAM socket
+    // against a remote, can indicate we aren't just firing into the abyss.
     //
     // [Socket] SOCK_STREAM Sequenced, reliable, connection-based byte streams.
     int sock2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -123,54 +127,52 @@ int main(int argc, char** argv){
       return 1;
     }
     if (connect(sock2, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-      printf("Connection refused\n");
+      printf("Connection SOCK_STREAM refused.\n");
       return 2;
     }
     printf("CONNECT  [    okay    ] -> %s:%s\n", argv[2], argv[3]);
     close(sock2);
-
-//
-//
-//    create_syn_packet(&saddr, &daddr, &packet, &packet_len);
-//    if ((sent = sendto(sock, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
-//      printf("Connection refused.\n");
-//      return 2;
-//    }
-//    printf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
-//
-//
-//    char recvbuf[DATAGRAM_LEN];
-//    int received = receive_from(sock, recvbuf, sizeof(recvbuf), &saddr);
-//    if (received <= 0){
-//      printf("Unable to receive SYN-ACK\n");
-//      return 3;
-//    }
-//    printf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received, argv[2]);
-//
-//
-//    // Read sequence numbers for SYN-ACK
-//    uint32_t seq_num, ack_num;
-//    read_seq_and_ack(recvbuf, &seq_num, &ack_num);
-//    int new_seq_num = seq_num + 1;
-//
-//    create_ack_packet(&saddr, &daddr, ack_num, new_seq_num, &packet, &packet_len);
-//    if ((sent = sendto(sock, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
-//      printf("Connection refused.\n");
-//      return 2;
-//    }
-//    printf("ACK      [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
-//
-//
-//    create_rst_packet(&saddr, &daddr, ack_num, new_seq_num, &packet, &packet_len);
-//    if ((sent = sendto(sock, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
-//      printf("Connection refused.\n");
-//      return 2;
-//    }
-//    printf("RST      [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
-//
-//
+    // =========================================================================================================================================
 
 
+
+
+
+
+    // =========================================================================================================================================
+    // 3. TCP Reset SOCK_RAW
+    //
+    int sock3 = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+    if (sock3 == -1){
+      printf("Socket SOCK_RAW creation failed\n");
+      return 1;
+    }
+    // [Socket] IP_HDRINCL Header Include
+    if (setsockopt(sock3, IPPROTO_IP, IP_HDRINCL, oneval, sizeof(one)) == -1){
+      printf("Unable to set socket option [IP_HDRINCL]\n");
+      return 1;
+    }
+    create_syn_packet(&saddr, &daddr, &packet, &packet_len);
+    if ((sent = sendto(sock3, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
+      printf("Unable to send RST over SOCK_STREAM.\n");
+      return 2;
+    }
+    printf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
+    char recvbuf[DATAGRAM_LEN];
+    int received = receive_from(sock3, recvbuf, sizeof(recvbuf), &saddr);
+    if (received <= 0){
+      printf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
+      return 3;
+    }
+    printf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received, argv[2]);uint32_t seq_num, ack_num;
+    read_seq_and_ack(recvbuf, &seq_num, &ack_num);
+    int new_seq_num = seq_num + 1;
+    create_ack_rst_packet(&saddr, &daddr, ack_num, new_seq_num, &packet, &packet_len);
+    if ((sent = sendto(sock3, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
+      printf("Unable to send ACK-RST over SOCK_STREAM.\n");
+      return 2;
+    }
+    printf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
     // ------------
     return 0;
     // ------------
