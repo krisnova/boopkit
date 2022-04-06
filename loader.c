@@ -78,7 +78,6 @@ int main(int argc, char **argv) {
     printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
     printf("-----------------------------------------------\n");
 
-    while(1){}
     while(1) {
       int lookup_key = 0, next_key;
       struct tcp_return ret;

@@ -108,6 +108,10 @@ struct tcp_receive_reset_args_t {
 SEC("tracepoint/tcp/tcp_receive_reset")
 int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   bpf_printk("boopkit: tcp_receive_reset");
-  //bpf_printk("boopkit: tcp_receive_reset sport=%hu dport=%hu saddr=%pI4 daddr=%pI4", REC->sport, REC->dport, REC->saddr, REC->daddr);
+  //bpf_printk("boopkit: tcp_receive_reset saddr=%pI4", args->saddr);
+  int saddrkey = 1;
+  struct tcp_return ret;
+  memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
+  bpf_map_update_elem(&events, &saddrkey, &ret, 1);
   return 0;
 }
