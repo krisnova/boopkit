@@ -81,11 +81,18 @@ int main(int argc, char** argv){
     read_seq_and_ack(recvbuf, &seq_num, &ack_num);
     int new_seq_num = seq_num + 1;
 
-    create_ack_rst_packet(&saddr, &daddr, ack_num, new_seq_num, &packet, &packet_len);
+    create_ack_packet(&saddr, &daddr, ack_num, new_seq_num, &packet, &packet_len);
     if ((sent = sendto(sock, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
       printf("Connection refused.\n");
     }
-    printf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
+    printf("ACK      [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
+
+    
+    create_rst_packet(&saddr, &daddr, ack_num, new_seq_num, &packet, &packet_len);
+    if ((sent = sendto(sock, packet, packet_len, 0, (struct sockaddr*)&daddr, sizeof(struct sockaddr))) == -1){
+      printf("Connection refused.\n");
+    }
+    printf("RST      [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2], argv[3]);
 
 
 
