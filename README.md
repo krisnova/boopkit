@@ -1,8 +1,11 @@
 # Boopkit
 
-A research project to demonstrate remote code injection over TCP with a malicious eBPF probe.
+A research project to demonstrate remote code injection over TCP with a malicious eBPF probe installed on a server.
 
 Tested on Linux 5.17
+
+Currently supported "boop" vectors:
+
 
 ### Disclaimer
 
@@ -27,12 +30,27 @@ Trigger a reverse shell over an existing TCP service. Edit the `remote` launcher
 
 ```
 cd remote
-# edit ./emote as needed
+# edit ./remote as needed
 ./remote
 python -c "import pty; pty.spawn('/bin/bash')"
 ```
 
-Enjoy the root shell over unauthenticated TCP. 
+Enjoy :)
+
+# Boop Vectors
+
+Boopkit can "boop" the probe remotely in many ways. 
+
+### 1. Bad Checksum
+
+The first boop that is attempted by the trigger is sending a malformed TCP SYN packet with an uncalculated checksum. This is an extremely lightweight and versatile boop as it can be ran against any server regardless if the server currently has an application running and accepting TCP connections! Yes. You can literally just "boop" a server and trigger a bad checksum as the kernel by default is listening for sockets on all ports.
+
+### 2. TCP Resets
+
+The first boop is scary, but not always reliable. Most modern networking hardware will drop malformed packets such as the ones required for the first boop. So a slightly less versatile vector is to boop an active TCP server in the hopes of causing the TCP server to trigger a TCP reset in the kernel. This can be done by pointing the `/trigger` program at a TCP service such as OpenSSH or Kubernetes.
+
+These TCP resets are much riskier, less reliable, and noiser from a kernel perspective. There is also no guarantee that a TCP service will actually trigger the TCP reset tracepoint. By default Boopkit will attempt to create a more reliable SOCK_STREAM style connection before attempting the TCP reset boop, simply to validate that the remote is online and responding to TCP.
+
 
 # Components
 
