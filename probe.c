@@ -74,10 +74,6 @@ int tcp_bad_csum(struct tcp_bad_csum_args_t  *args){
     return 0;
 }
 
-// SPDX-License-Identifier: GPL-2.0
-// The eBPF probe is dual-licensed with GPL because Linux is a fucking shit show.
-char LICENSE[] SEC("license") = "GPL";
-
 struct tcp_receive_reset_args_t {
   __u64 pad1;
   __u64 pad2;
@@ -115,3 +111,7 @@ int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   bpf_map_update_elem(&events, &saddrkey, &ret, 1);
   return 0;
 }
+
+// SPDX-License-Identifier: GPL-2.0
+// The eBPF probe is dual-licensed with GPL because Linux is a fucking shit show.
+char LICENSE[] SEC("license") = "GPL";
