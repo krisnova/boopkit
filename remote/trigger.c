@@ -55,13 +55,6 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    // [Source] Bind
-    // Bind the socket to the sadder
-//    if (bind(sock, (struct sockaddr*)&saddr, sizeof(struct sockaddr)) == -1){
-//      printf("Source IP bind failed\n");
-//      return 1;
-//    }
-
     // Validate members to stdout
     char daddrstr[INET_ADDRSTRLEN];
     char saddrstr[INET_ADDRSTRLEN];
