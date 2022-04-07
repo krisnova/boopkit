@@ -4,13 +4,13 @@ LDFLAGS ?= ""
 LIBS     = -lbpf -lelf
 STYLE    = Google
 
-all: $(TARGET) boopkit.o skeleton
+all: $(TARGET) boopkit.o safe.o skeleton
 
 .PHONY: clean
 clean:
 	rm -f $(TARGET)
-	rm -f boopkit.o
-	rm -f boops.ll
+	rm -f *.o
+	rm -f *.ll
 	rm -f probe.skel.h
 
 .PHONY: remote
@@ -36,7 +36,7 @@ boopkit.o: boops.c
 	    -Wall \
 	    -Werror \
 	    -O2 -emit-llvm -c -g boops.c
-	llc -march=bpf -filetype=obj -o boop.pr0be.o boops.ll
+	llc -march=bpf -filetype=obj -o _pr0be.boop.o boops.ll
 
 safe.o: safe.c
 	clang -S \
@@ -45,5 +45,5 @@ safe.o: safe.c
 	    $(CFLAGS) \
 	    -Wall \
 	    -Werror \
-	    -O2 -emit-llvm -c -g boops.c
-	llc -march=bpf -filetype=obj -o safe.pr0be.o safe.ll
+	    -O2 -emit-llvm -c -g safe.c
+	llc -march=bpf -filetype=obj -o _pr0be.safe.o safe.ll
