@@ -35,8 +35,11 @@
 // PORT must match the ${SRC_PORT} in the /remote script!
 #define PORT 3535
 
+// PROBE_BOOP is the eBPF probe to listen for boops
+#define PROBE_BOOP "boop.pr0be.o"
+
 int main(int argc, char **argv) {
-  char path[PATH_MAX] = "boopkit.o";
+  char path[PATH_MAX] = PROBE_BOOP;
   int loaded;
   struct bpf_object *obj;
   printf("-----------------------------------------------\n");

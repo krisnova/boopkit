@@ -19,8 +19,8 @@
 // ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
-// [spoof.c]
+// [safe.c]
 //
-// This file is used to spoof the Linux system in order
+// This file is used to obfuscate the Linux system in order
 // to hide the boopkit runtime from userspace.
 //

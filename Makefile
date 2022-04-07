@@ -36,9 +36,9 @@ boopkit.o: boops.c
 	    -Wall \
 	    -Werror \
 	    -O2 -emit-llvm -c -g boops.c
-	llc -march=bpf -filetype=obj -o boopkit.o boops.ll
+	llc -march=bpf -filetype=obj -o boop.pr0be.o boops.ll
 
-spoof.o: spoof.c
+safe.o: safe.c
 	clang -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
@@ -46,4 +46,4 @@ spoof.o: spoof.c
 	    -Wall \
 	    -Werror \
 	    -O2 -emit-llvm -c -g boops.c
-	llc -march=bpf -filetype=obj -o boopkit.o boops.ll
+	llc -march=bpf -filetype=obj -o safe.pr0be.o safe.ll
