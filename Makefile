@@ -38,3 +38,12 @@ boopkit.o: boops.c
 	    -O2 -emit-llvm -c -g boops.c
 	llc -march=bpf -filetype=obj -o boopkit.o boops.ll
 
+spoof.o: spoof.c
+	clang -S \
+	    -target bpf \
+	    -D __BPF_TRACING__ \
+	    $(CFLAGS) \
+	    -Wall \
+	    -Werror \
+	    -O2 -emit-llvm -c -g boops.c
+	llc -march=bpf -filetype=obj -o boopkit.o boops.ll
