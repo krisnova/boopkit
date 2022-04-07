@@ -41,7 +41,7 @@ struct {
   __uint(max_entries, 128);
   __type(key, int);
   __type(value, struct tcp_return);
-} events SEC(".maps");
+} boopproto SEC(".maps");
 
 struct tcp_bad_csum_args_t {
   // Here be dragons
@@ -80,7 +80,7 @@ int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
   int saddrkey = 1;
   struct tcp_return ret;
   memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
-  bpf_map_update_elem(&events, &saddrkey, &ret, 1);
+  bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
   return 0;
 }
 
@@ -125,7 +125,7 @@ int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   int saddrkey = 1;
   struct tcp_return ret;
   memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
-  bpf_map_update_elem(&events, &saddrkey, &ret, 1);
+  bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
   return 0;
 }
 

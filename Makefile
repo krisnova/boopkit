@@ -39,9 +39,9 @@ remote: remote/trigger.c ## Build trigger program
 	@echo "  ->  Building trigger program"
 	cd remote && make
 
-skeleton: ## Generate eBPF dynamic skeleton headers
+skeleton: pr0be ## Generate eBPF dynamic skeleton headers
 	@echo "  ->  Generating pr0be.skel.h"
-	@bpftool gen skeleton pr0be.safe.o -p > pr0be.skel.h
+	bpftool gen skeleton pr0be.safe.o -p > pr0be.skel.h
 
 format: ## Format the code
 	@echo "  ->  Formatting code"
