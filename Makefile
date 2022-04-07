@@ -11,10 +11,15 @@ clean:
 	rm -f $(TARGET)
 	rm -f boopkit.o
 	rm -f probe.ll
+	rm -f probe.skel.h
 
 .PHONY: remote
 remote: remote/trigger.c
 	cd remote && make
+
+skeleton:
+	bpftool gen skeleton boopkit.o -p > probe.skel.h
+
 
 format:
 	clang-format -i -style=$(STYLE) *.c *.h

