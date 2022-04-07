@@ -53,6 +53,8 @@ build: ## Build boopkit userspace program
 	@echo "  ->  Building boopkit"
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c -Wl, $(LIBS)
 
+install: ## Install boopkit to /usr/bin/boopkit
+	cp $(TARGET) /usr/bin/$(TARGET)
 
 pr0be: pr0be.boop.o pr0be.safe.o ## Compile eBPF probes
 	@echo "  ->  Building eBPF pr0bes"

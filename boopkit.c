@@ -37,7 +37,7 @@
 #include "pr0be.skel.h"
 // clang-format on
 
-#define VERSION "0.0.1"
+#define VERSION "1.0.2"
 
 // PORT must match the ${SRC_PORT} in the /remote script!
 #define PORT 3535
