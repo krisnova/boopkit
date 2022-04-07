@@ -154,7 +154,8 @@ int main(int argc, char **argv) {
   // So if we run the program with "sudo" we need to get the parent pid
   // for now just assume this
   //
-  // TODO: @kris-nova throw an error if ran with sudo instead of real privileges!
+  // TODO: @kris-nova throw an error if ran with sudo instead of real
+  // privileges!
   env.pid_to_hide = getpid();
   sprintf(pid, "%d", env.pid_to_hide);
   printf("  -> Obfuscating PID: %s\n", pid);
@@ -200,7 +201,8 @@ int main(int argc, char **argv) {
 
   // Set up ring buffer
   struct ring_buffer *rb = NULL;
-  rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL, NULL);
+  rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL,
+                        NULL);
   if (!rb) {
     fprintf(stderr, "Failed to create ring buffer\n");
     return 1;

@@ -47,7 +47,7 @@ skeleton: pr0be ## Generate eBPF dynamic skeleton headers
 format: ## Format the code
 	@echo "  ->  Formatting code"
 	@clang-format -i -style=$(STYLE) *.c *.h
-	@clang-format -i -style=$(STYLE) remote/*.c remote/*.h
+	@clang-format -i -style=$(STYLE) boop/*.c boop/*.h
 
 build: boop ## Build boopkit userspace program
 	@echo "  ->  Building boopkit"
