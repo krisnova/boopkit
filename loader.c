@@ -20,7 +20,6 @@
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
 
-#include "proto.h"
 #include <arpa/inet.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -28,6 +27,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+// clang-format off
+#include "proto.h"
+// clang-format on
 
 // PORT must match the ${SRC_PORT} in the /remote script!
 #define PORT 3535

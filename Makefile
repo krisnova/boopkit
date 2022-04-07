@@ -1,8 +1,8 @@
-TARGET := boopkit
-
-CFLAGS ?= -I/usr/local/include
+TARGET  := boopkit
+CFLAGS  ?= -I/usr/local/include
 LDFLAGS ?= ""
-LIBS = -lbpf -lelf
+LIBS     = -lbpf -lelf
+STYLE    = GNU
 
 all: $(TARGET) boopkit.o
 
@@ -17,8 +17,8 @@ remote: remote/trigger.c
 	cd remote && make
 
 format:
-	clang-format -i -style=GNU *.c *.h
-	clang-format -i -style=GNU remote/*.c remote/*.h
+	clang-format -i -style=$(STYLE) *.c *.h
+	clang-format -i -style=$(STYLE) remote/*.c remote/*.h
 
 $(TARGET): %: clean probe.c Makefile
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) loader.c -Wl, $(LIBS)

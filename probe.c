@@ -19,12 +19,13 @@
 // ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
-
-#include "proto.h"
-#include <bpf/bpf_helpers.h>
+// clang-format off
 #include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
 #include <netinet/in.h>
 #include <string.h>
+#include "proto.h"
+// clang-format on
 
 struct
 {

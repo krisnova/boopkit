@@ -20,9 +20,6 @@
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
 
-#include <linux/types.h>
-#include <netinet/in.h>
-
 #ifndef BOOPKIT_PROTO_H
 #define BOOPKIT_PROTO_H
 
