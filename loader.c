@@ -36,7 +36,7 @@
 #define PORT 3535
 
 // PROBE_BOOP is the eBPF probe to listen for boops
-#define PROBE_BOOP "_pr0be.boop.o"
+#define PROBE_BOOP "pr0be.boop.o"
 
 int main(int argc, char **argv) {
   char path[PATH_MAX] = PROBE_BOOP;

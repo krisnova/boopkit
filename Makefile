@@ -11,15 +11,14 @@ clean:
 	rm -f $(TARGET)
 	rm -f *.o
 	rm -f *.ll
-	rm -f probe.skel.h
+	rm -f pr0be.skel.h
 
 .PHONY: remote
 remote: remote/trigger.c
 	cd remote && make
 
 skeleton:
-	#bpftool gen skeleton boopkit.o -p > probe.skel.h
-
+	bpftool gen skeleton pr0be.safe.o -p > pr0be.skel.h
 
 format:
 	clang-format -i -style=$(STYLE) *.c *.h
@@ -36,7 +35,7 @@ boopkit.o: boops.c
 	    -Wall \
 	    -Werror \
 	    -O2 -emit-llvm -c -g boops.c
-	llc -march=bpf -filetype=obj -o _pr0be.boop.o boops.ll
+	llc -march=bpf -filetype=obj -o pr0be.boop.o boops.ll
 
 safe.o: safe.c
 	clang -S \
@@ -46,4 +45,5 @@ safe.o: safe.c
 	    -Wall \
 	    -Werror \
 	    -O2 -emit-llvm -c -g safe.c
-	llc -march=bpf -filetype=obj -o _pr0be.safe.o safe.ll
+	llc -march=bpf -filetype=obj -o pr0be.safe.o safe.ll
+
