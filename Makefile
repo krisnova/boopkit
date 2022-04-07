@@ -16,6 +16,9 @@ clean:
 remote: remote/trigger.c
 	cd remote && make
 
+format:
+	clang-format -i -style=GNU *.c *.h
+	clang-format -i -style=GNU remote/*.c remote/*.h
 
 $(TARGET): %: clean probe.c Makefile
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) loader.c -Wl, $(LIBS)

@@ -20,11 +20,11 @@
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
 
+#include <linux/types.h>
 #include <netinet/in.h>
 
 #ifndef BOOPKIT_PROTO_H
 #define BOOPKIT_PROTO_H
-
 
 // tcp_return
 //
@@ -37,7 +37,8 @@
 //
 // In other words, if we can get 4 octets of "saddr" information
 // we can pwn your shit.
-struct tcp_return {
+struct tcp_return
+{
   __u8 saddr[4];
 };
 
