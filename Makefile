@@ -4,7 +4,7 @@ LDFLAGS ?= ""
 LIBS     = -lbpf -lelf
 STYLE    = Google
 
-all: $(TARGET) boopkit.o safe.o skeleton
+all: boopkit.o safe.o skeleton $(TARGET)
 
 .PHONY: clean
 clean:
@@ -24,8 +24,8 @@ format:
 	clang-format -i -style=$(STYLE) *.c *.h
 	clang-format -i -style=$(STYLE) remote/*.c remote/*.h
 
-$(TARGET): %: clean boops.c Makefile
-	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) loader.c -Wl, $(LIBS)
+$(TARGET): %:
+	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c -Wl, $(LIBS)
 
 boopkit.o: boops.c
 	clang -S \
