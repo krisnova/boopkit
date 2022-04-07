@@ -88,8 +88,8 @@ int main(int argc, char **argv) {
 
   //
 
-  // ===========================================================================  // 1. Bad checksum SYN SOCK_RAW
-  // 1. Connectionless Bad Checksum
+  // ===========================================================================
+  // 1. Bad checksum SYN SOCK_RAW (Connectionless)
   //
   // Send a bad TCP checksum packet to any TCP socket. Regardless if a server
   // is running. The kernel will still trigger a bad TCP checksum event.
@@ -126,8 +126,8 @@ int main(int argc, char **argv) {
   close(sock1);
   // ===========================================================================
 
-  // ===========================================================================  // 2. TCP SOCK_STREAM Connection
-  // 2. Connection Socket
+  // ===========================================================================
+  // 2. TCP SOCK_STREAM Connection
   //
   // Here we have a connection based socket. This connection is not required
   // for a "boop". However, we use this to validate we can truly communicate
@@ -150,7 +150,8 @@ int main(int argc, char **argv) {
 
 
 
-  // ===========================================================================  // 3. TCP Reset SOCK_RAW
+  // ===========================================================================
+  // 3. TCP Reset SOCK_RAW
   //
   // This is the 3rd mechanism we use to boop a server.
   // Here we complete a TCP handshake, however we also flip the RST header bit
