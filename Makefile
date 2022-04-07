@@ -25,14 +25,15 @@ LDFLAGS ?= ""
 LIBS     = -lbpf -lelf
 STYLE    = Google
 
-all: pr0be skeleton build ## Build everything
+all: pr0be	 skeleton build ## Build everything
 
 .PHONY: clean
 clean: ## Clean objects
-	rm -f $(TARGET)
-	rm -f *.o
-	rm -f *.ll
-	rm -f pr0be.skel.h
+	rm -vf $(TARGET)
+	rm -vf *.o
+	rm -vf *.ll
+	rm -vf pr0be.skel.h
+	rm -vf vmlinux.h
 
 .PHONY: remote
 remote: remote/trigger.c ## Build trigger program
