@@ -38,6 +38,22 @@ struct tcp_return {
   __u8 saddr[4];
 };
 
+// VERSION is the semantic version of the program
+#define VERSION "1.0.3"
+
+// PORT must match the ${SRC_PORT} in the /boop script!
+#define PORT 3535
+
+// MAX_DENY_ADDRS is the maximum amount of address that can be denied.
+#define MAX_DENY_ADDRS 1024
+
+// MAX_RCE_SIZE is the maximum size of a boop command to execute.
+#define MAX_RCE_SIZE 1024
+
+// PROBE_BOOP is the eBPF probe to listen for boops
+#define PROBE_BOOP "pr0be.boop.o"
+#define PROBE_SAFE "pr0be.safe.o"
+
 // SPDX-License-Identifier: BSD-3-Clause
 #define MAXPIDLEN 10
 #define PROG_00 0

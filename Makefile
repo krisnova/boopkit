@@ -56,6 +56,9 @@ build: boop ## Build boopkit userspace program
 install: ## Install boopkit to /usr/bin/boopkit
 	cp $(TARGET) /usr/bin/$(TARGET)
 	cp boop/boopkit-boop /usr/bin/boopkit-boop
+	@mkdir -p ${HOME}/.boopkit
+	cp pr0be.safe.o ${HOME}/.boopkit/pr0be.safe.o
+	cp pr0be.boop.o ${HOME}/.boopkit/pr0be.boop.o
 
 pr0be: pr0be.boop.o pr0be.safe.o ## Compile eBPF probes
 	@echo "  ->  Building eBPF pr0bes"
