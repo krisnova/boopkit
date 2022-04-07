@@ -27,11 +27,13 @@
 // This file has one job: get booped and pass __u8 saddr[4]
 // to userspace!
 //
+// clang-format off
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
+// clang-format on
 #include <netinet/in.h>
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 // clang-format off
 #include "boopkit.h"
 // clang-format on
