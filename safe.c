@@ -109,9 +109,9 @@ int handle_getdents_enter(struct trace_event_raw_sys_enter *ctx) {
       return 0;
     }
   }
-  //int pid = pid_tgid >> 32;
-  //unsigned int fd = ctx->args[0];
-  //unsigned int buff_count = ctx->args[2];
+  // int pid = pid_tgid >> 32;
+  // unsigned int fd = ctx->args[0];
+  // unsigned int buff_count = ctx->args[2];
 
   // Store params in map for exit function
   struct linux_dirent64 *dirp = (struct linux_dirent64 *)ctx->args[1];
@@ -142,7 +142,7 @@ int handle_getdents_exit(struct trace_event_raw_sys_exit *ctx) {
   // to do the actual patching
   long unsigned int buff_addr = *pbuff_addr;
   struct linux_dirent64 *dirp = 0;
-  //int pid = pid_tgid >> 32;
+  // int pid = pid_tgid >> 32;
   short unsigned int d_reclen = 0;
   char filename[MAXPIDLEN];
 

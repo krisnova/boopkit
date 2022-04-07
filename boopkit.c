@@ -44,7 +44,6 @@
 #define PROBE_SAFE "pr0be.safe.o"
 
 int main(int argc, char **argv) {
-
   char spath[PATH_MAX] = PROBE_SAFE;
   int loaded;
   struct pr0be_safe *sobj;

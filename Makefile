@@ -4,7 +4,7 @@ LDFLAGS ?= ""
 LIBS     = -lbpf -lelf
 STYLE    = Google
 
-all: boopkit.o safe.o skeleton userspace
+all: format remote boopkit.o safe.o skeleton build
 
 .PHONY: clean
 clean:
@@ -24,7 +24,7 @@ format:
 	clang-format -i -style=$(STYLE) *.c *.h
 	clang-format -i -style=$(STYLE) remote/*.c remote/*.h
 
-userspace:
+build:
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c -Wl, $(LIBS)
 
 boopkit.o: boops.c
