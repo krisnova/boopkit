@@ -51,9 +51,12 @@ int main(int argc, char **argv) {
   printf("-----------------------------------------------\n");
   printf("Loading eBPF Probe: %s\n", spath);
   sobj = pr0be_safe__open();
-
-
-
+  loaded = pr0be_safe__load(sobj);
+  if (loaded < 0) {
+    printf("Unable to start eBPF probe: %s\n", spath);
+    return 1;
+  }
+  printf("eBPF Probe Loaded: %s\n", spath);
   char path[PATH_MAX] = PROBE_BOOP;
   struct bpf_object *obj;
   printf("-----------------------------------------------\n");
@@ -63,7 +66,6 @@ int main(int argc, char **argv) {
     printf("Unable to load eBPF object: %s\n", path);
     return 1;
   }
-
   loaded = bpf_object__load(obj);
   if (loaded < 0) {
     printf("Unable to start eBPF probe: %s\n", path);
