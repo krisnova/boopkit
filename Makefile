@@ -35,10 +35,10 @@ clean: ## Clean objects
 	rm -vf pr0be.skel.h
 	rm -vf vmlinux.h
 
-.PHONY: remote
-remote: remote/trigger.c ## Build trigger program
+.PHONY: boop
+boop:  ## Build trigger program
 	@echo "  ->  Building trigger program"
-	cd remote && make
+	cd boop && make
 
 skeleton: pr0be ## Generate eBPF dynamic skeleton headers
 	@echo "  ->  Generating pr0be.skel.h"
@@ -49,12 +49,13 @@ format: ## Format the code
 	@clang-format -i -style=$(STYLE) *.c *.h
 	@clang-format -i -style=$(STYLE) remote/*.c remote/*.h
 
-build: ## Build boopkit userspace program
+build: boop ## Build boopkit userspace program
 	@echo "  ->  Building boopkit"
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c -Wl, $(LIBS)
 
 install: ## Install boopkit to /usr/bin/boopkit
 	cp $(TARGET) /usr/bin/$(TARGET)
+	cp boop/boopkit-boop /usr/bin/boopkit-boop
 
 pr0be: pr0be.boop.o pr0be.safe.o ## Compile eBPF probes
 	@echo "  ->  Building eBPF pr0bes"

@@ -22,9 +22,9 @@
 default: remote
 
 clean:
-	rm -f trigger
+	rm -f boopkit-boop
 
 remote: clean
-	clang -Wall -o trigger \
+	clang -Wall -o boopkit-boop \
 		tcp.c \
-		trigger.c
+		boopkit-boop.c

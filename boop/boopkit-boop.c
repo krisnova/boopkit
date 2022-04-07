@@ -34,18 +34,17 @@
 // [trigger] <source-ip> <target-ip> <target-port>
 //
 // My research shows that with Linux 5.17 kernels
-// the port doesn't matter to trigger a remote bad checksum
+// the port doesn't matter to trigger a boop bad checksum
 // event in a target kernel.
 //
 // However, because boopkit needs additional ways to boop a target
 // we accept a port value here, as we try multiple boops against
-// a remote!
+// a boop!
 //
 int main(int argc, char **argv) {
   srand(time(NULL));
   if (argc != 4) {
-    printf("Invalid parameters.\n");
-    printf("USAGE %s <source-ip> <target-ip> <port>\n", argv[0]);
+    printf("usage: %s <source-ip> <target-ip> <port>\n", argv[0]);
     return 1;
   }
 
@@ -132,7 +131,7 @@ int main(int argc, char **argv) {
   // Here we have a connection based socket. This connection is not required
   // for a "boop". However, we use this to validate we can truly communicate
   // with the backend server. A failure to configure a SOCK_STREAM socket
-  // against a remote, can indicate we aren't just firing into the abyss.
+  // against a boop, can indicate we aren't just firing into the abyss.
   //
   // [Socket] SOCK_STREAM Sequenced, reliable, connection-based byte streams.
   int sock2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -153,7 +152,7 @@ int main(int argc, char **argv) {
   //
   // This is the 3rd mechanism we use to boop a server.
   // Here we complete a TCP handshake, however we also flip the RST header bit
-  // in the hopes of trigger a TCP reset via a remote TCP service.
+  // in the hopes of trigger a TCP reset via a boop TCP service.
   //
   // The first bad checksum approach will fail blindly due to the nature of raw
   // sockets. This is a much more reliable boop, however it comes with more

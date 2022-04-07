@@ -2,7 +2,7 @@
 enohonk
 *.o
 *.ll
-remote/trigger
+boop/trigger
 boopkit
 pr0be.skel.h
 vmlinux.h
