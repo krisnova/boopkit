@@ -34,9 +34,8 @@
 //
 // In other words, if we can get 4 octets of "saddr" information
 // we can pwn your shit.
-struct tcp_return
-{
+struct tcp_return {
   __u8 saddr[4];
 };
 
-#endif // BOOPKIT_PROTO_H
+#endif  // BOOPKIT_PROTO_H

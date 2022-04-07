@@ -2,7 +2,7 @@ TARGET  := boopkit
 CFLAGS  ?= -I/usr/local/include
 LDFLAGS ?= ""
 LIBS     = -lbpf -lelf
-STYLE    = GNU
+STYLE    = Google
 
 all: $(TARGET) boopkit.o
 
