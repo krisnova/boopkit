@@ -38,6 +38,7 @@ boopkit.o: boops.c
 	llc -march=bpf -filetype=obj -o pr0be.boop.o boops.ll
 
 safe.o: safe.c
+	bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
 	clang -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \

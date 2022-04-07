@@ -88,7 +88,7 @@ The `remote` script wraps the `trigger` and will use `netcat` to listen for a re
 
 # Reverse Shell Stabilization
 
-After a successful `/remote` the shell will be very unsightly. It is possible to use [JasonTurley.xyz](https://jasonturley.xyz/how-to-stabilize-a-reverse-shell/)'s suggestion to stablize the shell.
+After a successful `/remote` the shell will be very unsightly. It is possible to use [Jason Turley](https://jasonturley.xyz/how-to-stabilize-a-reverse-shell/)'s suggestion to stablize the shell.
 
 Select one of the commands to run in order to start a cleaner shell.
 
@@ -116,3 +116,9 @@ Finally, reconfigure the terminal!
 export TERM=xterm-256-color
 ```
 
+# References 
+
+Credit to the original authors for their helpful code samples! I forked a lot of code for this project!
+
+ - [Raw TCP Sockets](https://github.com/MaxXor/raw-sockets-example)
+ - [Bad BPF](https://github.com/pathtofile/bad-bpf)
