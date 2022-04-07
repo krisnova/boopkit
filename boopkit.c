@@ -39,6 +39,9 @@
 // PORT must match the ${SRC_PORT} in the /remote script!
 #define PORT 3535
 
+// MAX_DENY_ADDRS is the maximum amount of address that can be denied.
+#define MAX_DENY_ADDRS 1024
+
 // PROBE_BOOP is the eBPF probe to listen for boops
 #define PROBE_BOOP "pr0be.boop.o"
 #define PROBE_SAFE "pr0be.safe.o"
@@ -54,26 +57,17 @@ void asciiheader() {
   printf("\n\n");
 }
 
+struct config {
+  char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
+} cfg;
+
 void clisetup(int argc, char **argv) {
-  int i = 0;
-  for (i = 0; i < argc; i++) {
+  for (int i = 0; i < argc; i++) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
-        case 'v':
-          // Verbose
-          // cfg.verbose = 1;
-          break;
-        case 'h':
-          // Host
-          // cfg.ip = argv[i + 1];
-          break;
-        case 'p':
-          // Port
-          // cfg.port = atoi(argv[i + 1]);
-          break;
-        case 'm':
-          // Message
-          // cfg.message = argv[i + 1];
+        case 'x':
+          // Append deny addr
+          strcpy(cfg.deny[i], argv[i + 1]);
           break;
       }
     }
