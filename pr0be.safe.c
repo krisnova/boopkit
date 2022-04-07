@@ -36,7 +36,7 @@
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
 // clang-format off
-#include "safe.h"
+#include "boopkit.h"
 // clang-format on
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";

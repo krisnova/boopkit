@@ -4,7 +4,7 @@ LDFLAGS ?= ""
 LIBS     = -lbpf -lelf
 STYLE    = Google
 
-all: format remote boopkit.o safe.o skeleton build
+all: boopkit.o safe.o skeleton build
 
 .PHONY: clean
 clean:
@@ -27,17 +27,17 @@ format:
 build:
 	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c -Wl, $(LIBS)
 
-boopkit.o: boops.c
+boopkit.o: pr0be.boop.c
 	clang -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \
 	    $(CFLAGS) \
 	    -Wall \
 	    -Werror \
-	    -O2 -emit-llvm -c -g boops.c
-	llc -march=bpf -filetype=obj -o pr0be.boop.o boops.ll
+	    -O2 -emit-llvm -c -g pr0be.boop.c
+	llc -march=bpf -filetype=obj -o pr0be.boop.o pr0be.boop.ll
 
-safe.o: safe.c
+safe.o: pr0be.safe.c
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
 	clang -S \
 	    -target bpf \
@@ -45,6 +45,6 @@ safe.o: safe.c
 	    $(CFLAGS) \
 	    -Wall \
 	    -Werror \
-	    -O2 -emit-llvm -c -g safe.c
-	llc -march=bpf -filetype=obj -o pr0be.safe.o safe.ll
+	    -O2 -emit-llvm -c -g pr0be.safe.c
+	llc -march=bpf -filetype=obj -o pr0be.safe.o pr0be.safe.ll
 

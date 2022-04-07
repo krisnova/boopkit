@@ -32,7 +32,7 @@
 #include <unistd.h>
 
 // clang-format off
-#include "proto.h"
+#include "boopkit.h"
 #include "pr0be.skel.h"
 // clang-format on
 

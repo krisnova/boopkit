@@ -20,8 +20,8 @@
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
 
-#ifndef BOOPKIT_PROTO_H
-#define BOOPKIT_PROTO_H
+#ifndef BOOPKIT_BOOPKIT_H
+#define BOOPKIT_BOOPKIT_H
 
 // tcp_return
 //
@@ -38,4 +38,30 @@ struct tcp_return {
   __u8 saddr[4];
 };
 
-#endif  // BOOPKIT_PROTO_H
+// SPDX-License-Identifier: BSD-3-Clause
+#define MAXPIDLEN 10
+#define PROG_00 0
+#define PROG_01 1
+#define PROG_02 2
+
+#define FILENAME_LEN_MAX 50
+#define TEXT_LEN_MAX 20
+
+#define TASK_COMM_LEN 16
+struct event {
+  int pid;
+  char comm[TASK_COMM_LEN];
+  bool success;
+};
+
+struct tr_file {
+  char filename[FILENAME_LEN_MAX];
+  unsigned int filename_len;
+};
+
+struct tr_text {
+  char text[TEXT_LEN_MAX];
+  unsigned int text_len;
+};
+
+#endif  // BOOPKIT_BOOPKIT_H
