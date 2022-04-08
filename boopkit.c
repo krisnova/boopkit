@@ -105,8 +105,8 @@ void clisetup(int argc, char **argv) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
         case 's':
-            cfg.sudobypass = 1;
-            break;
+          cfg.sudobypass = 1;
+          break;
         case 'x':
           // Append deny addr
           strcpy(cfg.deny[cfg.denyc], argv[i + 1]);
@@ -132,18 +132,18 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
 }
 
 void rootcheck(int argc, char **argv) {
-  long luid = (long) getuid();
+  long luid = (long)getuid();
   printf("  -> getuid() : %ld\n", luid);
   if (luid != 0) {
     printf("  XX Invalid UID.\n");
-    if (!cfg.sudobypass){
+    if (!cfg.sudobypass) {
       printf("  XX Permission denied.\n");
       exit(1);
     }
     printf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
   }
-  long lpid = (long) getpid();
-  long lppid = (long) getppid();
+  long lpid = (long)getpid();
+  long lppid = (long)getppid();
   printf("  -> getpid()  : %ld\n", lpid);
   printf("  -> getppid() : %ld\n", lppid);
   if (lpid - lppid == 1) {
