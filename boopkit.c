@@ -63,7 +63,6 @@ void usage() {
   exit(0);
 }
 
-
 int handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
   printf(" ** Boop: %s\n ", dial);
   struct sockaddr_in daddr;
