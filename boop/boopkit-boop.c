@@ -129,7 +129,6 @@ void clisetup(int argc, char **argv) {
 
 void rootcheck(int argc, char **argv) {
   long luid = (long)getuid();
-  printf("  -> getuid() : %ld\n", luid);
   if (luid != 0) {
     printf("  XX Invalid UID.\n");
     printf("  XX Permission denied.\n");
@@ -148,20 +147,16 @@ void rootcheck(int argc, char **argv) {
 // a boop!
 //
 int main(int argc, char **argv) {
+  int one = 1;
+  const int *oneval = &one;
   asciiheader();
   rootcheck(argc, argv);
   clisetup(argc, argv);
   srand(time(NULL));
-
-//  printf("lport: %s\n", cfg.lport);
-//  printf("lhost: %s\n", cfg.lhost);
-//  printf("rport: %s\n", cfg.rport);
-//  printf("rhost: %s\n", cfg.rhost);
-  
-  // [Vars]
-  // one and oneval used for various socket options below.
-  int one = 1;
-  const int *oneval = &one;
+  printf("RHOST    [%s]\n", cfg.rhost);
+  printf("RPORT    [%s]\n", cfg.rport);
+  printf("LHOST    [%s]\n", cfg.lhost);
+  printf("LPORT    [%s]\n", cfg.lport);
 
   // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family
@@ -186,14 +181,8 @@ int main(int argc, char **argv) {
   // Validate members to stdout
   char daddrstr[INET_ADDRSTRLEN];
   char saddrstr[INET_ADDRSTRLEN];
-
   inet_ntop(AF_INET, &daddr.sin_addr, daddrstr, sizeof daddrstr);
   inet_ntop(AF_INET, &saddr.sin_addr, saddrstr, sizeof saddrstr);
-
-  printf("\n-------------------------------------------------------\n");
-  printf(" Destination : %s:%d\n", daddrstr, ntohs(daddr.sin_port));
-  printf("   Source    : %s:%d\n", saddrstr, ntohs(saddr.sin_port));
-  printf("-------------------------------------------------------\n\n");
 
   //
 
