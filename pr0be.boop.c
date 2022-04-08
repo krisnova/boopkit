@@ -33,6 +33,7 @@
 // clang-format on
 #include <netinet/in.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 // clang-format off
 #include "boopkit.h"

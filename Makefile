@@ -25,7 +25,7 @@ LDFLAGS ?= ""
 LIBS     = -lbpf -lelf
 STYLE    = Google
 
-all: pr0be	 skeleton build ## Build everything
+all: pr0be skeleton build ## Build everything
 
 .PHONY: clean
 clean: ## Clean objects

