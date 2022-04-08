@@ -67,7 +67,7 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
     return 1;
   }
   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    printf(" XX Connection SOCK_STREAM refused.\n");
+    //printf(" XX Connection SOCK_STREAM refused.\n");
     return 1;
   }
 
