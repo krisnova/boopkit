@@ -55,12 +55,19 @@ sudo make install
 Run boopkit-boop against the server.
 
 ```bash 
-    boopkit-boop \
-      -lhost $LHOST \
-      -lport $LPORT \
-      -rhost $RHOST \
-      -rport $RPORT \
-      -x "$RCE"
+# ===================
+RCE="ls -la"
+# ===================
+LHOST="127.0.0.1"
+LPORT="3535"
+RHOST="127.0.0.1"
+RPORT="22"
+boopkit-boop \
+  -lhost $LHOST \
+  -lport $LPORT \
+  -rhost $RHOST \
+  -rport $RPORT \
+  -x "$RCE"
 ```
 
 # Remote Vectors
