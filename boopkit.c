@@ -55,7 +55,8 @@ void usage() {
   printf("Linux rootkit and backdoor over eBPF.\n");
   printf("Author: Kris Nóva <kris@nivenly.com>\n");
   printf("\n");
-  printf("Usage: boopkit [options]\n");
+  printf("Usage: \n");
+  printf("boopkit [options]\n");
   printf("\n");
   printf("Options:\n");
   printf("-h, help           Display help and usage for boopkit.\n");

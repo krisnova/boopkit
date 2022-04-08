@@ -51,17 +51,16 @@ void usage() {
   printf("Linux rootkit and backdoor over eBPF.\n");
   printf("Author: Kris Nóva <kris@nivenly.com>\n");
   printf("\n");
-  printf("Usage: boopkit-boop [options]\n");
+  printf("Usage: \n");
+  printf("boopkit-boop [options]\n");
   printf("\n");
   printf("Options:\n");
-  printf("-lhost             Local  (src) address: 127.0.0.1.\n");
-  printf("-lport             Local  (src) port:    3535\n");
-  printf("-rhost             Remote (dst) address: 127.0.0.1.\n");
-  printf("-rport             Remote (dst) port:    22\n");
-  printf(
-      "-x, execute        Command to execute on the boopscript server: ls "
-      "-la\n");
-  printf("-h, help           Display help and usage for boopkit.\n");
+  printf("-lhost             Local  (src) address   : 127.0.0.1.\n");
+  printf("-lport             Local  (src) port      :    3535\n");
+  printf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
+  printf("-rport             Remote (dst) port      : 22\n");
+  printf("-x, execute        Remote command to exec : ls -la\n");
+  printf("-h, help           Print help and usage.\n");
   printf("\n");
   exit(0);
 }
@@ -175,8 +174,8 @@ int main(int argc, char **argv) {
   int one = 1;
   const int *oneval = &one;
   asciiheader();
-  rootcheck(argc, argv);
   clisetup(argc, argv);
+  rootcheck(argc, argv);
   srand(time(NULL));
   printf("RHOST    [%s]\n", cfg.rhost);
   printf("RPORT    [%s]\n", cfg.rport);
