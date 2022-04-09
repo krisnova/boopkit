@@ -20,8 +20,9 @@ Remote command execution over raw TCP.
 Download and build boopkit.
 
 ```bash
-git clone https://github.com/kris-nova/boopkit.git
-cd boopkit
+wget https://github.com/kris-nova/boopkit/archive/refs/tags/v1.0.5.tar.gz
+tar -xzf v1.0.5.tar.gz 
+cd boopkit-1.0.5/
 make
 sudo make install
 ```
