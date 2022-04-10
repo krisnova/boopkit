@@ -47,13 +47,11 @@ struct {
 } boopproto SEC(".maps");
 
 struct tcp_bad_csum_args_t {
-
   unsigned long long pad;
 
-  const void * skbaddr;
+  const void *skbaddr;
   __u8 saddr[sizeof(struct sockaddr_in6)];
   __u8 daddr[sizeof(struct sockaddr_in6)];
-
 
   // Here be dragons
   //
@@ -69,8 +67,6 @@ struct tcp_bad_csum_args_t {
   //__u8 headerpadding[16];
   //__u8 pad1[4];
   //__u8 saddr[4];
-
-
 };
 
 // name: tcp_bad_csum
@@ -92,10 +88,10 @@ int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
   bpf_printk("boopkit: tcp_bad_csum");
   bpf_printk("boopkit: src=%pISpc dest=%pISpc", args->saddr, args->daddr);
 
-  //int saddrkey = 1;
-  //struct tcp_return ret;
-  //memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
-  //bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
+  // int saddrkey = 1;
+  // struct tcp_return ret;
+  // memcpy(ret.saddr, args->saddr, sizeof(args->saddr));
+  // bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
 
   return 0;
 }

