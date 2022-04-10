@@ -39,7 +39,7 @@ struct tcp_return {
 };
 
 // VERSION is the semantic version of the program
-#define VERSION "1.0.5"
+#define VERSION "1.0.6"
 
 // PORT for the boopkit TCP protocol for boopscript RCE
 #define PORT 3535

