@@ -57,6 +57,10 @@ struct tcp_return {
 #define PROBE_BOOP "pr0be.boop.o"
 #define PROBE_SAFE "pr0be.safe.o"
 
+// TIMEOUT_SECONDS_RECVRCE is the amount of seconds to wait for recvrce()
+// after a boop
+#define TIMEOUT_SECONDS_RECVRCE 1
+
 // SPDX-License-Identifier: BSD-3-Clause
 #define MAXPIDLEN 10
 #define PROG_00 0

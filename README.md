@@ -119,9 +119,10 @@ NCATLISTENPORT="3545"
 python -c "import pty; pty.spawn('/bin/bash')"
 ```
 
-### References 
+### References
 
-Credit to the original authors for their helpful code samples! I forked a lot of code for this project!
-
+ - [Tracepoints with BPF](https://lwn.net/Articles/683504/)
  - [Raw TCP Sockets](https://github.com/MaxXor/raw-sockets-example)
  - [Bad BPF](https://github.com/pathtofile/bad-bpf)
+
+Credit to the original authors for their helpful code samples! I forked a lot of code for this project! 

