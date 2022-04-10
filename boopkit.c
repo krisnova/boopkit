@@ -129,7 +129,7 @@ struct config {
 // clisetup will initialize the config struct for the program
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
-  cfg.sudobypass = 1;
+  cfg.sudobypass = 0;
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
     strncpy(cfg.pr0besafepath, PROBE_SAFE, sizeof PROBE_SAFE);
