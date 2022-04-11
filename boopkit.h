@@ -24,7 +24,7 @@
 #define BOOPKIT_BOOPKIT_H
 
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
-#define MAX_RCE_SIZE 256
+#define MAX_RCE_SIZE 128
 
 struct encapsulated_tcp_boop {
 

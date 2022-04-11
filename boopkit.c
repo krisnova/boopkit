@@ -361,6 +361,7 @@ int main(int argc, char **argv) {
       if (!ignore) {
         char *rce = malloc(MAX_RCE_SIZE);
         int retval;
+        printf("  -> encapsulated: %s\n", ret.rce);
         retval = recvrce(saddrval, rce);
         if (retval == 0) {
           printf("<- Executing: %s\r\n", rce);

@@ -28,6 +28,7 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
 
 // clang-format off
 #include "../boopkit.h"

@@ -85,11 +85,16 @@ int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
 struct tcp_receive_reset_args_t {
   unsigned long long pad;
 
+  const void * skaddr;
   __u16 sport;
   __u16 dport;
   __u16 family;
   __u8 saddr[4];
   __u8 daddr[4];
+  __u8 saddr_v6[16];
+  __u8 daddr_v6[16];
+  __u64 sock_cookie;
+
 };
 
 // name: tcp_receive_reset
@@ -118,8 +123,12 @@ struct tcp_receive_reset_args_t {
 SEC("tracepoint/tcp/tcp_receive_reset")
 int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   int saddrkey = 1;
+  //char rce[MAX_RCE_SIZE];
+  //sprintf(rce, "%llx", args->sock_cookie);
+  bpf_printk("%llx", args->sock_cookie);
   struct encapsulated_tcp_boop ret;
   memcpy(ret.saddrval, args->saddr, sizeof(args->saddr));
+  //memcpy(ret.rce, rce, sizeof rce);
   bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
   return 0;
 }
