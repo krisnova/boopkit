@@ -343,14 +343,14 @@ int main(int argc, char **argv) {
     int ikey = 0, jkey;
     int err;
     char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
-    struct tcp_return ret;
+    struct encapsulated_tcp_boop ret;
     while (!bpf_map_get_next_key(fd, &ikey, &jkey)) {
       err = bpf_map_lookup_elem(fd, &jkey, &ret);
       if (err < 0) {
         continue;
       }
       ignore = 0;
-      inet_ntop(AF_INET, &ret.saddr, saddrval, sizeof(saddrval));
+      inet_ntop(AF_INET, &ret.saddrval, saddrval, sizeof(saddrval));
       for (int i = 0; i < cfg.denyc; i++) {
         if (strncmp(saddrval, cfg.deny[i], INET_ADDRSTRLEN) == 0) {
           // Ignoring string in deny list

