@@ -21,20 +21,21 @@
 //
 // [common.c]
 
+#include "common.h"
+
 #include <stdio.h>
 #include <string.h>
-#include "common.h"
 
 int quiet = 0;
 
-void boopprintf (const char *format, ...) {
+void boopprintf(const char *format, ...) {
   if (quiet) {
     return;
   }
   va_list args;
-  va_start( args, format );
-  vprintf( format, args );
-  va_end( args );
+  va_start(args, format);
+  vprintf(format, args);
+  va_end(args);
 }
 
 // asciiheader is the main runtime banner.
@@ -51,4 +52,3 @@ void asciiheader() {
   printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
   printf("\n\n");
 }
-

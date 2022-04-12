@@ -10,6 +10,6 @@
 extern int quiet;
 
 void asciiheader();
-void boopprintf (const char *__restrict __format, ...);
+void boopprintf(const char *__restrict __format, ...);
 
-#endif // BOOPKIT_COMMON_H
+#endif  // BOOPKIT_COMMON_H

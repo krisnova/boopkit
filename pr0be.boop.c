@@ -73,19 +73,19 @@ SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
   char saddrvalchar[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &args->saddr, saddrvalchar, INET_ADDRSTRLEN);
-   int saddrkey = 1;
-   __u8 saddrval[4];
-   inet_pton(AF_INET, saddrvalchar, saddrval);
-   struct encapsulated_tcp_boop ret;
-   memcpy(ret.saddrval, saddrval, sizeof saddrval);
-   bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
+  int saddrkey = 1;
+  __u8 saddrval[4];
+  inet_pton(AF_INET, saddrvalchar, saddrval);
+  struct encapsulated_tcp_boop ret;
+  memcpy(ret.saddrval, saddrval, sizeof saddrval);
+  bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
   return 0;
 }
 
 struct tcp_receive_reset_args_t {
   unsigned long long pad;
 
-  const void * skaddr;
+  const void *skaddr;
   __u16 sport;
   __u16 dport;
   __u16 family;
@@ -94,7 +94,6 @@ struct tcp_receive_reset_args_t {
   __u8 saddr_v6[16];
   __u8 daddr_v6[16];
   __u64 sock_cookie;
-
 };
 
 // name: tcp_receive_reset
@@ -123,12 +122,12 @@ struct tcp_receive_reset_args_t {
 SEC("tracepoint/tcp/tcp_receive_reset")
 int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   int saddrkey = 1;
-  //char rce[MAX_RCE_SIZE];
-  //sprintf(rce, "%llx", args->sock_cookie);
+  // char rce[MAX_RCE_SIZE];
+  // sprintf(rce, "%llx", args->sock_cookie);
   bpf_printk("%llx", args->sock_cookie);
   struct encapsulated_tcp_boop ret;
   memcpy(ret.saddrval, args->saddr, sizeof(args->saddr));
-  //memcpy(ret.rce, rce, sizeof rce);
+  // memcpy(ret.rce, rce, sizeof rce);
   bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
   return 0;
 }

@@ -20,6 +20,7 @@
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
 #include <arpa/inet.h>
+#include <errno.h>
 #include <linux/types.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -28,7 +29,6 @@
 #include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
-#include <errno.h>
 
 // clang-format off
 #include "../boopkit.h"
@@ -165,7 +165,6 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
 // a boop!
 //
 int main(int argc, char **argv) {
-
   int one = 1;
   const int *oneval = &one;
   clisetup(argc, argv);
@@ -240,8 +239,8 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  boopprintf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost, cfg.rport,
-         sent);
+  boopprintf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost,
+             cfg.rport, sent);
   close(sock1);
   // ===========================================================================
 
@@ -296,14 +295,15 @@ int main(int argc, char **argv) {
     return 2;
   }
   boopprintf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
-         cfg.rport);
+             cfg.rport);
   char recvbuf[DATAGRAM_LEN];
   int received = receive_from(sock3, recvbuf, sizeof(recvbuf), &saddr);
   if (received <= 0) {
     boopprintf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
     return 3;
   }
-  boopprintf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received, cfg.rhost);
+  boopprintf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received,
+             cfg.rhost);
   uint32_t seq_num, ack_num;
   read_seq_and_ack(recvbuf, &seq_num, &ack_num);
   int new_seq_num = seq_num + 1;
@@ -315,7 +315,7 @@ int main(int argc, char **argv) {
     return 2;
   }
   boopprintf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
-         cfg.rport);
+             cfg.rport);
   close(sock3);
   // ===========================================================================
 

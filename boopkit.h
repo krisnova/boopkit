@@ -27,15 +27,13 @@
 #define MAX_RCE_SIZE 128
 
 struct encapsulated_tcp_boop {
-
   // saddr is the 4 byte minimum required to pass an
   // IP address over TCP
-  __u8 saddrval[4]; // Saturn Valley
+  __u8 saddrval[4];  // Saturn Valley
 
   // rce is an optional buffer to fill with a command if
   // a boop can encapsulate one.
   char rce[MAX_RCE_SIZE];
-
 };
 
 // VERSION is the semantic version of the program

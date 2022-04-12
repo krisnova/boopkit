@@ -83,14 +83,14 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
                       (struct timeval *)&retry, sizeof(struct timeval));
   if (retval != 0) {
     boopprintf("Error (%d) setting socket SO_SNDTIMEO: %s\n", retval,
-           strerror(errno));
+               strerror(errno));
     return 1;
   }
   retval = setsockopt(revsock, SOL_SOCKET, SO_RCVTIMEO,
                       (struct timeval *)&retry, sizeof(struct timeval));
   if (retval != 0) {
     boopprintf("Error (%d) setting socket SO_RCVTIMEO: %s\n", retval,
-           strerror(errno));
+               strerror(errno));
     return 1;
   }
 
@@ -181,7 +181,8 @@ void rootcheck(int argc, char **argv) {
     // implies that the process tree has cascaded a new
     // ppid() for the process. In other words, we are probably
     // running with sudo (or similar).
-    boopprintf("  XX Running as cascaded pid (sudo) is invalid for obfuscation.\n");
+    boopprintf(
+        "  XX Running as cascaded pid (sudo) is invalid for obfuscation.\n");
     if (!cfg.sudobypass) {
       boopprintf("  XX Permission denied.\n");
       exit(1);
