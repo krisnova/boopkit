@@ -197,8 +197,8 @@ void rootcheck(int argc, char **argv) {
 // By design this will only log to stdout to create an
 // easier obfuscating experience!
 int main(int argc, char **argv) {
-  asciiheader();
   clisetup(argc, argv);
+  asciiheader();
   rootcheck(argc, argv);
   boopprintf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
   // Return value for eBPF loading
