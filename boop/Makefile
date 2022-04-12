@@ -27,4 +27,5 @@ clean:
 remote: clean
 	clang -Wall -o boopkit-boop \
 		tcp.c \
+		../common.c \
 		boopkit-boop.c

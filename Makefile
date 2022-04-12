@@ -51,7 +51,7 @@ format: ## Format the code
 
 build: boop ## Build boopkit userspace program
 	@echo "  ->  Building boopkit"
-	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c -Wl, $(LIBS)
+	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c common.c -Wl, $(LIBS)
 
 install: ## Install boopkit to /usr/bin/boopkit
 	cp $(TARGET) /usr/bin/$(TARGET)
