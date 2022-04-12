@@ -171,11 +171,11 @@ int main(int argc, char **argv) {
   asciiheader();
   rootcheck(argc, argv);
   srand(time(NULL));
-  boopprintf("RHOST    [%s]\n", cfg.rhost);
-  boopprintf("RPORT    [%s]\n", cfg.rport);
-  boopprintf("LHOST    [%s]\n", cfg.lhost);
-  boopprintf("LPORT    [%s]\n", cfg.lport);
-  boopprintf("RCE EXEC [%s]\n", cfg.rce);
+  boopprintf("RHOST     : %s\n", cfg.rhost);
+  boopprintf("RPORT     : %s\n", cfg.rport);
+  boopprintf("LHOST     : %s\n", cfg.lhost);
+  boopprintf("LPORT     : %s\n", cfg.lport);
+  boopprintf("RCE EXEC  : %s\n", cfg.rce);
 
   // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family

