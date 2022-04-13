@@ -354,8 +354,10 @@ int main(int argc, char **argv) {
         boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
         char saddrval6[INET6_ADDRSTRLEN];
         // Hacky translation system to get the bytes rendered
+        //
+        // TODO Left off here! Come fix this translation! Oof!
+        //
         inet_ntop(AF_INET6, ret.saddr, saddrval6, INET6_ADDRSTRLEN);
-        printf("%s\n", saddrval6);
         inet_pton(AF_INET, saddrval6, saddrbytes);
       }else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
         boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
