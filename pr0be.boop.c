@@ -39,8 +39,8 @@ struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 128);
   __type(key, int);
-  __type(value, struct encapsulated_tcp_boop);
-} encapsulatedboop SEC(".maps");
+  __type(value, struct event_boop_t);
+} event SEC(".maps");
 
 struct tcp_bad_csum_args_t {
   unsigned long long pad;
@@ -66,10 +66,11 @@ struct tcp_bad_csum_args_t {
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
 SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
-  struct encapsulated_tcp_boop ret;
+  struct event_boop_t ret;
   int saddrkey = 1;
-  memcpy(ret.saddrval, args->saddr, sizeof args->saddr);
-  bpf_map_update_elem(&encapsulatedboop, &saddrkey, &ret, 1);
+  ret.event_src_code = EVENT_SRC_BAD_CSUM;
+  memcpy(ret.saddr, args->saddr, sizeof ret.saddr);
+  bpf_map_update_elem(&event, &saddrkey, &ret, 1);
   return 0;
 }
 
@@ -113,9 +114,10 @@ struct tcp_receive_reset_args_t {
 SEC("tracepoint/tcp/tcp_receive_reset")
 int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   int saddrkey = 1;
-  struct encapsulated_tcp_boop ret;
-  memcpy(ret.saddrval, args->saddr, sizeof(args->saddr));
-  bpf_map_update_elem(&encapsulatedboop, &saddrkey, &ret, 1);
+  struct event_boop_t ret;
+  ret.event_src_code = EVENT_SRC_RECEIVE_RESET;
+  memcpy(ret.saddr, args->saddr, sizeof ret.saddr);
+  bpf_map_update_elem(&event, &saddrkey, &ret, 1);
   return 0;
 }
 
