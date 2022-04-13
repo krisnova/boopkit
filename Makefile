@@ -60,8 +60,11 @@ install: ## Install boopkit to /usr/bin/boopkit
 	cp pr0be.safe.o ${HOME}/.boopkit/pr0be.safe.o
 	cp pr0be.boop.o ${HOME}/.boopkit/pr0be.boop.o
 
-pr0be: pr0be.boop.o pr0be.safe.o ## Compile eBPF probes
+pr0be: autogen pr0be.boop.o pr0be.safe.o ## Compile eBPF probes
 	@echo "  ->  Building eBPF pr0bes"
+
+autogen:
+	bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
 
 pr0be.boop.o: pr0be.boop.c
 	@echo "  ->  Building pr0be.boop.o"
@@ -76,7 +79,6 @@ pr0be.boop.o: pr0be.boop.c
 
 pr0be.safe.o: pr0be.safe.c
 	@echo "  ->  Building pr0be.safe.o"
-	bpftool btf dump file /sys/kernel/btf/vmlinux format c > vmlinux.h
 	clang -S \
 	    -target bpf \
 	    -D __BPF_TRACING__ \

@@ -20,6 +20,7 @@
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
 
+#pragma once
 #ifndef BOOPKIT_BOOPKIT_H
 #define BOOPKIT_BOOPKIT_H
 

