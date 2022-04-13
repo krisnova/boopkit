@@ -40,7 +40,7 @@ struct {
   __uint(max_entries, 128);
   __type(key, int);
   __type(value, struct encapsulated_tcp_boop);
-} boopproto SEC(".maps");
+} encapsulatedboop SEC(".maps");
 
 struct tcp_bad_csum_args_t {
   unsigned long long pad;
@@ -66,14 +66,10 @@ struct tcp_bad_csum_args_t {
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
 SEC("tracepoint/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
-  //  char saddrvalchar[INET_ADDRSTRLEN];
-  //  inet_ntop(AF_INET, &args->saddr, saddrvalchar, INET_ADDRSTRLEN);
-  //  int saddrkey = 1;
-  //  __u8 saddrval[4];
-  //  inet_pton(AF_INET, saddrvalchar, saddrval);
-  //  struct encapsulated_tcp_boop ret;
-  //  memcpy(ret.saddrval, saddrval, sizeof saddrval);
-  //  bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
+  struct encapsulated_tcp_boop ret;
+  int saddrkey = 1;
+  memcpy(ret.saddrval, args->saddr, sizeof args->saddr);
+  bpf_map_update_elem(&encapsulatedboop, &saddrkey, &ret, 1);
   return 0;
 }
 
@@ -117,13 +113,9 @@ struct tcp_receive_reset_args_t {
 SEC("tracepoint/tcp/tcp_receive_reset")
 int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   int saddrkey = 1;
-  // char rce[MAX_RCE_SIZE];
-  // sprintf(rce, "%llx", args->sock_cookie);
-  bpf_printk("%llx", args->sock_cookie);
   struct encapsulated_tcp_boop ret;
   memcpy(ret.saddrval, args->saddr, sizeof(args->saddr));
-  // memcpy(ret.rce, rce, sizeof rce);
-  bpf_map_update_elem(&boopproto, &saddrkey, &ret, 1);
+  bpf_map_update_elem(&encapsulatedboop, &saddrkey, &ret, 1);
   return 0;
 }
 

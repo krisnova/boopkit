@@ -108,9 +108,7 @@ NCATLISTENPORT="3545"
 
  - 'clang'
  - `bpftool`
- - 'linux-headers'
  - 'llvm'
- - 'libbpf'
  - 'lib32-glibc'
 
 ### Reverse Shell Stabilization
