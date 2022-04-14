@@ -30,8 +30,8 @@
 // clang-format off
 #include "vmlinux.h"
 // clang-format on
-#include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
+#include <bpf/bpf_helpers.h>
 #include <string.h>
 
 #include "boopkit.h"
@@ -59,7 +59,6 @@ struct {
 ////  __u8 pad1[4];
 //  __u8 saddr[4];
 //};
-
 
 struct tcp_bad_csum_args_t {
   __u8 padding[16];
@@ -89,7 +88,7 @@ int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
   int saddrkey = 1;
   ret.event_src_code = EVENT_SRC_BAD_CSUM;
   memcpy(ret.saddr, args->saddr, sizeof ret.saddr);
-  //bpf_probe_read_kernel(ret.saddr, sizeof ret.saddr, args->saddr);
+  // bpf_probe_read_kernel(ret.saddr, sizeof ret.saddr, args->saddr);
   bpf_map_update_elem(&event, &saddrkey, &ret, 1);
   return 0;
 }
@@ -137,7 +136,7 @@ int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   struct event_boop_t ret;
   ret.event_src_code = EVENT_SRC_RECEIVE_RESET;
   memcpy(ret.saddr, args->saddr, sizeof ret.saddr);
-  //bpf_probe_read_kernel(ret.saddr,sizeof ret.saddr, args->saddr);
+  // bpf_probe_read_kernel(ret.saddr,sizeof ret.saddr, args->saddr);
   bpf_map_update_elem(&event, &saddrkey, &ret, 1);
   return 0;
 }

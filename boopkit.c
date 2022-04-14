@@ -350,7 +350,7 @@ int main(int argc, char **argv) {
 
       // Calculate saddrval
       // Copy the first 4 bytes on to saddrbytes
-      memcpy(saddrbytes,ret.saddr,sizeof saddrbytes);
+      memcpy(saddrbytes, ret.saddr, sizeof saddrbytes);
       inet_ntop(AF_INET, &saddrbytes, saddrval, sizeof(saddrval));
 
       // ---- [ FILTER ] -----
@@ -368,7 +368,7 @@ int main(int argc, char **argv) {
         // Arrange the saddrval bytes from the kernel
         if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
           boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
-        }else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
+        } else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
           boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
         }
         boopprintf("  ** Boop source: %s\n", saddrval);
@@ -384,11 +384,11 @@ int main(int argc, char **argv) {
             system(rce);
           }
           free(rce);
-        } else  {
+        } else {
           // TODO Parse RCE from map/encapsulation
-          //boopprintf("  <- Executing: %s\r\n", ret.rce);
-          //system(ret.rce);
-          //boopprintf("  -> no RCE found!\n");
+          // boopprintf("  <- Executing: %s\r\n", ret.rce);
+          // system(ret.rce);
+          // boopprintf("  -> no RCE found!\n");
         }
       }
       err = bpf_map_delete_elem(fd, &jkey);
@@ -399,5 +399,3 @@ int main(int argc, char **argv) {
     }
   }
 }
-
-

@@ -26,10 +26,8 @@
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
 #define MAX_RCE_SIZE 128
 
-
-#define EVENT_SRC_BAD_CSUM       1
-#define EVENT_SRC_RECEIVE_RESET  2
-
+#define EVENT_SRC_BAD_CSUM 1
+#define EVENT_SRC_RECEIVE_RESET 2
 
 // event_boop_t represents an event from the kernel.
 //
@@ -43,13 +41,11 @@
 // NOTE: All event_boop_t fields MUST be used in a probe in order
 // to pass the eBPF verifier!
 struct event_boop_t {
-
   // saddr is 28 fucking bytes
   __u8 saddr[28];
 
   // an enumerated type of EVENT_SRC_* from above
   int event_src_code;
-
 };
 
 // VERSION is the semantic version of the program
