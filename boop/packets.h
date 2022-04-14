@@ -48,12 +48,11 @@ void create_ack_rst_packet(struct sockaddr_in *src, struct sockaddr_in *dst,
                            int *out_packet_len);
 void create_rst_packet(struct sockaddr_in *src, struct sockaddr_in *dst,
                        char **out_packet, int *out_packet_len);
-void create_bad_syn_packet_payload(struct sockaddr_in *src, struct sockaddr_in *dst,
-                           char **out_packet, int *out_packet_len, char *payload);
+void create_bad_syn_packet_payload(struct sockaddr_in *src,
+                                   struct sockaddr_in *dst, char **out_packet,
+                                   int *out_packet_len, char *payload);
 int receive_from(int sock, char *buffer, size_t buffer_length,
                  struct sockaddr_in *dst);
 void read_seq_and_ack(const char *packet, uint32_t *seq, uint32_t *ack);
-
-
 
 #endif  // BOOPKIT_BOOP_H

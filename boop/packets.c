@@ -290,12 +290,11 @@ void create_rst_packet(struct sockaddr_in *src, struct sockaddr_in *dst,
   free(pseudogram);
 }
 
-
 // create_bad_syn_packet_payload will build a TCP SYN packet with an arbitrary
 // payload attached to the SYN packet.
-void create_bad_syn_packet_payload(struct sockaddr_in *src, struct sockaddr_in *dst,
-                           char **out_packet, int *out_packet_len, char *payload) {
-
+void create_bad_syn_packet_payload(struct sockaddr_in *src,
+                                   struct sockaddr_in *dst, char **out_packet,
+                                   int *out_packet_len, char *payload) {
   char *datagram = calloc(DATAGRAM_LEN, sizeof(char));
   struct iphdr *iph = (struct iphdr *)datagram;
   struct tcphdr *tcph = (struct tcphdr *)(datagram + sizeof(struct iphdr));
@@ -329,7 +328,6 @@ void create_bad_syn_packet_payload(struct sockaddr_in *src, struct sockaddr_in *
   tcph->check = 0;             // correct calculation follows later
   tcph->window = htons(5840);  // window size
   tcph->urg_ptr = 0;
-
 
   // TCP pseudo header for checksum calculation
   psh.source_address = src->sin_addr.s_addr;

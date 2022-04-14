@@ -37,9 +37,9 @@
 /******************************************************************************
  * General definitions
  ******************************************************************************/
-#define PERF_MAX_WAKEUP_EVENTS   64
-#define PERF_MMAP_PAGE_COUNT	256
-#define MAX_CPUS		256
+#define PERF_MAX_WAKEUP_EVENTS 64
+#define PERF_MMAP_PAGE_COUNT 256
+#define MAX_CPUS 256
 
 /******************************************************************************
  * General used macros
@@ -69,7 +69,7 @@ struct pkt_trace_metadata {
   __u16 cap_len;
   __u16 flags;
   __u16 prog_index;
-  int   action;
+  int action;
 } __packed;
 
 #ifndef __bpf__

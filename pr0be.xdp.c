@@ -32,15 +32,15 @@
 /*****************************************************************************
  * Include files
  *****************************************************************************/
-#include <stdbool.h>
-#include <bpf/bpf_helpers.h>
 #include "pr0be.xdp.h"
+
+#include <bpf/bpf_helpers.h>
+#include <stdbool.h>
 
 /*****************************************************************************
  * Macros
  *****************************************************************************/
 #define min(x, y) ((x) < (y) ? x : y)
-
 
 /*****************************************************************************
  * Local definitions and global variables
@@ -52,25 +52,21 @@ struct {
   __type(value, __u32);
 } xdpdump_perf_map SEC(".maps");
 
-
 /*****************************************************************************
  * .data section value storing the capture configuration
  *****************************************************************************/
 struct trace_configuration trace_cfg SEC(".data");
 
-
 /*****************************************************************************
  * XDP trace program
  *****************************************************************************/
 SEC("xdp")
-int xdpdump(struct xdp_md *xdp)
-{
+int xdpdump(struct xdp_md *xdp) {
   void *data_end = (void *)(long)xdp->data_end;
   void *data = (void *)(long)xdp->data;
   struct pkt_trace_metadata metadata;
 
-  if (data >= data_end ||
-      trace_cfg.capture_if_ifindex != xdp->ingress_ifindex)
+  if (data >= data_end || trace_cfg.capture_if_ifindex != xdp->ingress_ifindex)
     return XDP_PASS;
 
   metadata.prog_index = trace_cfg.capture_prog_index;
@@ -82,13 +78,11 @@ int xdpdump(struct xdp_md *xdp)
   metadata.flags = 0;
 
   bpf_perf_event_output(xdp, &xdpdump_perf_map,
-                        ((__u64) metadata.cap_len << 32) |
-                            BPF_F_CURRENT_CPU,
+                        ((__u64)metadata.cap_len << 32) | BPF_F_CURRENT_CPU,
                         &metadata, sizeof(metadata));
 
   return XDP_PASS;
 }
-
 
 /*****************************************************************************
  * License
