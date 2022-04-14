@@ -32,7 +32,7 @@ clean: ## Clean objects
 	rm -vf $(TARGET)
 	rm -vf *.o
 	rm -vf *.ll
-	rm -vf pr0be.skel.h
+	rm -vf pr0be.skel*
 	rm -vf vmlinux.h
 
 .PHONY: boop
@@ -41,8 +41,11 @@ boop:  ## Build trigger program
 	cd boop && make
 
 skeleton: pr0be ## Generate eBPF dynamic skeleton headers
-	@echo "  ->  Generating pr0be.skel.h"
-	bpftool gen skeleton pr0be.safe.o -p > pr0be.skel.h
+	@echo "  ->  Generating pr0be.skel.safe.h"
+	bpftool gen skeleton pr0be.safe.o -p > pr0be.skel.safe.h
+	@echo "  ->  Generating pr0be.skel.xdp.h"
+	bpftool gen skeleton pr0be.xdp.o  -p > pr0be.skel.xdp.h
+
 
 format: ## Format the code
 	@echo "  ->  Formatting code"
@@ -60,7 +63,7 @@ install: ## Install boopkit to /usr/bin/boopkit
 	cp pr0be.safe.o ${HOME}/.boopkit/pr0be.safe.o
 	cp pr0be.boop.o ${HOME}/.boopkit/pr0be.boop.o
 
-pr0be: autogen pr0be.boop.o pr0be.safe.o ## Compile eBPF probes
+pr0be: autogen pr0be.boop.o pr0be.safe.o pr0be.xdp.o## Compile eBPF probes
 	@echo "  ->  Building eBPF pr0bes"
 
 autogen:
@@ -87,6 +90,17 @@ pr0be.safe.o: pr0be.safe.c
 	    -Werror \
 	    -O2 -emit-llvm -c -g pr0be.safe.c
 	llc -march=bpf -filetype=obj -o pr0be.safe.o pr0be.safe.ll
+
+pr0be.xdp.o: pr0be.xdp.c
+	@echo "  ->  Building pr0be.xdp.o"
+	clang -S \
+	    -target bpf \
+	    -D __BPF_TRACING__ \
+	    $(CFLAGS) \
+	    -Wall \
+	    -Werror \
+	    -O2 -emit-llvm -c -g pr0be.xdp.c
+	llc -march=bpf -filetype=obj -o pr0be.xdp.o pr0be.xdp.ll
 
 .PHONY: help
 help:  ## Show help messages for make targets

