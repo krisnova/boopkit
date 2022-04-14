@@ -4,163 +4,138 @@
 #ifndef __PR0BE_XDP_SKEL_H__
 #define __PR0BE_XDP_SKEL_H__
 
+#include <bpf/libbpf.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <bpf/libbpf.h>
 
 struct pr0be_xdp {
-	struct bpf_object_skeleton *skeleton;
-	struct bpf_object *obj;
-	struct {
-		struct bpf_map *xdpdump_perf_map;
-		struct bpf_map *data;
-	} maps;
-	struct {
-		struct bpf_program *xdpdump;
-	} progs;
-	struct {
-		struct bpf_link *xdpdump;
-	} links;
-	struct pr0be_xdp__data {
-		struct trace_configuration trace_cfg;
-	} *data;
+  struct bpf_object_skeleton *skeleton;
+  struct bpf_object *obj;
+  struct {
+    struct bpf_map *xdpdump_perf_map;
+    struct bpf_map *data;
+  } maps;
+  struct {
+    struct bpf_program *xdpdump;
+  } progs;
+  struct {
+    struct bpf_link *xdpdump;
+  } links;
+  struct pr0be_xdp__data {
+    struct trace_configuration trace_cfg;
+  } * data;
 };
 
-static void
-pr0be_xdp__destroy(struct pr0be_xdp *obj)
-{
-	if (!obj)
-		return;
-	if (obj->skeleton)
-		bpf_object__destroy_skeleton(obj->skeleton);
-	free(obj);
+static void pr0be_xdp__destroy(struct pr0be_xdp *obj) {
+  if (!obj) return;
+  if (obj->skeleton) bpf_object__destroy_skeleton(obj->skeleton);
+  free(obj);
 }
 
-static inline int
-pr0be_xdp__create_skeleton(struct pr0be_xdp *obj);
+static inline int pr0be_xdp__create_skeleton(struct pr0be_xdp *obj);
 
-static inline struct pr0be_xdp *
-pr0be_xdp__open_opts(const struct bpf_object_open_opts *opts)
-{
-	struct pr0be_xdp *obj;
-	int err;
+static inline struct pr0be_xdp *pr0be_xdp__open_opts(
+    const struct bpf_object_open_opts *opts) {
+  struct pr0be_xdp *obj;
+  int err;
 
-	obj = (struct pr0be_xdp *)calloc(1, sizeof(*obj));
-	if (!obj) {
-		errno = ENOMEM;
-		return NULL;
-	}
+  obj = (struct pr0be_xdp *)calloc(1, sizeof(*obj));
+  if (!obj) {
+    errno = ENOMEM;
+    return NULL;
+  }
 
-	err = pr0be_xdp__create_skeleton(obj);
-	if (err)
-		goto err_out;
+  err = pr0be_xdp__create_skeleton(obj);
+  if (err) goto err_out;
 
-	err = bpf_object__open_skeleton(obj->skeleton, opts);
-	if (err)
-		goto err_out;
+  err = bpf_object__open_skeleton(obj->skeleton, opts);
+  if (err) goto err_out;
 
-	return obj;
+  return obj;
 err_out:
-	pr0be_xdp__destroy(obj);
-	errno = -err;
-	return NULL;
+  pr0be_xdp__destroy(obj);
+  errno = -err;
+  return NULL;
 }
 
-static inline struct pr0be_xdp *
-pr0be_xdp__open(void)
-{
-	return pr0be_xdp__open_opts(NULL);
+static inline struct pr0be_xdp *pr0be_xdp__open(void) {
+  return pr0be_xdp__open_opts(NULL);
 }
 
-static inline int
-pr0be_xdp__load(struct pr0be_xdp *obj)
-{
-	return bpf_object__load_skeleton(obj->skeleton);
+static inline int pr0be_xdp__load(struct pr0be_xdp *obj) {
+  return bpf_object__load_skeleton(obj->skeleton);
 }
 
-static inline struct pr0be_xdp *
-pr0be_xdp__open_and_load(void)
-{
-	struct pr0be_xdp *obj;
-	int err;
+static inline struct pr0be_xdp *pr0be_xdp__open_and_load(void) {
+  struct pr0be_xdp *obj;
+  int err;
 
-	obj = pr0be_xdp__open();
-	if (!obj)
-		return NULL;
-	err = pr0be_xdp__load(obj);
-	if (err) {
-		pr0be_xdp__destroy(obj);
-		errno = -err;
-		return NULL;
-	}
-	return obj;
+  obj = pr0be_xdp__open();
+  if (!obj) return NULL;
+  err = pr0be_xdp__load(obj);
+  if (err) {
+    pr0be_xdp__destroy(obj);
+    errno = -err;
+    return NULL;
+  }
+  return obj;
 }
 
-static inline int
-pr0be_xdp__attach(struct pr0be_xdp *obj)
-{
-	return bpf_object__attach_skeleton(obj->skeleton);
+static inline int pr0be_xdp__attach(struct pr0be_xdp *obj) {
+  return bpf_object__attach_skeleton(obj->skeleton);
 }
 
-static inline void
-pr0be_xdp__detach(struct pr0be_xdp *obj)
-{
-	return bpf_object__detach_skeleton(obj->skeleton);
+static inline void pr0be_xdp__detach(struct pr0be_xdp *obj) {
+  return bpf_object__detach_skeleton(obj->skeleton);
 }
 
 static inline const void *pr0be_xdp__elf_bytes(size_t *sz);
 
-static inline int
-pr0be_xdp__create_skeleton(struct pr0be_xdp *obj)
-{
-	struct bpf_object_skeleton *s;
+static inline int pr0be_xdp__create_skeleton(struct pr0be_xdp *obj) {
+  struct bpf_object_skeleton *s;
 
-	s = (struct bpf_object_skeleton *)calloc(1, sizeof(*s));
-	if (!s)
-		goto err;
-	obj->skeleton = s;
+  s = (struct bpf_object_skeleton *)calloc(1, sizeof(*s));
+  if (!s) goto err;
+  obj->skeleton = s;
 
-	s->sz = sizeof(*s);
-	s->name = "pr0be_xdp";
-	s->obj = &obj->obj;
+  s->sz = sizeof(*s);
+  s->name = "pr0be_xdp";
+  s->obj = &obj->obj;
 
-	/* maps */
-	s->map_cnt = 2;
-	s->map_skel_sz = sizeof(*s->maps);
-	s->maps = (struct bpf_map_skeleton *)calloc(s->map_cnt, s->map_skel_sz);
-	if (!s->maps)
-		goto err;
+  /* maps */
+  s->map_cnt = 2;
+  s->map_skel_sz = sizeof(*s->maps);
+  s->maps = (struct bpf_map_skeleton *)calloc(s->map_cnt, s->map_skel_sz);
+  if (!s->maps) goto err;
 
-	s->maps[0].name = "xdpdump_perf_map";
-	s->maps[0].map = &obj->maps.xdpdump_perf_map;
+  s->maps[0].name = "xdpdump_perf_map";
+  s->maps[0].map = &obj->maps.xdpdump_perf_map;
 
-	s->maps[1].name = "pr0be_xd.data";
-	s->maps[1].map = &obj->maps.data;
-	s->maps[1].mmaped = (void **)&obj->data;
+  s->maps[1].name = "pr0be_xd.data";
+  s->maps[1].map = &obj->maps.data;
+  s->maps[1].mmaped = (void **)&obj->data;
 
-	/* programs */
-	s->prog_cnt = 1;
-	s->prog_skel_sz = sizeof(*s->progs);
-	s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
-	if (!s->progs)
-		goto err;
+  /* programs */
+  s->prog_cnt = 1;
+  s->prog_skel_sz = sizeof(*s->progs);
+  s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);
+  if (!s->progs) goto err;
 
-	s->progs[0].name = "xdpdump";
-	s->progs[0].prog = &obj->progs.xdpdump;
-	s->progs[0].link = &obj->links.xdpdump;
+  s->progs[0].name = "xdpdump";
+  s->progs[0].prog = &obj->progs.xdpdump;
+  s->progs[0].link = &obj->links.xdpdump;
 
-	s->data = (void *)pr0be_xdp__elf_bytes(&s->data_sz);
+  s->data = (void *)pr0be_xdp__elf_bytes(&s->data_sz);
 
-	return 0;
+  return 0;
 err:
-	bpf_object__destroy_skeleton(s);
-	return -ENOMEM;
+  bpf_object__destroy_skeleton(s);
+  return -ENOMEM;
 }
 
-static inline const void *pr0be_xdp__elf_bytes(size_t *sz)
-{
-	*sz = 8024;
-	return (const void *)"\
+static inline const void *pr0be_xdp__elf_bytes(size_t *sz) {
+  *sz = 8024;
+  return (const void *)"\
 \x7f\x45\x4c\x46\x02\x01\x01\0\0\0\0\0\0\0\0\0\x01\0\xf7\0\x01\0\0\0\0\0\0\0\0\
 \0\0\0\0\0\0\0\0\0\0\0\xd8\x19\0\0\0\0\0\0\0\0\0\0\x40\0\0\0\0\0\x40\0\x16\0\
 \x01\0\x61\x14\0\0\0\0\0\0\x61\x13\x04\0\0\0\0\0\x3d\x34\x1f\0\0\0\0\0\x61\x15\
@@ -463,4 +438,3 @@ static inline const void *pr0be_xdp__elf_bytes(size_t *sz)
 }
 
 #endif /* __PR0BE_XDP_SKEL_H__ */
-

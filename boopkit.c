@@ -23,8 +23,6 @@
 //
 // Where the main() function goes down.
 
-
-
 #include <arpa/inet.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
