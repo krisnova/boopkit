@@ -23,6 +23,8 @@
 //
 // Where the main() function goes down.
 
+
+
 #include <arpa/inet.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -37,9 +39,10 @@
 // clang-format off
 #include "boopkit.h"
 #include "common.h"
-#include "pr0be.skel.xdp.h"
 #include "pr0be.skel.safe.h"
+#include "pr0be.skel.xdp.h"
 // clang-format on
+
 void usage() {
   boopprintf("Boopkit version: %s\n", VERSION);
   boopprintf("Linux rootkit and backdoor over eBPF.\n");

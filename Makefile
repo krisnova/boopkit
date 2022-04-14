@@ -63,6 +63,7 @@ install: ## Install boopkit to /usr/bin/boopkit
 	cp pr0be.safe.o ${HOME}/.boopkit/pr0be.safe.o
 	cp pr0be.boop.o ${HOME}/.boopkit/pr0be.boop.o
 
+.PHONY: pr0be
 pr0be: autogen pr0be.boop.o pr0be.safe.o pr0be.xdp.o## Compile eBPF probes
 	@echo "  ->  Building eBPF pr0bes"
 
