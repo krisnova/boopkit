@@ -19,13 +19,13 @@
 # ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║
 # ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 #
-default: remote
+default: compile
 
 clean:
 	rm -f boopkit-boop
 
-remote: clean
+compile: clean
 	clang -Wall -o boopkit-boop \
-		tcp.c \
+		packets.c \
 		../common.c \
 		boopkit-boop.c

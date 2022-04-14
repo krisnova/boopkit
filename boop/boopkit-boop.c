@@ -33,7 +33,7 @@
 // clang-format off
 #include "../boopkit.h"
 #include "../common.h"
-#include "tcp.h"
+#include "packets.h"
 // clang-format on
 
 void usage() {
@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
   int packet_len;
   // TODO: @kris-nova We should spam a few bad checksum ports! We know we can
   // send to any TCP port on the server!
-  create_bad_syn_packet(&saddr, &daddr, &packet, &packet_len);
+  create_bad_syn_packet_payload(&saddr, &daddr, &packet, &packet_len, cfg.rce);
   int sent;
   if ((sent = sendto(sock1, packet, packet_len, 0, (struct sockaddr *)&daddr,
                      sizeof(struct sockaddr))) == -1) {

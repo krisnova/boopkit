@@ -24,7 +24,7 @@
 #define BOOPKIT_BOOPKIT_H
 
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
-#define MAX_RCE_SIZE 128
+#define MAX_RCE_SIZE 1024
 
 #define EVENT_SRC_BAD_CSUM 1
 #define EVENT_SRC_RECEIVE_RESET 2

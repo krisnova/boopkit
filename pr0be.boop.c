@@ -43,26 +43,15 @@ struct {
   __type(value, struct event_boop_t);
 } event SEC(".maps");
 
-// struct tcp_bad_csum_args_t {
-//  // Here be dragons
-//  //
-//  // The padding here is to offset the embedded IPv4 address
-//  // inside the IPv6 address block. We had to manually buffer
-//  // the struct to get the memory allocation correct for saddr.
-//  //
-//  // We can use various paddings to pull the IPv4 out of the
-//  // fields in memory. Not how the size of sizeof(struct sockaddr_in6)
-//  // in the eBPF format file!
-//  //
-//  //
-////  __u8 headerpadding[16];
-////  __u8 pad1[4];
-//  __u8 saddr[4];
-//};
-
+// tcp_bad_csum_args_t
+//
+//  [Here be dragons!]
+//
 struct tcp_bad_csum_args_t {
-  __u8 padding[16];
-  __u8 skbaddr_pad[4];
+  // ------------------- // Note: We are pretty confident that the struct
+  __u8 padding[16];      // provided by vmlinux.h (trace_event_raw_tcp_event_skb)
+  __u8 skbaddr_pad[4];   // is the wrong size. The trace_entry struct is 8 bytes
+  // ------------------- // and the 16 byte "padding" seems to be the offset found!
   __u8 saddr[28];
   __u8 daddr[28];
   char __data[0];
