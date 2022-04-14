@@ -46,7 +46,7 @@ void usage() {
   boopprintf("\n");
   boopprintf("Options:\n");
   boopprintf("-lhost             Local  (src) address   : 127.0.0.1.\n");
-  boopprintf("-lport             Local  (src) port      :    3535\n");
+  boopprintf("-lport             Local  (src) port      : 3535\n");
   boopprintf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
   boopprintf("-rport             Remote (dst) port      : 22\n");
   boopprintf("-q, quiet          Disable output.\n");
