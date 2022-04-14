@@ -75,6 +75,29 @@ boopkit-boop \
 
 Boopkit will respond to various events on the network. Both of which can be triggered with the `boopkit-boop` tool.
 
+TCP Header Format. Taken from [RFC 793](https://datatracker.ietf.org/doc/html/rfc793#section-3.1). September 1981
+```
+        0                   1                   2                   3
+        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |          Source Port          |       Destination Port        |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                        Sequence Number                        |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                    Acknowledgment Number                      |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |  Data |           |U|A|P|R|S|F|                               |
+       | Offset| Reserved  |R|C|S|S|Y|I|            Window             |
+       |       |           |G|K|H|T|N|N|                               |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |           Checksum            |         Urgent Pointer        |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                    Options                    |    Padding    |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       |                             data                              |
+       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
+
 ### 1. Bad Checksum
 
 First the `boopkit-boop` tool will send a malformed TCP SYN packet with an empty checksum to the server over a `SOCK_RAW` socket. This will trigger `boopkit` remotely regardless of what TCP services are running. In theory this would work against a server that has no TCP services listening!
