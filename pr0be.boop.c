@@ -31,6 +31,7 @@
 #include "vmlinux.h"
 // clang-format on
 #include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 #include <string.h>
 
 #include "boopkit.h"
@@ -42,12 +43,30 @@ struct {
   __type(value, struct event_boop_t);
 } event SEC(".maps");
 
-struct tcp_bad_csum_args_t {
-  unsigned long long pad;
+// struct tcp_bad_csum_args_t {
+//  // Here be dragons
+//  //
+//  // The padding here is to offset the embedded IPv4 address
+//  // inside the IPv6 address block. We had to manually buffer
+//  // the struct to get the memory allocation correct for saddr.
+//  //
+//  // We can use various paddings to pull the IPv4 out of the
+//  // fields in memory. Not how the size of sizeof(struct sockaddr_in6)
+//  // in the eBPF format file!
+//  //
+//  //
+////  __u8 headerpadding[16];
+////  __u8 pad1[4];
+//  __u8 saddr[4];
+//};
 
-  const void *skbaddr;
-  __u8 saddr[sizeof(struct sockaddr_in6)];
-  __u8 daddr[sizeof(struct sockaddr_in6)];
+
+struct tcp_bad_csum_args_t {
+  __u8 padding[16];
+  __u8 skbaddr_pad[4];
+  __u8 saddr[28];
+  __u8 daddr[28];
+  char __data[0];
 };
 
 // name: tcp_bad_csum
@@ -70,6 +89,7 @@ int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
   int saddrkey = 1;
   ret.event_src_code = EVENT_SRC_BAD_CSUM;
   memcpy(ret.saddr, args->saddr, sizeof ret.saddr);
+  //bpf_probe_read_kernel(ret.saddr, sizeof ret.saddr, args->saddr);
   bpf_map_update_elem(&event, &saddrkey, &ret, 1);
   return 0;
 }
@@ -117,6 +137,7 @@ int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   struct event_boop_t ret;
   ret.event_src_code = EVENT_SRC_RECEIVE_RESET;
   memcpy(ret.saddr, args->saddr, sizeof ret.saddr);
+  //bpf_probe_read_kernel(ret.saddr,sizeof ret.saddr, args->saddr);
   bpf_map_update_elem(&event, &saddrkey, &ret, 1);
   return 0;
 }

@@ -44,8 +44,8 @@
 // to pass the eBPF verifier!
 struct event_boop_t {
 
-  // saddr is 32 fucking bytes
-  __u8 saddr[32];
+  // saddr is 28 fucking bytes
+  __u8 saddr[28];
 
   // an enumerated type of EVENT_SRC_* from above
   int event_src_code;
