@@ -37,6 +37,7 @@
 // clang-format off
 #include "boopkit.h"
 #include "common.h"
+#include "pr0be.skel.xdp.h"
 #include "pr0be.skel.safe.h"
 // clang-format on
 void usage() {
