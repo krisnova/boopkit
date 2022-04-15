@@ -47,7 +47,7 @@ static inline __u64 ether_addr_to_u64(const __u8 *addr){
 
 
 SEC("xdp")
-int  xdp_program(struct xdp_md *ctx)
+int  xdp_xcap(struct xdp_md *ctx)
 {
   void *data = (void *)(long)ctx->data;
   void *data_end = (void *)(long)ctx->data_end;

