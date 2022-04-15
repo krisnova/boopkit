@@ -45,9 +45,7 @@ struct {
 
 struct trace_configuration trace_cfg SEC(".data");
 
-/*****************************************************************************
- * XDP trace program
- *****************************************************************************/
+
 SEC("xdp")
 int xdpdump(struct xdp_md *xdp) {
   void *data_end = (void *)(long)xdp->data_end;
@@ -76,3 +74,32 @@ int xdpdump(struct xdp_md *xdp) {
  * License
  *****************************************************************************/
 char _license[] SEC("license") = "GPL";
+
+
+//static inline void trace_to_perf_buffer(struct xdp_buff *xdp, bool fexit,
+//                                        int action)
+//{
+//  void *data_end = (void *)(long)xdp->data_end;
+//  void *data = (void *)(long)xdp->data;
+//  struct pkt_trace_metadata metadata;
+//
+//  if (data >= data_end ||
+//      trace_cfg.capture_if_ifindex != xdp->rxq->dev->ifindex)
+//    return;
+//
+//  metadata.prog_index = trace_cfg.capture_prog_index;
+//  metadata.ifindex = xdp->rxq->dev->ifindex;
+//  metadata.rx_queue = xdp->rxq->queue_index;
+//  metadata.pkt_len = (__u16)(data_end - data);
+//  metadata.cap_len = min(metadata.pkt_len, trace_cfg.capture_snaplen);
+//  metadata.action = action;
+//  metadata.flags = 0;
+//
+//  if (fexit)
+//    metadata.flags |= MDF_DIRECTION_FEXIT;
+//
+//  bpf_xdp_output(xdp, &xdpdump_perf_map,
+//                 ((__u64) metadata.cap_len << 32) |
+//                     BPF_F_CURRENT_CPU,
+//                 &metadata, sizeof(metadata));
+//}

