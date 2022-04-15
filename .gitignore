@@ -4,5 +4,5 @@ enohonk
 *.ll
 boop/bookit-boop
 boopkit
-pr0be.skel.h
+pr0be.skel*
 vmlinux.h
