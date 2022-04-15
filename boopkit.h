@@ -95,30 +95,4 @@ struct tr_text {
   unsigned int text_len;
 };
 
-#define PERF_MAX_WAKEUP_EVENTS 64
-#define PERF_MMAP_PAGE_COUNT 256
-#define MAX_CPUS 256
-
-#ifndef __packed
-#define __packed __attribute__((packed))
-#endif
-
-struct trace_configuration {
-  __u32 capture_if_ifindex;
-  __u32 capture_snaplen;
-  __u32 capture_prog_index;
-};
-
-#define MDF_DIRECTION_FEXIT 1
-
-struct pkt_trace_metadata {
-  __u32 ifindex;
-  __u32 rx_queue;
-  __u16 pkt_len;
-  __u16 cap_len;
-  __u16 flags;
-  __u16 prog_index;
-  int action;
-} __packed;
-
 #endif  // BOOPKIT_BOOPKIT_H

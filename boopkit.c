@@ -39,7 +39,6 @@
 #include "boopkit.h"
 #include "common.h"
 #include "pr0be.skel.safe.h"
-#include "pr0be.skel.xdp.h"
 // clang-format on
 
 void usage() {
@@ -171,6 +170,16 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
   return 0;
 }
 
+// XDP Sample Callback [perf_buffer_sample_fn]
+void perf_buffer_sample (void *private_data, int cpu, void * x, unsigned int y){
+
+}
+
+// XDP Lost Callback [perf_buffer_lost_fn]
+void perf_buffer_lost(void *private_data, int cpu, unsigned long long x) {
+
+}
+
 static enum bpf_perf_event_ret handle_perf_event(void *private_data,
                                                  int cpu,
                                                  struct perf_event_header *event){
@@ -208,20 +217,6 @@ void rootcheck(int argc, char **argv) {
   }
 }
 
-struct perf_handler_ctx {
-  uint64_t                 missed_events;
-  uint64_t                 last_missed_events;
-  uint64_t                 captured_packets;
-  uint64_t                 epoch_delta;
-  uint64_t                 packet_id;
-  uint64_t                 cpu_packet_id[MAX_CPUS];
-//  struct dumpopt          *cfg;
-//  struct capture_programs *xdp_progs;
-//  pcap_t                  *pcap;
-//  pcap_dumper_t           *pcap_dumper;
-//  struct xpcapng_dumper   *pcapng_dumper;
-};
-
 /**
  * main
  *
@@ -236,48 +231,9 @@ int main(int argc, char **argv) {
   int loaded, err;
   struct bpf_object *bpobj;
   struct pr0be_safe *sfobj;
-  struct bpf_object  *xdpobj;
   struct bpf_program *program = NULL;
-  struct bpf_program *xdpprog = NULL;
   struct ring_buffer *rb = NULL;
   char pid[MAXPIDLEN];
-
-
-
-  // ===========================================================================
-  // [pr0be.xdp.o]
-  {
-    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bexdppath);
-    xdpobj = bpf_object__open(cfg.pr0bexdppath);
-    if (!xdpobj) {
-      boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bexdppath);
-      boopprintf("Privileged access required to load eBPF probe!\n");
-      boopprintf("Permission denied.\n");
-      return 1;
-    }
-    loaded = bpf_object__load(xdpobj);
-    if (loaded < 0) {
-      boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
-      return 1;
-    }
-    boopprintf("  ->   eBPF Probe Loaded         : %s\n", cfg.pr0bebooppath);
-    bpf_object__next_map(xdpobj, NULL);
-    bpf_object__for_each_program(xdpprog, xdpobj) {
-      boopprintf("  ->   eBPF Program Address      : %p\n", xdpprog);
-      const char *progname = bpf_program__name(xdpprog);
-      boopprintf("  ->   eBPF Program Name         : %s\n", progname);
-      const char *progsecname = bpf_program__section_name(xdpprog);
-      boopprintf("  ->   eBPF Program Section Name : %s\n", progsecname);
-      struct bpf_link *link = bpf_program__attach(xdpprog);
-      if (!link) {
-        boopprintf("Unable to link eBPF program: %s\n", xdpprog);
-        continue;
-      }
-    }
-  }
-  // [pr0be.xdp.o]
-  // ===========================================================================
-
 
 
   // ===========================================================================
@@ -380,28 +336,6 @@ int main(int argc, char **argv) {
   boopprintf("  ->   eBPF Map Name: %s\n", bmapname);
   int fd = bpf_map__fd(bpmap);
 
-  struct bpf_map *xdpmap = bpf_object__next_map(xdpobj, NULL);
-  const char *xdpmapname = bpf_map__name(xdpmap);
-  boopprintf("  ->   eBPF Map Name: %s\n", xdpmapname);
-  int xfd = bpf_map__fd(xdpmap);
-
-  struct perf_buffer          *perf_buf = NULL;
-  struct perf_event_attr       perf_attr = {
-      .sample_type = PERF_SAMPLE_RAW | PERF_SAMPLE_TIME,
-      .type = PERF_TYPE_SOFTWARE,
-      .config = PERF_COUNT_SW_BPF_OUTPUT,
-      .sample_period = 1,
-      .wakeup_events = 1,
-  };
-
-  // XDP Perf Buffer
-  struct perf_buffer_raw_opts  perf_opts = {};
-  struct perf_handler_ctx      perf_ctx;
-  perf_opts.attr = &perf_attr;
-  perf_opts.event_cb = handle_perf_event;
-  perf_opts.ctx = &perf_ctx;
-  perf_buf = perf_buffer__new_raw(xfd, PERF_MMAP_PAGE_COUNT, &perf_opts);
-
   // Logs
   for (int i = 0; i < cfg.denyc; i++) {
     boopprintf("   X Deny address: %s\n", cfg.deny[i]);
@@ -417,8 +351,7 @@ int main(int argc, char **argv) {
   int ignore = 0;
   while (1) {
     ring_buffer__poll(rb, 100); // Ignore errors!
-    perf_buffer__poll(perf_buf, 1000); // Ignore errors!
-    perf_buffer__consume(perf_buf);
+
     int ikey = 0, jkey;
     int err;
     char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
