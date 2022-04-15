@@ -233,6 +233,7 @@ int main(int argc, char **argv) {
   struct xdp_program *xdp_prog = NULL;
   int                xdp_prog_fd;
   int                xdp_map_fd;
+  int                xdp_ret;
   struct bpf_object  *xdp_obj;
 
   // ===========================================================================
@@ -241,7 +242,14 @@ int main(int argc, char **argv) {
       // Initialize interface
       cfg.if_index = if_nametoindex(cfg.if_name);
       boopprintf("  -> [%d] XDP Packet Capture [xcap] Interface: %s\n", cfg.if_index, cfg.if_name);
-      xdp_prog = xdp_program__open_file(cfg.pr0bexdppath, "xdp_xcap", NULL);
+      xdp_prog = xdp_program__open_file(cfg.pr0bexdppath, "xdp", NULL);
+      xdp_ret = xdp_program__attach(xdp_prog, cfg.if_index, XDP_MODE_SKB, 0);
+      if (xdp_ret < 0) {
+        boopprintf("Unable to load XDP object: %s\n", cfg.pr0bexdppath);
+        boopprintf("Privileged access required to load XDP probe!\n");
+        boopprintf("Permission denied.\n");
+        return 1;
+      }
   }
   // [pr0be.xdp.o]
   // ===========================================================================
@@ -267,7 +275,7 @@ int main(int argc, char **argv) {
     loaded = pr0be_safe__load(sfobj);
     if (loaded < 0) {
       boopprintf("Unable to load eBPF object: %s\n", cfg.pr0besafepath);
-      boopprintf("Privileged acces required to load eBPF probe!\n");
+      boopprintf("Privileged access required to load eBPF probe!\n");
       boopprintf("Permission denied.\n");
       return 1;
     }

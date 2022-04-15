@@ -36,33 +36,39 @@
 
 #include "boopkit.h"
 
-static inline __u64 ether_addr_to_u64(const __u8 *addr){
-  __u64 u = 0;
-  int i;
-  int ETH_ALEN = 6; // Taken from Linux headers <linux/if_ether.h>
-  for (i = ETH_ALEN - 1; i >= 0; i--)
-    u = u << 8 | addr[i];
-  return u;
-}
-
+//static inline __u64 ether_addr_to_u64(const __u8 *addr){
+//  __u64 u = 0;
+//  int i;
+//  int ETH_ALEN = 6; // Taken from Linux headers <linux/if_ether.h>
+//  for (i = ETH_ALEN - 1; i >= 0; i--)
+//    u = u << 8 | addr[i];
+//  return u;
+//}
+//
 
 SEC("xdp")
-int  xdp_xcap(struct xdp_md *ctx)
-{
+int  xdp_xcap(struct xdp_md *ctx){
+
   void *data = (void *)(long)ctx->data;
-  void *data_end = (void *)(long)ctx->data_end;
-  struct ethhdr *eth = data;
-  __u64 offset = sizeof(*eth);
+//  void *data_end = (void *)(long)ctx->data_end;
+//  struct ethhdr *eth = data;
+//  __u64 offset = sizeof(*eth);
 
-  if ((void *)eth + offset > data_end)
-    return 0;
 
-  bpf_printk("src: %llu, dst: %llu, proto: %u\n",
-             ether_addr_to_u64(eth->h_source),
-             ether_addr_to_u64(eth->h_dest),
-             bpf_ntohs(eth->h_proto));
+  bpf_printk("xdp data ->");
+  bpf_printk("%*ph", data);
+  bpf_printk("xdp data ->");
 
+
+  // --------------------
+  //	XDP_ABORTED = 0,
+  //	XDP_DROP = 1,
+  //	XDP_PASS = 2,
+  //	XDP_TX = 3,
+  //	XDP_REDIRECT = 4,
   return XDP_PASS;
+  // --------------------
+
 }
 
 // SPDX-License-Identifier: GPL-2.0
