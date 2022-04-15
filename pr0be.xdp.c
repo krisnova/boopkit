@@ -33,32 +33,45 @@
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_helpers.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "boopkit.h"
 
-//static inline __u64 ether_addr_to_u64(const __u8 *addr){
-//  __u64 u = 0;
-//  int i;
-//  int ETH_ALEN = 6; // Taken from Linux headers <linux/if_ether.h>
-//  for (i = ETH_ALEN - 1; i >= 0; i--)
-//    u = u << 8 | addr[i];
-//  return u;
-//}
-//
+#define min(x, y) ((x) < (y) ? x : y)
+
+struct {
+  __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+  __uint(max_entries, MAX_ENTRIES_CPU);
+  __type(key, int);
+  __type(value, __u32);
+} xcap_perf_map SEC(".maps");
+
+
+struct trace_configuration trace_cfg SEC(".data");
 
 SEC("xdp")
-int  xdp_xcap(struct xdp_md *ctx){
+int  xdp_xcap(struct xdp_md *xdp){
 
-  void *data = (void *)(long)ctx->data;
-//  void *data_end = (void *)(long)ctx->data_end;
-//  struct ethhdr *eth = data;
-//  __u64 offset = sizeof(*eth);
+  void *data_end = (void *)(long)xdp->data_end;
+  void *data = (void *)(long)xdp->data;
+  struct pkt_trace_metadata metadata;
 
+  if (data >= data_end ||
+      trace_cfg.capture_if_ifindex != xdp->ingress_ifindex)
+    return XDP_PASS;
 
-  bpf_printk("xdp data ->");
-  bpf_printk("%*ph", data);
-  bpf_printk("xdp data ->");
+  metadata.prog_index = trace_cfg.capture_prog_index;
+  metadata.ifindex = xdp->ingress_ifindex;
+  metadata.rx_queue = xdp->rx_queue_index;
+  metadata.pkt_len = (__u16)(data_end - data);
+  metadata.cap_len = min(metadata.pkt_len, trace_cfg.capture_snaplen);
+  metadata.action = 0;
+  metadata.flags = 0;
 
+  bpf_perf_event_output(xdp, &xcap_perf_map,
+                        ((__u64) metadata.cap_len << 32) |
+                            BPF_F_CURRENT_CPU,
+                        &metadata, sizeof(metadata));
 
   // --------------------
   //	XDP_ABORTED = 0,

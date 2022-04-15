@@ -228,11 +228,13 @@ int main(int argc, char **argv) {
   char pid[MAXPIDLEN];
 
   // XDP
-  struct xdp_program *xdp_prog = NULL;
-  int                xdp_prog_fd;
-  int                xdp_map_fd;
-  int                xdp_ret;
-  struct bpf_object  *xdp_obj;
+  struct xdp_program          *xdp_prog = NULL;
+  int                         xdp_prog_fd;
+  struct bpf_object_open_opts *xdp_open_opts;
+  const char                  *xdp_prog_name;
+  int                         xdp_map_fd;
+  int                         xdp_ret;
+  struct bpf_object           *xdp_obj;
 
   // ===========================================================================
   // [pr0be.xdp.o]
@@ -240,14 +242,21 @@ int main(int argc, char **argv) {
       // Initialize interface
       cfg.if_index = if_nametoindex(cfg.if_name);
       boopprintf("  -> [%d] XDP Packet Capture [xcap] Interface: %s\n", cfg.if_index, cfg.if_name);
-      xdp_prog = xdp_program__open_file(cfg.pr0bexdppath, "xdp", NULL);
-      xdp_ret = xdp_program__attach(xdp_prog, cfg.if_index, XDP_MODE_SKB, 0);
-      if (xdp_ret < 0) {
+      xdp_obj = bpf_object__open(cfg.pr0bexdppath);
+      if (!xdp_obj) {
         boopprintf("Unable to load XDP object: %s\n", cfg.pr0bexdppath);
         boopprintf("Privileged access required to load XDP probe!\n");
         boopprintf("Permission denied.\n");
         return 1;
       }
+      xdp_prog = xdp_program__open_file(cfg.pr0bexdppath, "xdp", xdp_open_opts);
+      xdp_prog_name = xdp_program__name(xdp_prog);
+      xdp_ret = xdp_program__attach(xdp_prog, cfg.if_index, XDP_MODE_SKB, 0);
+      if (!xdp_ret) {
+        boopprintf("Failed to attach %s\n", cfg.pr0bexdppath);
+        return 1;
+      }
+      boopprintf("  ->   eBPF Program Attached : %s %s\n", xdp_prog_name, "xdp");
   }
   // [pr0be.xdp.o]
   // ===========================================================================
@@ -347,12 +356,40 @@ int main(int argc, char **argv) {
 
   // ===========================================================================
   // [maps]
+
+  // boop
   struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
   const char *bmapname = bpf_map__name(bpmap);
-  boopprintf("  ->   eBPF Map Name: %s\n", bmapname);
+  boopprintf("  ->   eBPF   Map Name: %s\n", bmapname);
   int fd = bpf_map__fd(bpmap);
 
-  // Logs
+  // xdp
+  struct perf_buffer *xdp_perf_buffer;
+  struct bpf_map *xdp_map = bpf_object__find_map_by_name(xdp_obj, "xcap_perf_map");
+  if (!xdp_map) {
+    boopprintf("Unable to load XDP perf map: %s\n", "xdp_perf_map");
+    return 1;
+  }
+  const char *xdp_map_name = bpf_map__name(xdp_map);
+  boopprintf("  ->    XDP   Map Name: %s\n", xdp_map_name);
+  xdp_map_fd = bpf_map__fd(xdp_map);
+
+  struct perf_event_attr       perf_attr = {
+      .sample_type = PERF_SAMPLE_RAW | PERF_SAMPLE_TIME,
+      .type = PERF_TYPE_SOFTWARE,
+      .config = PERF_COUNT_SW_BPF_OUTPUT,
+      .sample_period = 1,
+      .wakeup_events = 1,
+  };
+
+  // --------------------------------------------------------------------------------
+  //  perf_buffer__new_raw(int map_fd, size_t page_cnt, struct perf_event_attr *attr,
+  //                       perf_buffer_event_fn event_cb, void *ctx,
+  //                       const struct perf_buffer_raw_opts *opts);
+  perf_buffer__new_raw(xdp_map_fd, 256, &perf_attr, NULL, NULL, NULL);
+  // --------------------------------------------------------------------------------
+
+  // logs
   for (int i = 0; i < cfg.denyc; i++) {
     boopprintf("   X Deny address: %s\n", cfg.deny[i]);
   }

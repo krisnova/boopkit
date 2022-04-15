@@ -59,6 +59,8 @@ struct event_boop_t {
 // MAX_DENY_ADDRS is the maximum amount of address that can be denied.
 #define MAX_DENY_ADDRS 1024
 
+#define MAX_ENTRIES_CPU 256
+
 // MAX_PORT_STR is the port size for rport and lport
 #define MAX_PORT_STR 32
 
@@ -96,5 +98,21 @@ struct tr_text {
   char text[TEXT_LEN_MAX];
   unsigned int text_len;
 };
+
+struct trace_configuration {
+  __u32 capture_if_ifindex;
+  __u32 capture_snaplen;
+  __u32 capture_prog_index;
+};
+
+struct pkt_trace_metadata {
+  __u32 ifindex;
+  __u32 rx_queue;
+  __u16 pkt_len;
+  __u16 cap_len;
+  __u16 flags;
+  __u16 prog_index;
+  int   action;
+} __packed;
 
 #endif  // BOOPKIT_BOOPKIT_H
