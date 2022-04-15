@@ -25,6 +25,7 @@
 
 #include <arpa/inet.h>
 #include <bpf/bpf.h>
+#include <bpf/btf.h>
 #include <bpf/libbpf.h>   // libbpf
 #include <xdp/libxdp.h>   // libxdp
 #include <errno.h>
@@ -225,10 +226,13 @@ int main(int argc, char **argv) {
   struct pr0be_safe *sfobj;
   struct bpf_program *progboop = NULL;
   struct ring_buffer *rb = NULL;
+  struct perf_buffer *pb = NULL;
   char pid[MAXPIDLEN];
 
   // XDP
-  struct xdp_program          *xdp_prog = NULL;
+  struct xdp_program          *xdp_prog         = NULL;
+  struct xdp_program          *xdp_prog_fentry  = NULL;
+  struct xdp_program          *xdp_prog_fexit   = NULL;
   int                         xdp_prog_fd;
   struct bpf_object_open_opts *xdp_open_opts;
   const char                  *xdp_prog_name;
@@ -242,21 +246,42 @@ int main(int argc, char **argv) {
       // Initialize interface
       cfg.if_index = if_nametoindex(cfg.if_name);
       boopprintf("  -> [%d] XDP Packet Capture [xcap] Interface: %s\n", cfg.if_index, cfg.if_name);
-      xdp_obj = bpf_object__open(cfg.pr0bexdppath);
+      // xdp
+      xdp_prog = xdp_program__open_file(cfg.pr0bexdppath, "xdp", NULL);
+      if (!xdp_prog) {
+        boopprintf("Failed to open XDP program: %s\n", cfg.pr0bexdppath);
+        return 1;
+      }
+      // fentry
+      xdp_prog_fentry = xdp_program__open_file(cfg.pr0bexdppath, "fentry/func", NULL);
+      if (!xdp_prog_fentry) {
+        boopprintf("Failed to open XDP program [fentry]: %s\n",
+                   cfg.pr0bexdppath);
+        return 1;
+      }
+      // fexit
+      xdp_prog_fexit = xdp_program__open_file(cfg.pr0bexdppath, "fexit/func", NULL);
+      if (!xdp_prog_fexit) {
+        boopprintf("Failed to open XDP program [fexit]: %s\n",
+                   cfg.pr0bexdppath);
+        return 1;
+      }
+      xdp_prog_name = xdp_program__name(xdp_prog);
+      xdp_ret = xdp_program__attach(xdp_prog, cfg.if_index, XDP_MODE_SKB, 0);
+      if (xdp_ret != 0) {
+        boopprintf("%d\n", xdp_ret);
+        boopprintf("Failed to attach %s\n", cfg.pr0bexdppath);
+        return 1;
+      }
+      boopprintf("  ->   eBPF Program Attached : %s %s\n", xdp_prog_name, "xdp");
+      xdp_obj = xdp_program__bpf_obj(xdp_prog);
       if (!xdp_obj) {
         boopprintf("Unable to load XDP object: %s\n", cfg.pr0bexdppath);
         boopprintf("Privileged access required to load XDP probe!\n");
         boopprintf("Permission denied.\n");
         return 1;
       }
-      xdp_prog = xdp_program__open_file(cfg.pr0bexdppath, "xdp", xdp_open_opts);
-      xdp_prog_name = xdp_program__name(xdp_prog);
-      xdp_ret = xdp_program__attach(xdp_prog, cfg.if_index, XDP_MODE_SKB, 0);
-      if (!xdp_ret) {
-        boopprintf("Failed to attach %s\n", cfg.pr0bexdppath);
-        return 1;
-      }
-      boopprintf("  ->   eBPF Program Attached : %s %s\n", xdp_prog_name, "xdp");
+      xdp_prog_fd = xdp_program__fd(xdp_prog);
   }
   // [pr0be.xdp.o]
   // ===========================================================================
@@ -374,6 +399,39 @@ int main(int argc, char **argv) {
   boopprintf("  ->    XDP   Map Name: %s\n", xdp_map_name);
   xdp_map_fd = bpf_map__fd(xdp_map);
 
+
+  struct bpf_program          *trace_prog_fentry;
+  struct bpf_program          *trace_prog_fexit;
+  struct bpf_link             *trace_link_fentry = NULL;
+  struct bpf_link             *trace_link_fexit = NULL;
+  trace_prog_fentry = bpf_object__find_program_by_name(xdp_obj,
+                                                       "trace_on_entry");
+  if (!trace_prog_fentry) {
+    boopprintf("ERROR: Can't find XDP trace fentry function!\n");
+    return 0;
+  }
+
+  trace_prog_fexit = bpf_object__find_program_by_name(xdp_obj,
+                                                      "trace_on_exit");
+  if (!trace_prog_fexit) {
+    boopprintf("ERROR: Can't find XDP trace fexit function!\n");
+    return 0;
+  }
+
+
+  bpf_program__set_expected_attach_type(trace_prog_fentry,
+                                        BPF_TRACE_FENTRY);
+  bpf_program__set_expected_attach_type(trace_prog_fexit,
+                                        BPF_TRACE_FEXIT);
+  bpf_program__set_attach_target(trace_prog_fentry,
+                                 xdp_prog_fd,
+                                 NULL);
+  bpf_program__set_attach_target(trace_prog_fexit,
+                                 xdp_prog_fd,
+                                NULL);
+
+
+  // ----
   struct perf_event_attr       perf_attr = {
       .sample_type = PERF_SAMPLE_RAW | PERF_SAMPLE_TIME,
       .type = PERF_TYPE_SOFTWARE,
@@ -386,7 +444,8 @@ int main(int argc, char **argv) {
   //  perf_buffer__new_raw(int map_fd, size_t page_cnt, struct perf_event_attr *attr,
   //                       perf_buffer_event_fn event_cb, void *ctx,
   //                       const struct perf_buffer_raw_opts *opts);
-  perf_buffer__new_raw(xdp_map_fd, 256, &perf_attr, NULL, NULL, NULL);
+  // TODO callback function! Woo!
+  pb = perf_buffer__new_raw(xdp_map_fd, 256, &perf_attr, NULL, NULL, NULL);
   // --------------------------------------------------------------------------------
 
   // logs
@@ -404,6 +463,7 @@ int main(int argc, char **argv) {
   int ignore = 0;
   while (1) {
     ring_buffer__poll(rb, 100); // Ignore errors!
+    perf_buffer__poll(pb, 100); // Ignore errors!
 
     int ikey = 0, jkey;
     int err;

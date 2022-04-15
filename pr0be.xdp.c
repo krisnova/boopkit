@@ -32,6 +32,7 @@
 // clang-format on
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -49,16 +50,53 @@ struct {
 
 struct trace_configuration trace_cfg SEC(".data");
 
-SEC("xdp")
-int  xdp_xcap(struct xdp_md *xdp){
-
+static inline void trace_to_perf_buffer(struct xdp_buff *xdp, bool fexit, int action){
   void *data_end = (void *)(long)xdp->data_end;
   void *data = (void *)(long)xdp->data;
   struct pkt_trace_metadata metadata;
 
-  if (data >= data_end ||
-      trace_cfg.capture_if_ifindex != xdp->ingress_ifindex)
+  if (data >= data_end){
+    return;
+  }
+
+  metadata.prog_index = trace_cfg.capture_prog_index;
+  metadata.ifindex = xdp->rxq->dev->ifindex;
+  metadata.rx_queue = xdp->rxq->queue_index;
+  metadata.pkt_len = (__u16)(data_end - data);
+  metadata.cap_len = min(metadata.pkt_len, trace_cfg.capture_snaplen);
+  metadata.action = action;
+  metadata.flags = 0;
+
+  bpf_xdp_output(xdp, &xcap_perf_map,
+                 ((__u64) metadata.cap_len << 32) |
+                     BPF_F_CURRENT_CPU,
+                 &metadata, sizeof(metadata));
+}
+
+SEC("fentry/func")
+int BPF_PROG(trace_on_entry, struct xdp_buff *xdp){
+  trace_to_perf_buffer(xdp, false, 0);
+  return 0;
+}
+
+SEC("fexit/func")
+int BPF_PROG(trace_on_exit, struct xdp_buff *xdp, int ret){
+  trace_to_perf_buffer(xdp, true, ret);
+  return 0;
+}
+
+
+// XDP (Metadata only)
+SEC("xdp")
+int  xdp_xcap(struct xdp_md *xdp){
+  void *data_end = (void *)(long)xdp->data_end;
+  void *data = (void *)(long)xdp->data;
+  struct pkt_trace_metadata metadata;
+
+  if (data >= data_end){
     return XDP_PASS;
+  }
+
 
   metadata.prog_index = trace_cfg.capture_prog_index;
   metadata.ifindex = xdp->ingress_ifindex;
@@ -67,7 +105,6 @@ int  xdp_xcap(struct xdp_md *xdp){
   metadata.cap_len = min(metadata.pkt_len, trace_cfg.capture_snaplen);
   metadata.action = 0;
   metadata.flags = 0;
-
   bpf_perf_event_output(xdp, &xcap_perf_map,
                         ((__u64) metadata.cap_len << 32) |
                             BPF_F_CURRENT_CPU,
@@ -81,8 +118,9 @@ int  xdp_xcap(struct xdp_md *xdp){
   //	XDP_REDIRECT = 4,
   return XDP_PASS;
   // --------------------
-
 }
+
+
 
 // SPDX-License-Identifier: GPL-2.0
 // The eBPF probe is dual-licensed with GPL because Linux is a fucking shit
