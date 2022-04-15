@@ -232,9 +232,44 @@ int main(int argc, char **argv) {
   int loaded, err;
   struct bpf_object *bpobj;
   struct pr0be_safe *sfobj;
+  struct pr0be_xdp *xdpobj;
   struct bpf_program *program = NULL;
   struct ring_buffer *rb = NULL;
   char pid[MAXPIDLEN];
+
+
+  // ===========================================================================
+  // [pr0be.xdp.o]
+  {
+    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bexdppath);
+//    bpobj = bpf_object__open(cfg.pr0bebooppath);
+//    if (!bpobj) {
+//      boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
+//      boopprintf("Privileged access required to load eBPF probe!\n");
+//      boopprintf("Permission denied.\n");
+//      return 1;
+//    }
+//    loaded = bpf_object__load(bpobj);
+//    if (loaded < 0) {
+//      boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
+//      return 1;
+//    }
+//    boopprintf("  ->   eBPF Probe Loaded     : %s\n", cfg.pr0bebooppath);
+//    bpf_object__next_map(bpobj, NULL);
+//    bpf_object__for_each_program(program, bpobj) {
+//      const char *progname = bpf_program__name(program);
+//      const char *progsecname = bpf_program__section_name(program);
+//      boopprintf("  ->   eBPF Program Attached : %s %s\n", progname, progsecname);
+//      struct bpf_link *link = bpf_program__attach(program);
+//      if (!link) {
+//        boopprintf("Unable to link eBPF program: %s\n", progname);
+//        continue;
+//      }
+//    }
+  }
+  // [pr0be.xdp.o]
+  // ===========================================================================
+
 
 
   // ===========================================================================
