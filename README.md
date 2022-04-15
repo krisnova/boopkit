@@ -71,6 +71,11 @@ boopkit-boop \
   -x "$RCE"
 ```
 
+# DPI
+
+  - Option 1: Fuck around with XDP/pcap
+  - Option 2: Just use pcap
+
 # Remote Vectors
 
 Boopkit will respond to various events on the network. Both of which can be triggered with the `boopkit-boop` tool.

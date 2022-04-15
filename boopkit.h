@@ -25,9 +25,11 @@
 
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
 #define MAX_RCE_SIZE 1024
+#define MAX_MTU_PACKET_LIMIT 1024
 
 #define EVENT_SRC_BAD_CSUM 1
 #define EVENT_SRC_RECEIVE_RESET 2
+#define EVENT_SRC_XDP 3
 
 // event_boop_t represents an event from the kernel.
 //

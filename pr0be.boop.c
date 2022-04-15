@@ -43,6 +43,7 @@ struct {
   __type(value, struct event_boop_t);
 } event SEC(".maps");
 
+
 // tcp_bad_csum_args_t
 //
 //  [Here be dragons!]
@@ -51,8 +52,7 @@ struct tcp_bad_csum_args_t {
   // ------------------- // Note: We are pretty confident that the struct
   __u8 padding[16];     // provided by vmlinux.h (trace_event_raw_tcp_event_skb)
   __u8 skbaddr_pad[4];  // is the wrong size. The trace_entry struct is 8 bytes
-  // ------------------- // and the 16 byte "padding" seems to be the offset
-  // found!
+  // ------------------- // and the 16 byte "padding" seems to be the offset!
   __u8 saddr[28];
   __u8 daddr[28];
   char __data[0];
