@@ -59,6 +59,9 @@ static inline void trace_to_perf_buffer(struct xdp_buff *xdp, bool fexit, int ac
   metadata.action = action;
   metadata.flags = 0;
 
+  if (fexit)
+    metadata.flags |= MDF_DIRECTION_FEXIT;
+
   bpf_xdp_output(xdp, &xcap_perf_map,
                  ((__u64) metadata.cap_len << 32) |
                      BPF_F_CURRENT_CPU,

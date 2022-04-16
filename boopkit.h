@@ -105,6 +105,8 @@ struct trace_configuration {
   __u32 capture_prog_index;
 };
 
+#define MDF_DIRECTION_FEXIT 1
+
 struct pkt_trace_metadata {
   __u32 ifindex;
   __u32 rx_queue;
