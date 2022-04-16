@@ -24,4 +24,6 @@
 #ifndef BOOPKIT_DPI_H
 #define BOOPKIT_DPI_H
 
+int xcaprce(__u8 saddr[4], char *rce);
+
 #endif  // BOOPKIT_DPI_H

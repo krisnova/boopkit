@@ -140,6 +140,7 @@ NCATLISTENPORT="3545"
  - 'bpftool'   Required for `libbpf`
  - 'xdp-tools' Required for `libxdp`
  - 'llvm'
+ - 'pcap'
  - 'lib32-glibc'
 
 ### Reverse Shell Stabilization

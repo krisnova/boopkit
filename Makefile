@@ -22,7 +22,7 @@
 TARGET  := boopkit
 CFLAGS  ?= -I/usr/local/include
 LDFLAGS ?= ""
-LIBS     = -lxdp -lbpf -lelf
+LIBS     = -lxdp -lbpf -lelf -lpcap
 STYLE    = Google
 
 all: pr0be skeleton build ## Build everything
