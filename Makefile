@@ -45,6 +45,9 @@ skeleton: pr0be ## Generate eBPF dynamic skeleton headers
 	bpftool gen skeleton pr0be.safe.o -p > pr0be.skel.safe.h
 	bpftool gen skeleton pr0be.xdp.o -p > pr0be.skel.xdp.h
 
+xdptools:
+	@echo "Git clone xdp-tools..."
+	git clone git@github.com:xdp-project/xdp-tools.git
 
 format: ## Format the code
 	@echo "  ->  Formatting code"

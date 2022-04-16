@@ -239,59 +239,80 @@ int main(int argc, char **argv) {
   struct bpf_program          *xdp_prog_fexit   = NULL;
   int                         xdp_prog_fd;
   struct bpf_object_open_opts *xdp_open_opts;
-  const char                  *xdp_prog_name;
+  const char                  *xdp_prog_fentry_name;
+  const char                  *xdp_prog_fexit_name;
   const char                  *xdp_perf_map_name;
   int                         xdp_map_fd;
   int                         xdp_ret;
+  int                         xdp_prog_fentry_fd;
+  int                         xdp_prog_fexit_fd;
   struct bpf_object           *xdp_obj;
 
   // ===========================================================================
   // [pr0be.xdp.o]
-  {
-      // Initialize interface
-      cfg.if_index = if_nametoindex(cfg.if_name);
-      boopprintf("  -> Interface [%s] [xcap]\n", cfg.if_name);
-
-      // Load XDP object
-      xdp_obj = bpf_object__open(cfg.pr0bexdppath);
-      if (!xdp_obj) {
-        err_libbfp = libbpf_get_error(xdp_obj);
-        boopprintf("Unable to load XDP object: %s\n", cfg.pr0bexdppath);
-        boopprintf("Unable to load XDP object: %s\n", strerror(-err_libbfp));
-        boopprintf("Privileged access required to load XDP probe!\n");
-        boopprintf("Permission denied.\n");
-        return 1;
-      }
-      // Load xdp_perf_map
-      xdp_perf_map = bpf_object__next_map(xdp_obj, NULL);
-      if (!xdp_perf_map) {
-        err_libbfp = libbpf_get_error(xdp_perf_map);
-        boopprintf("Unable to load XDP data map: %s\n", strerror(-err_libbfp));
-        return 1;
-      }
-      xdp_perf_map_name = bpf_map__name(xdp_perf_map);
-      boopprintf("  ->   eBPF Map Loaded       : %s\n", xdp_perf_map_name);
-
-      // fentry
-      xdp_prog_fentry = bpf_object__find_program_by_name(xdp_obj,"trace_on_entry");
-      if (!xdp_prog_fentry) {
-        err_libbfp = libbpf_get_error(xdp_prog_fentry);
-        boopprintf("Unable to load XDP [fentry] program : %s\n", strerror(-err_libbfp));
-        return 1;
-      }
-      xdp_prog_name = bpf_program__name(xdp_prog_fentry);
-      boopprintf("  ->   eBPF Program [fentry] : %s\n", xdp_prog_name);
-
-      // fexit
-      xdp_prog_fexit = bpf_object__find_program_by_name(xdp_obj,"trace_on_exit");
-      if (!xdp_prog_fexit) {
-        err_libbfp = libbpf_get_error(xdp_prog_fexit);
-        boopprintf("Unable to load XDP [fexit] program : %s\n", strerror(-err_libbfp));
-        return 1;
-      }
-      xdp_prog_name = bpf_program__name(xdp_prog_fexit);
-      boopprintf("  ->   eBPF Program [fexit]  : %s\n", xdp_prog_name);
-  }
+//  {
+//      // Initialize interface
+//      cfg.if_index = if_nametoindex(cfg.if_name);
+//      boopprintf("  -> Interface [%s] [xcap]\n", cfg.if_name);
+//
+//      // Load XDP object
+//      xdp_obj = bpf_object__open(cfg.pr0bexdppath);
+//      if (!xdp_obj) {
+//        err_libbfp = libbpf_get_error(xdp_obj);
+//        boopprintf("Unable to load XDP object: %s\n", cfg.pr0bexdppath);
+//        boopprintf("Unable to load XDP object: %s\n", strerror(-err_libbfp));
+//        boopprintf("Privileged access required to load XDP probe!\n");
+//        boopprintf("Permission denied.\n");
+//        return 1;
+//      }
+//      // Load xdp_perf_map
+//      xdp_perf_map = bpf_object__next_map(xdp_obj, NULL);
+//      if (!xdp_perf_map) {
+//        err_libbfp = libbpf_get_error(xdp_perf_map);
+//        boopprintf("Unable to load XDP data map: %s\n", strerror(-err_libbfp));
+//        return 1;
+//      }
+//      xdp_perf_map_name = bpf_map__name(xdp_perf_map);
+//      boopprintf("  ->   eBPF Map Loaded       : %s\n", xdp_perf_map_name);
+//
+//      // fentry
+//      xdp_prog_fentry = bpf_object__find_program_by_name(xdp_obj,"trace_on_entry");
+//      if (!xdp_prog_fentry) {
+//        err_libbfp = libbpf_get_error(xdp_prog_fentry);
+//        boopprintf("Unable to load XDP [fentry] program : %s\n", strerror(-err_libbfp));
+//        return 1;
+//      }
+//      xdp_prog_fentry_name = bpf_program__name(xdp_prog_fentry);
+//      xdp_prog_fentry_fd = bpf_program__fd(xdp_prog_fentry);
+//      boopprintf("  ->   eBPF Program [fentry] : %s\n", xdp_prog_fentry_name);
+//
+//      // fexit
+//      xdp_prog_fexit = bpf_object__find_program_by_name(xdp_obj,"trace_on_exit");
+//      if (!xdp_prog_fexit) {
+//        err_libbfp = libbpf_get_error(xdp_prog_fexit);
+//        boopprintf("Unable to load XDP [fexit] program : %s\n", strerror(-err_libbfp));
+//        return 1;
+//      }
+//      xdp_prog_fexit_name = bpf_program__name(xdp_prog_fexit);
+//      xdp_prog_fexit_fd = bpf_program__fd(xdp_prog_fexit);
+//      boopprintf("  ->   eBPF Program [fexit]  : %s\n", xdp_prog_fexit_name);
+//
+//      bpf_program__set_expected_attach_type(xdp_prog_fentry,
+//                                            BPF_TRACE_FENTRY);
+//      bpf_program__set_expected_attach_type(xdp_prog_fexit,
+//                                            BPF_TRACE_FEXIT);
+//      // TODO Set attach func name!
+//      bpf_program__set_attach_target(xdp_prog_fentry,
+//                                     xdp_prog_fentry_fd,
+//                                     NULL);
+//      bpf_program__set_attach_target(xdp_prog_fexit,
+//                                     xdp_prog_fexit_fd,
+//                                     NULL);
+//
+//      boopprintf("  ->   eBPF Attach Types Set : %s %s\n", xdp_prog_fentry_name, xdp_prog_fexit_name);
+//
+//
+//  }
   // [pr0be.xdp.o]
   // ===========================================================================
 
@@ -397,6 +418,16 @@ int main(int argc, char **argv) {
   boopprintf("  ->   eBPF   Map Name: %s\n", bmapname);
   int fd = bpf_map__fd(bpmap);
 
+
+  // Forking xdpdump code here
+  //
+  // listen_on_interface() is the main packet capture method
+  // load_and_attach_trace() is for loading/attaching BPF probe
+  // load_xdp_trace_program() is for loading the XDP probe
+
+
+
+
 //  struct bpf_program          *xdp_prog_fentry;
 //  struct bpf_program          *xdp_prog_fexit;
 //  struct bpf_link             *trace_link_fentry = NULL;
@@ -418,17 +449,6 @@ int main(int argc, char **argv) {
 
 
 
-//  bpf_program__set_expected_attach_type(xdp_prog_fentry,
-//                                        BPF_TRACE_FENTRY);
-//  bpf_program__set_expected_attach_type(xdp_prog_fexit,
-//                                        BPF_TRACE_FEXIT);
-//  bpf_program__set_attach_target(xdp_prog_fentry,
-//                                 xdp_map_fd,
-//                                 NULL);
-//  bpf_program__set_attach_target(xdp_prog_fexit,
-//                                 xdp_map_fd,
-//                                NULL);
-//
 
   // ----
 //  struct perf_event_attr       perf_attr = {
