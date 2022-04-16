@@ -136,8 +136,9 @@ NCATLISTENPORT="3545"
 
 ### Compile Time Dependencies 
 
- - 'clang'
- - `bpftool`
+ - 'clang' 
+ - 'bpftool'   Required for `libbpf`
+ - 'xdp-tools' Required for `libxdp`
  - 'llvm'
  - 'lib32-glibc'
 
