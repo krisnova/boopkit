@@ -35,7 +35,6 @@ struct {
   __type(value, struct event_boop_t);
 } event SEC(".maps");
 
-
 // tcp_bad_csum_args_t
 //
 //  [Here be dragons!]
