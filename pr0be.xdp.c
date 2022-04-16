@@ -19,14 +19,6 @@
 // ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║
 // ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 //
-// [boops.c]
-//
-// This file is used to build the eBPF probes that
-// will respond to various "boops" from a boop.
-//
-// This file has one job: get booped and pass __u8 saddr[4]
-// to userspace!
-//
 // clang-format off
 #include "vmlinux.h"
 // clang-format on
