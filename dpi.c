@@ -37,7 +37,7 @@
 
 //--- [ Header ] ---
 
-#define XCAP_BUFFER_SIZE 16
+#define XCAP_BUFFER_SIZE 1024
 
 typedef struct xcap_ip_packet {
   int captured;
