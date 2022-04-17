@@ -148,11 +148,11 @@ void *xcap(void *v_dev_name) {
 
     // Xcap Packet Ring Buffer
     struct xcap_ip_packet *xpack = malloc(sizeof (xcap_ip_packet));
-    xpack->packet = malloc(header.caplen);
+    xpack->packet = malloc(header.len);
     xpack->iph = malloc(sizeof (struct ip));
     xpack->header = malloc(sizeof (struct pcap_pkthdr));
     xpack->captured = 1;
-    memcpy(xpack->packet, packet, header.caplen);
+    memcpy(xpack->packet, packet, header.len);
     memcpy(xpack->iph, iph, sizeof (struct ip));
     memcpy(xpack->header, &header, sizeof (struct pcap_pkthdr));
     pthread_mutex_lock(&lock);
@@ -164,6 +164,7 @@ void *xcap(void *v_dev_name) {
   for (int ii = 0; ii <= XCAP_BUFFER_SIZE; ii++) {
     free(xcap_ring_buffer[ii]);
   }
+  pcap_close(handle);
   return NULL;
 }
 
@@ -173,16 +174,13 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   pthread_mutex_lock(&lock);
   for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *from = xcap_ring_buffer[i];
-    if (!from->captured) {
-      continue;
-    }
     struct xcap_ip_packet *to = malloc(sizeof (xcap_ip_packet));
+
     // packet
-    to->packet = malloc(from->header->caplen);
-    memcpy(to->packet, from->packet, from->header->caplen);
+    to->packet = malloc(from->header->len);
+    memcpy(to->packet, from->packet, from->header->len);
 
     // iph
-
     struct in_addr src_in = from->iph->ip_src;
     //boopprintf("[SNAP] IP Source Address = %s\n", inet_ntoa(src_in));
     //boopprintf("[SNAP] IP Dest Address = %s\n", inet_ntoa((struct in_addr) from->iph->ip_dst));
@@ -191,7 +189,7 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
 
     // header
     to->header = malloc(sizeof (struct pcap_pkthdr));
-    memcpy(to->header, &from->header, sizeof (struct pcap_pkthdr));
+    memcpy(to->header, from->header, sizeof (struct pcap_pkthdr));
 
     snap[i] = to;
   }
@@ -223,11 +221,12 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
       continue; // Ignore non captured packets in the buffer
     }
     unsigned char *packet = xpack->packet;
-    for (int j = 0; j < xpack->header->caplen; j++) {
+//    printf("packet len: %d\n",xpack->header->len);
+//    printf("packet caplen: %d\n",xpack->header->caplen);
+    for (int j = 0; j < xpack->header->len; j++) {
       printf("%c", packet[j]); // Print the DPI of the packet!
     }
   }
-
   printf("fin\n");
   exit(1);
   return 1;
