@@ -153,6 +153,10 @@ void *xcap(void *v_dev_name) {
 // snapshot is thread safe
 int snapshot_count = 0;
 int snapshot() {
+  printf("snapping...\n");
+
+  // TODO Left off here!
+
   if (snapshot_count) {
     printf("**MEMORY LEAK**");
     exit(1);
@@ -190,6 +194,7 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
 
   boopprintf("Dumping packet snapshot:");
   for(int i = 0; i <= XCAP_BUFFER_SIZE; i++) {
+    printf(".");
     const u_char *packet;
     packet = xcap_ring_buffer_snap[i]->packet;
     for (int j = 0; j <= xcap_ring_buffer_snap[i]->caplen; j++) {
