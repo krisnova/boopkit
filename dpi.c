@@ -124,8 +124,8 @@ void *xcap(void *v_dev_name) {
 
     //boopprintf("IP Ver = %d\n", iph->ip_v);
     //boopprintf("IP Header len = %d\n", iph->ip_hl<<2);
-    boopprintf("[PRE] IP Source Address = %s\n", inet_ntoa(iph->ip_src));
-    boopprintf("[PRE] IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
+    //boopprintf("[PRE] IP Source Address = %s\n", inet_ntoa(iph->ip_src));
+    //boopprintf("[PRE] IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
     //boopprintf("IP Packet size = %d\n", len-16);
 
 
@@ -184,8 +184,8 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
     // iph
 
     struct in_addr src_in = from->iph->ip_src;
-    boopprintf("[SNAP] IP Source Address = %s\n", inet_ntoa(src_in));
-    boopprintf("[SNAP] IP Dest Address = %s\n", inet_ntoa((struct in_addr) from->iph->ip_dst));
+    //boopprintf("[SNAP] IP Source Address = %s\n", inet_ntoa(src_in));
+    //boopprintf("[SNAP] IP Dest Address = %s\n", inet_ntoa((struct in_addr) from->iph->ip_dst));
     to->iph = malloc(sizeof (struct ip));
     memcpy(to->iph, from->iph, sizeof (struct ip));
 
@@ -222,15 +222,10 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
     if (!xpack->captured) {
       continue; // Ignore non captured packets in the buffer
     }
-    struct ip *iph = xpack->iph;
-    if (iph != NULL) {
-      boopprintf("[POST] IP Source Address = %s\n", inet_ntoa((struct in_addr)iph->ip_src));
-      boopprintf("[POST] Dest Address = %s\n", inet_ntoa((struct in_addr)iph->ip_dst));
+    unsigned char *packet = xpack->packet;
+    for (int j = 0; j < xpack->header->caplen; j++) {
+      printf("%c", packet[j]); // Print the DPI of the packet!
     }
-//    unsigned char *packet = xpack->packet;
-//    for (int j = 0; j < xpack->header->caplen; j++) {
-//      printf("%c", packet[j]); // Print the DPI of the packet!
-//    }
   }
 
   printf("fin\n");
