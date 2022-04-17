@@ -86,7 +86,7 @@ struct event_boop_t {
 struct event {
   int pid;
   char comm[TASK_COMM_LEN];
-  bool success;
+  int success;
 };
 
 struct tr_file {

