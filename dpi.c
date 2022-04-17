@@ -22,12 +22,32 @@
 // [dpi.c]
 
 #include <linux/types.h>
+#include <arpa/inet.h>
+#include <net/ethernet.h>
+#include <netinet/ip.h>
 #include <pcap.h>
+#include <pthread.h>
 #include <string.h>
+#include <stdlib.h>
 // clang-format off
 #include "dpi.h"
 #include "common.h"
 // clang-format on
+
+
+#define XCAP_BUFFER_SIZE 1024
+
+typedef struct xcap_saddr_packet {
+  struct in_addr *saddr;
+  unsigned char *packet;
+  // TODO add other fields from packet parsing below!
+  // TODO consider perfomance hits of packet parsing before/after (probably just do saddr)
+} xcap_saddr_packet;
+
+xcap_saddr_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
+int xcap_pos = 0;
+int xcap_collect = 1;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void *xcap(void *v_dev_name) {
   char *dev_name = (char *)v_dev_name;
@@ -74,18 +94,57 @@ void *xcap(void *v_dev_name) {
   boopprintf("  -> Listening xCap Kernel packets:\n");
 
 
-
   /* Search for RCE */
-  while (1) {
+  boopprintf("--------------------------------------------\n");
+  struct ether_header *ep;
+  struct ip *iph;
+  unsigned short ether_type;
+  int cycle = 0;
+  while (xcap_collect) {
     packet = pcap_next(handle, &header);
-    for (int i = 0; i < header.caplen; i++) {
-      u_char ch = packet[i];
-      printf("%c ", ch);
+    ep = (struct ether_header *)packet;
+    ether_type = ntohs(ep->ether_type);
+    u_int len = header.len;
+    if (ether_type != ETHERTYPE_IP) {
+      continue;
     }
-    printf("\n");
-  }
+    packet += sizeof(struct ether_header);
+    iph = (struct ip *)packet;
+    {
+      //boopprintf("IP Ver = %d\n", iph->ip_v);
+      //boopprintf("IP Header len = %d\n", iph->ip_hl<<2);
+      //boopprintf("IP Source Address = %s\n", inet_ntoa(iph->ip_src));
+      //boopprintf("IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
+      //boopprintf("IP Packet size = %d\n", len-16);
+    }
 
-  return 0;
+    if (xcap_pos == XCAP_BUFFER_SIZE) {
+      xcap_pos = 0;
+      cycle = 1;
+    }
+    if (cycle) {
+      // If we are cycling, free up the previous position
+      pthread_mutex_lock(&lock);
+      free(xcap_ring_buffer[xcap_pos]->packet);
+      free(xcap_ring_buffer[xcap_pos]->saddr);
+      free(xcap_ring_buffer[xcap_pos]);
+      pthread_mutex_unlock(&lock);
+    }
+
+    // Memory set for xpack
+    struct xcap_saddr_packet *xpack = malloc(sizeof (xcap_saddr_packet));
+    xpack->packet = malloc(header.caplen);
+    xpack->saddr = malloc(sizeof (struct in_addr));
+    memcpy(xpack->packet, packet, header.caplen);
+    memcpy(xpack->saddr, &iph->ip_src, sizeof (struct in_addr));
+    pthread_mutex_lock(&lock);
+    xcap_ring_buffer[xcap_pos] = xpack;
+    pthread_mutex_unlock(&lock);
+    xcap_pos++;
+    // ------------------------------------------------------
+
+  }
+  return NULL;
 }
 
 // xcaprce is the main "interface" for pulling an RCE
@@ -93,6 +152,9 @@ void *xcap(void *v_dev_name) {
 //
 // Different implementations may exist, for the first example
 // we are just using pcap.h
-int xcaprce(__u8 saddr[4], char *rce) {
-  return 0;
+int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
+  // Todo setup in_addr structs as needed
+  boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
+  return 1;
+  // return 0; // When we found our RCE!
 }

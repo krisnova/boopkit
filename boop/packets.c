@@ -325,7 +325,7 @@ void create_bad_syn_packet_payload(struct sockaddr_in *src,
   tcph->psh = 0;
   tcph->ack = 0;
   tcph->urg = 0;
-  tcph->check = 0;             // correct calculation follows later
+  tcph->check = 0;                       // correct calculation follows later
   tcph->window = htons(5840);  // window size
   tcph->urg_ptr = 0;
 
