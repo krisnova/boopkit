@@ -28,47 +28,54 @@
 #include <pcap.h>
 #include <pthread.h>
 #include <string.h>
+#include <unistd.h>
 #include <stdlib.h>
 // clang-format off
 #include "dpi.h"
 #include "common.h"
 // clang-format on
 
+//--- [ Header ] ---
 
-#define XCAP_BUFFER_SIZE 1024
+#define XCAP_BUFFER_SIZE 16
 
-typedef struct xcap_saddr_packet {
-  struct in_addr *saddr;
+typedef struct xcap_ip_packet {
+  int captured;
+  struct ip *iph;
   unsigned char *packet;
-  unsigned int caplen;
-  // TODO add other fields from packet parsing below!
-  // TODO consider perfomance hits of packet parsing before/after (probably just do saddr)
-} xcap_saddr_packet;
+  struct pcap_pkthdr *header;
+} xcap_ip_packet;
 
-xcap_saddr_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
-xcap_saddr_packet *xcap_ring_buffer_snap[XCAP_BUFFER_SIZE];
-int xcap_pos = 0;
-int xcap_collect = 1;
+// xcap_ring_buffer is the main thread safe packet ring buffer
+xcap_ip_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
+int xcap_pos = 0;     // The position of the ring buffer to write
+int xcap_collect = 1; // While (xcap_collect) { /* events */ }
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+//--- [ Header ] ---
 
 void *xcap(void *v_dev_name) {
   char *dev_name = (char *)v_dev_name;
   boopprintf("  -> Starting xCap Interface  : %s\n", dev_name);
-  // Taken from TCPDump
+
+  // Initialize ring buffer
+  for (int ii = 0; ii <= XCAP_BUFFER_SIZE; ii++) {
+    struct xcap_ip_packet *xpack = malloc(sizeof (struct xcap_ip_packet));
+    xpack->packet = malloc(1); // Init to 1 byte to begin!
+    xpack->iph = malloc(sizeof (struct ip));
+    xpack->header = malloc(sizeof (struct pcap_pkthdr));
+    xpack->captured = 0;
+    xcap_ring_buffer[ii] = xpack;
+  }
 
   // TCP Dump filter
   char filter_exp[] = "";
-
-  pcap_t *handle; /* Session handle */
-
-  char errbuf[PCAP_ERRBUF_SIZE]; /* Error string */
-  struct bpf_program fp;         /* The compiled filter */
-  bpf_u_int32 mask;              /* Our netmask */
-  bpf_u_int32 net;               /* Our IP */
-  struct pcap_pkthdr header;     /* The header that pcap gives us */
-  const u_char *packet;          /* The actual packet */
-
-  /* Find the properties for the device */
+  pcap_t *handle;
+  char errbuf[PCAP_ERRBUF_SIZE];
+  struct bpf_program fp;
+  bpf_u_int32 mask;
+  bpf_u_int32 net;
+  struct pcap_pkthdr header;
   if (pcap_lookupnet(dev_name, &net, &mask, errbuf) == -1) {
     boopprintf("Couldn't get netmask for device %s: %s\n", dev_name, errbuf);
     net = 0;
@@ -81,7 +88,9 @@ void *xcap(void *v_dev_name) {
     boopprintf("Couldn't open device %s: %s\n", dev_name, errbuf);
     return NULL;
   }
-  /* Compile and apply the filter */
+
+  // TODO Manage filters!
+  // --- [ Filter ] ---
   if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
     boopprintf("Couldn't parse filter %s: %s\n", filter_exp,
                pcap_geterr(handle));
@@ -92,91 +101,103 @@ void *xcap(void *v_dev_name) {
                pcap_geterr(handle));
     return NULL;
   }
+  // --- [ Filter ] ---
 
   boopprintf("  -> Listening xCap Kernel packets:\n");
 
-
   /* Search for RCE */
-  boopprintf("--------------------------------------------\n");
   struct ether_header *ep;
-  struct ip *iph;
+
   unsigned short ether_type;
   int cycle = 0;
+  const u_char *packet;
+  struct ip *iph;
   while (xcap_collect) {
     packet = pcap_next(handle, &header);
     ep = (struct ether_header *)packet;
     ether_type = ntohs(ep->ether_type);
-    u_int len = header.len;
     if (ether_type != ETHERTYPE_IP) {
       continue;
     }
     packet += sizeof(struct ether_header);
     iph = (struct ip *)packet;
-    {
-      //boopprintf("IP Ver = %d\n", iph->ip_v);
-      //boopprintf("IP Header len = %d\n", iph->ip_hl<<2);
-      //boopprintf("IP Source Address = %s\n", inet_ntoa(iph->ip_src));
-      //boopprintf("IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
-      //boopprintf("IP Packet size = %d\n", len-16);
-    }
+
+    //boopprintf("IP Ver = %d\n", iph->ip_v);
+    //boopprintf("IP Header len = %d\n", iph->ip_hl<<2);
+    boopprintf("[PRE] IP Source Address = %s\n", inet_ntoa(iph->ip_src));
+    boopprintf("[PRE] IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
+    //boopprintf("IP Packet size = %d\n", len-16);
+
 
     if (xcap_pos == XCAP_BUFFER_SIZE) {
+      // Start the ring buffer back at 0, and we have now
+      // completed a "cycle"
       xcap_pos = 0;
-      cycle = 1;
+      cycle    = 1;
     }
     if (cycle) {
-      // If we are cycling, free up the previous position
+      // If we are cycling, free up the previous position in
+      // the ring buffer.
       pthread_mutex_lock(&lock);
       free(xcap_ring_buffer[xcap_pos]->packet);
-      free(xcap_ring_buffer[xcap_pos]->saddr);
+      free(xcap_ring_buffer[xcap_pos]->iph);
+      free(xcap_ring_buffer[xcap_pos]->header);
       free(xcap_ring_buffer[xcap_pos]);
       pthread_mutex_unlock(&lock);
     }
 
-    // Memory set for xpack
-    struct xcap_saddr_packet *xpack = malloc(sizeof (xcap_saddr_packet));
+    // Xcap Packet Ring Buffer
+    struct xcap_ip_packet *xpack = malloc(sizeof (xcap_ip_packet));
     xpack->packet = malloc(header.caplen);
-    xpack->saddr = malloc(sizeof (struct in_addr));
+    xpack->iph = malloc(sizeof (struct ip));
+    xpack->header = malloc(sizeof (struct pcap_pkthdr));
+    xpack->captured = 1;
     memcpy(xpack->packet, packet, header.caplen);
-    memcpy(xpack->saddr, &iph->ip_src, sizeof (struct in_addr));
-    xpack->caplen = header.caplen;
+    memcpy(xpack->iph, iph, sizeof (struct ip));
+    memcpy(xpack->header, &header, sizeof (struct pcap_pkthdr));
     pthread_mutex_lock(&lock);
     xcap_ring_buffer[xcap_pos] = xpack;
     pthread_mutex_unlock(&lock);
     xcap_pos++;
-    // ------------------------------------------------------
-
+  }
+  // Initialize ring buffer
+  for (int ii = 0; ii <= XCAP_BUFFER_SIZE; ii++) {
+    free(xcap_ring_buffer[ii]);
   }
   return NULL;
 }
 
 // snapshot is thread safe
-int snapshot_count = 0;
-int snapshot() {
-  printf("snapping...\n");
-
-  // TODO Left off here!
-
-  if (snapshot_count) {
-    printf("**MEMORY LEAK**");
-    exit(1);
-  }
+int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
+  boopprintf("  -> Taking snapshot of network traffic.\n");
   pthread_mutex_lock(&lock);
-  boopprintf("Snapshot:\n");
-  for(int i = 0; i <= XCAP_BUFFER_SIZE; i++) {
-    // TODO Check if buffer is "full" we could be running before we cycle!
-    struct xcap_saddr_packet *xpack = malloc(sizeof (xcap_saddr_packet));
-    xpack->packet = malloc(xcap_ring_buffer[i]->caplen);
-    xpack->saddr = malloc(sizeof (struct in_addr));
-    memcpy(xpack->packet, xcap_ring_buffer[i]->packet, xcap_ring_buffer[i]->caplen);
-    memcpy(xpack->saddr, xcap_ring_buffer[i]->saddr, sizeof (struct in_addr));
-    xpack->caplen = xcap_ring_buffer[i]->caplen;
-    xcap_ring_buffer_snap[i] = xpack;
-    boopprintf(".");
+  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+    struct xcap_ip_packet *from = xcap_ring_buffer[i];
+    if (!from->captured) {
+      continue;
+    }
+    struct xcap_ip_packet *to = malloc(sizeof (xcap_ip_packet));
+    // packet
+    to->packet = malloc(from->header->caplen);
+    memcpy(to->packet, from->packet, from->header->caplen);
+
+    // iph
+
+    struct in_addr src_in = from->iph->ip_src;
+    boopprintf("[SNAP] IP Source Address = %s\n", inet_ntoa(src_in));
+    boopprintf("[SNAP] IP Dest Address = %s\n", inet_ntoa((struct in_addr) from->iph->ip_dst));
+    to->iph = malloc(sizeof (struct ip));
+    memcpy(to->iph, from->iph, sizeof (struct ip));
+
+    // header
+    to->header = malloc(sizeof (struct pcap_pkthdr));
+    memcpy(to->header, &from->header, sizeof (struct pcap_pkthdr));
+
+    snap[i] = to;
   }
-  boopprintf("\n");
   pthread_mutex_unlock(&lock);
-  snapshot_count++;
+
+  boopprintf("  -> Snapshot complete!\n");
   return 0;
 }
 
@@ -187,21 +208,33 @@ int snapshot() {
 // Different implementations may exist, for the first example
 // we are just using pcap.h
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
-  // Todo setup in_addr structs as needed
+
+  // TODO Hang until the buffer fills up - I think we have a race
+  sleep(2);
+
   boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
-
-  snapshot(); // Thread safe snapshot of the ring buffer!
-
-  boopprintf("Dumping packet snapshot:");
-  for(int i = 0; i <= XCAP_BUFFER_SIZE; i++) {
-    printf(".");
-    const u_char *packet;
-    packet = xcap_ring_buffer_snap[i]->packet;
-    for (int j = 0; j <= xcap_ring_buffer_snap[i]->caplen; j++) {
-      printf("%c", packet[j]); // Print the DPI of the packet!
+  xcap_ip_packet *snap[XCAP_BUFFER_SIZE];
+  snapshot(snap);   // Thread safe snapshot of the ring buffer!
+  boopprintf("Dumping packet snapshot\n");
+  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+    struct xcap_ip_packet *xpack;
+    xpack = snap[i];
+    if (!xpack->captured) {
+      continue; // Ignore non captured packets in the buffer
     }
+    struct ip *iph = xpack->iph;
+    if (iph != NULL) {
+      boopprintf("[POST] IP Source Address = %s\n", inet_ntoa((struct in_addr)iph->ip_src));
+      boopprintf("[POST] Dest Address = %s\n", inet_ntoa((struct in_addr)iph->ip_dst));
+    }
+//    unsigned char *packet = xpack->packet;
+//    for (int j = 0; j < xpack->header->caplen; j++) {
+//      printf("%c", packet[j]); // Print the DPI of the packet!
+//    }
   }
 
+  printf("fin\n");
+  exit(1);
   return 1;
   // return 0; // When we found our RCE!
 }

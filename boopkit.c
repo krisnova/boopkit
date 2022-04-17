@@ -426,7 +426,7 @@ int main(int argc, char **argv) {
 
   // logs
   for (int i = 0; i < cfg.denyc; i++) {
-    boopprintf("   X Deny address: %s\n", cfg.deny[i]);
+    boopprintf("  XX Deny address: %s\n", cfg.deny[i]);
   }
   boopprintf("  -> Obfuscating PID: %s\n", pid);
 
