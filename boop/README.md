@@ -25,7 +25,9 @@ Remote trigger program for boopkit.
    Use at your own risk.
 
 ================================================================
-Boopkit.Linux rootkit and backdoor. Built using eBPF.
+
+Boopkit.
+Linux rootkit and backdoor. Built using eBPF.
 
 Usage: 
 boopkit-boop [options]
