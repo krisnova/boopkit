@@ -58,9 +58,10 @@ build: boop ## Build boopkit userspace program
 	@echo "  ->  Building boopkit"
 	clang $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(TARGET) boopkit.c common.c dpi.c -Wl,
 
+.PHONY: contrib
 contrib: ## Build static dependencies
 	@echo "  ->  Boopkit static dependencies"
-
+	@cd contrib && ./deps
 
 
 static: ## Build boopkit userspace program (static)
