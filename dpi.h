@@ -26,6 +26,7 @@
 
 #define XCAP_BUFFER_SIZE 64
 
+extern int xcap_collect;
 typedef struct xcap_ip_packet {
   int captured;
   struct ip *iph;
