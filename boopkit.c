@@ -216,6 +216,7 @@ void rootcheck(int argc, char **argv) {
 int main(int argc, char **argv) {
   clisetup(argc, argv);
   asciiheader();
+  boopprintf("====================================================================\n");
   rootcheck(argc, argv);
   boopprintf("  -> Logs                    : cat /sys/kernel/tracing/trace_pipe\n");
 
@@ -428,6 +429,7 @@ int main(int argc, char **argv) {
     boopprintf("  XX Deny address            : %s\n", cfg.deny[i]);
   }
   boopprintf("  -> Obfuscating PID         : %s\n", pid);
+  boopprintf("====================================================================\n");
 
   // ===========================================================================
   // Boopkit event loop
