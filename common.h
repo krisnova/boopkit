@@ -11,7 +11,7 @@
 extern int quiet;
 
 // VERSION is the semantic version of the program
-#define VERSION "1.2.0"
+#define VERSION "1.2.1"
 
 void asciiheader();
 void boopprintf(const char *__restrict __format, ...);
