@@ -38,9 +38,8 @@
 
 void usage() {
   asciiheader();
-  boopprintf("Boopkit version: %s\n", VERSION);
-  boopprintf("Linux rootkit and backdoor over eBPF.\n");
-  boopprintf("Author: Kris Nóva <kris@nivenly.com>\n");
+  boopprintf("Boopkit.");
+  boopprintf("Linux rootkit and backdoor. Built using eBPF.\n");
   boopprintf("\n");
   boopprintf("Usage: \n");
   boopprintf("boopkit-boop [options]\n");
