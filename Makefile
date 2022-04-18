@@ -37,7 +37,6 @@ clean: ## Clean objects
 	cd contrib && ls | grep -v dep | xargs rm -vfr
 	rm -vrf xdp-tools/*
 
-
 .PHONY: boop
 boop:  ## Build trigger program
 	@echo "  ->  Building trigger program"
