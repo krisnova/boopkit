@@ -368,9 +368,6 @@ void create_bad_syn_packet_payload(struct sockaddr_in *src,
 
   // 38 begin data transmission for pseudogram
   offset = 38;
-  for (int i = 0; i < strlen(payload); i++) {
-    datagram[offset + i] = payload[i];
-  }
 
   // create a bad (malformed) SYN packet without a checksum.
   // tcph->check = csum((const char*)pseudogram, psize);
