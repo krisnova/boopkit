@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  boopprintf("  -> [%d  bytes]   TX SYN     : %s:%s (RCE payload, *bad checksum)\n", sent, cfg.rhost, cfg.rport);
+  boopprintf("  -> [%03d bytes]   TX SYN     : %s:%s (RCE payload, *bad checksum)\n", sent, cfg.rhost, cfg.rport);
   close(sock1);
   // ===========================================================================
 
@@ -308,14 +308,14 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send RST over SOCK_STREAM.\n");
     return 2;
   }
-  boopprintf("  -> [%d  bytes]   TX SYN     : %s:%s\n", sent, cfg.rhost, cfg.rport);
+  boopprintf("  -> [%03d bytes]   TX SYN     : %s:%s\n", sent, cfg.rhost, cfg.rport);
   char recvbuf[DATAGRAM_LEN];
   int received = receive_from(sock3, recvbuf, sizeof(recvbuf), &saddr);
   if (received <= 0) {
     boopprintf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
     return 3;
   }
-  boopprintf("  <- [%d  bytes]   RX SYN-ACK : %s:%s (RCE payload)\n", received, cfg.rhost, cfg.rport);
+  boopprintf("  <- [%03d bytes]   RX SYN-ACK : %s:%s (RCE payload)\n", received, cfg.rhost, cfg.rport);
   uint32_t seq_num, ack_num;
   read_seq_and_ack(recvbuf, &seq_num, &ack_num);
   int new_seq_num = seq_num + 1;
@@ -326,7 +326,7 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send ACK-RST over SOCK_STREAM.\n");
     return 2;
   }
-  boopprintf("  -> [%d  bytes]   TX ACK-RST : %s:%s\n", sent, cfg.rhost, cfg.rport);
+  boopprintf("  -> [%03d bytes]   TX ACK-RST : %s:%s\n", sent, cfg.rhost, cfg.rport);
   close(sock3);
   // ===========================================================================
 

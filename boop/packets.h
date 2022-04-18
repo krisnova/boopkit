@@ -25,7 +25,7 @@
 
 #define DATAGRAM_LEN 4096
 #define OPT_SIZE 20
-//#define MAX_TCP 1024 // 1400 is a viable MTU, for safety we set 1024
+#define MAX_PORT_STR 24
 
 struct pseudo_header {
   u_int32_t source_address;

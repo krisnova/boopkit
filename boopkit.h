@@ -25,11 +25,9 @@
 
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
 #define MAX_RCE_SIZE 1024
-#define MAX_MTU_PACKET_LIMIT 1024
 
 #define EVENT_SRC_BAD_CSUM 1
 #define EVENT_SRC_RECEIVE_RESET 2
-#define EVENT_SRC_XDP 3
 
 // event_boop_t represents an event from the kernel.
 //
@@ -59,53 +57,22 @@ struct event_boop_t {
 // MAX_DENY_ADDRS is the maximum amount of address that can be denied.
 #define MAX_DENY_ADDRS 1024
 
-#define MAX_ENTRIES_CPU 256
-
-// MAX_PORT_STR is the port size for rport and lport
-#define MAX_PORT_STR 32
-
-// PROBE_BOOP is the eBPF probe to listen for boops
-#define PROBE_BOOP "pr0be.boop.o"
-#define PROBE_SAFE "pr0be.safe.o"
-#define PROBE_XDP "pr0be.xdp.o"
+// eBPF Probes
+#define PROBE_BOOP   "pr0be.boop.o"
+#define PROBE_SAFE   "pr0be.safe.o"
+#define PROBE_XDP    "pr0be.xdp.o"
 
 // TIMEOUT_SECONDS_RECVRCE is the amount of seconds to wait for recvrce()
 // after a boop
 #define TIMEOUT_SECONDS_RECVRCE 1
 
 // SPDX-License-Identifier: BSD-3-Clause
-#define MAXPIDLEN 10
-#define PROG_00 0
-#define PROG_01 1
-#define PROG_02 2
-
-#define FILENAME_LEN_MAX 50
-#define TEXT_LEN_MAX 20
-
 #define TASK_COMM_LEN 16
 struct event {
   int pid;
   char comm[TASK_COMM_LEN];
   int success;
 };
-
-struct tr_file {
-  char filename[FILENAME_LEN_MAX];
-  unsigned int filename_len;
-};
-
-struct tr_text {
-  char text[TEXT_LEN_MAX];
-  unsigned int text_len;
-};
-
-struct trace_configuration {
-  __u32 capture_if_ifindex;
-  __u32 capture_snaplen;
-  __u32 capture_prog_index;
-};
-
-#define MDF_DIRECTION_FEXIT 1
 
 struct pkt_trace_metadata {
   __u32 ifindex;

