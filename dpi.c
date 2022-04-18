@@ -262,14 +262,14 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
         return 0;  // Money, Success, Fame, Glamour
       } else {
         boopprintf("  -> [FILTER FAILURE] No RCE in xCap!\n");
-        snapshot_dump(snap);
+        //snapshot_dump(snap);
         snapshot_free(snap);
         return 1;
       }
     }
   }
   boopprintf("  -> No RCE in xCap!\n");
-  snapshot_dump(snap);
+  //snapshot_dump(snap);
   snapshot_free(snap);
   return 1;
   // return 0; // When we found our RCE!
