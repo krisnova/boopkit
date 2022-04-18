@@ -403,8 +403,7 @@ int main(int argc, char **argv) {
     bpf_object__for_each_program(progboop, bpobj) {
       const char *progname = bpf_program__name(progboop);
       const char *progsecname = bpf_program__section_name(progboop);
-      boopprintf("  ->   eBPF Program Attached : %s %s\n", progname,
-                 progsecname);
+      boopprintf("  ->   eBPF Program Attached : %s\n", progsecname);
       struct bpf_link *link = bpf_program__attach(progboop);
       if (!link) {
         boopprintf("Unable to link eBPF program: %s\n", progname);
