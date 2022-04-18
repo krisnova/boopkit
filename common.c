@@ -57,8 +57,8 @@ void asciiheader() {
   printf("   \n");
   printf("   IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE \n");
   printf("   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, \n");
-  printf("   EXEMPLARY, OR CONSEQUENTIAL DAMAGES");
-  printf("   \n");
+  printf("   EXEMPLARY, OR CONSEQUENTIAL DAMAGES.");
+  printf("   \n\n");
   printf("   DO NOT ATTEMPT TO USE THE TOOLS TO VIOLATE THE LAW.\n");
   printf("   THE AUTHOR IS NOT RESPONSIBLE FOR ANY ILLEGAL ACTION.\n");
   printf("   MISUSE OF THE SOFTWARE, INFORMATION, OR SOURCE CODE\n");
@@ -66,6 +66,6 @@ void asciiheader() {
   printf("   \n");
   printf("   Use at your own risk.\n");
   printf("\n");
-  printf("================================================================\n\n");
+  printf("================================================================\n");
 
 }

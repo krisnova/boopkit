@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
     return 2;
   }
   boopprintf(
-      "  -> [%03d bytes]   TX SYN     : %s:%s (RCE payload, *bad checksum)\n",
+      "  -> [%03d bytes]   TX SYN     : %s:%s (RCE, *bad csum)\n",
       sent, cfg.rhost, cfg.rport);
   close(sock1);
   // ===========================================================================
@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
     boopprintf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
     return 3;
   }
-  boopprintf("  <- [%03d bytes]   RX SYN-ACK : %s:%s (RCE payload)\n", received,
+  boopprintf("  <- [%03d bytes]   RX SYN-ACK : %s:%s (RCE)\n", received,
              cfg.rhost, cfg.rport);
   uint32_t seq_num, ack_num;
   read_seq_and_ack(recvbuf, &seq_num, &ack_num);
