@@ -24,7 +24,7 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <string.h>
+#include <stdarg.h>
 
 int quiet = 0;
 

@@ -21,7 +21,7 @@
 #
 TARGET  := boopkit
 CFLAGS  ?= -I/usr/local/include
-LDFLAGS ?= ""
+LDFLAGS ?=
 LIBS     = -lxdp -lbpf -lelf -lpcap -lpthread
 STYLE    = Google
 
@@ -56,7 +56,16 @@ format: ## Format the code
 
 build: boop ## Build boopkit userspace program
 	@echo "  ->  Building boopkit"
-	clang $(CFLAGS) $(LDFLAGS) -o $(TARGET) boopkit.c common.c dpi.c -Wl, $(LIBS)
+	clang $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(TARGET) boopkit.c common.c dpi.c -Wl,
+
+contrib: ## Build static dependencies
+	@echo "  ->  Boopkit static dependencies"
+	mkdir -p contrib
+
+
+static: ## Build boopkit userspace program (static)
+	@echo "  ->  Building boopkit"
+	gcc $(CFLAGS) $(LDFLAGS) $(LIBS) -static -o $(TARGET) boopkit.c common.c dpi.c -Wl,
 
 install: ## Install boopkit to /usr/bin/boopkit
 	cp $(TARGET) /usr/bin/$(TARGET)

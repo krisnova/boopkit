@@ -1,4 +1,5 @@
 .idea
+contrib*
 enohonk
 *.o
 *.ll
