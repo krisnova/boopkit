@@ -97,7 +97,7 @@ void snapshot_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
 
 void *xcap(void *v_dev_name) {
   char *dev_name = (char *)v_dev_name;
-  char filter_exp[] = ""; // TCP Dump filter
+  char filter_exp[] = "";  // TCP Dump filter
   pcap_t *handle;
   char errbuf[PCAP_ERRBUF_SIZE];
   struct bpf_program fp;

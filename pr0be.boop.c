@@ -30,7 +30,7 @@
 
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
-  __uint(max_entries, MAX_ENTRIES_CPU);
+  __uint(max_entries, 8192);
   __type(key, int);
   __type(value, struct event_boop_t);
 } event SEC(".maps");

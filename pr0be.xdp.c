@@ -26,4 +26,4 @@
 // SPDX-License-Identifier: GPL-2.0
 // The eBPF probe is dual-licensed with GPL because Linux is a fucking shit
 // show.
-//char LICENSE[] SEC("license") = "GPL";
+// char LICENSE[] SEC("license") = "GPL";

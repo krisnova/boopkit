@@ -58,9 +58,9 @@ struct event_boop_t {
 #define MAX_DENY_ADDRS 1024
 
 // eBPF Probes
-#define PROBE_BOOP   "pr0be.boop.o"
-#define PROBE_SAFE   "pr0be.safe.o"
-#define PROBE_XDP    "pr0be.xdp.o"
+#define PROBE_BOOP "pr0be.boop.o"
+#define PROBE_SAFE "pr0be.safe.o"
+#define PROBE_XDP "pr0be.xdp.o"
 
 // TIMEOUT_SECONDS_RECVRCE timeout seconds for recvrce()
 #define TIMEOUT_SECONDS_RECVRCE 1
