@@ -60,7 +60,7 @@ build: boop ## Build boopkit userspace program
 
 contrib: ## Build static dependencies
 	@echo "  ->  Boopkit static dependencies"
-	mkdir -p contrib
+
 
 
 static: ## Build boopkit userspace program (static)
