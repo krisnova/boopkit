@@ -34,25 +34,14 @@
 #include "common.h"
 // clang-format on
 
-//--- [ Header ] ---
 
-//#define XCAP_BUFFER_SIZE 16384
-#define XCAP_BUFFER_SIZE 64
 
-typedef struct xcap_ip_packet {
-  int captured;
-  struct ip *iph;
-  unsigned char *packet;
-  struct pcap_pkthdr *header;
-} xcap_ip_packet;
 
 // xcap_ring_buffer is the main thread safe packet ring buffer
 xcap_ip_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
 int xcap_pos = 0;      // The position of the ring buffer to write
 int xcap_collect = 1;  // While (xcap_collect) { /* events */ }
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
-//--- [ Header ] ---
 
 int rce_filter(char *raw, char *rce) {
   char *target = NULL;
