@@ -66,22 +66,6 @@ struct event_boop_t {
 // after a boop
 #define TIMEOUT_SECONDS_RECVRCE 1
 
-// SPDX-License-Identifier: BSD-3-Clause
-#define TASK_COMM_LEN 16
-struct event {
-  int pid;
-  char comm[TASK_COMM_LEN];
-  int success;
-};
 
-struct pkt_trace_metadata {
-  __u32 ifindex;
-  __u32 rx_queue;
-  __u16 pkt_len;
-  __u16 cap_len;
-  __u16 flags;
-  __u16 prog_index;
-  int action;
-} __packed;
 
 #endif  // BOOPKIT_BOOPKIT_H
