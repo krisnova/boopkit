@@ -249,9 +249,8 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  boopprintf(
-      "  -> [%03d bytes]   TX SYN     : %s:%s (RCE, *bad csum)\n",
-      sent, cfg.rhost, cfg.rport);
+  boopprintf("  -> [%03d bytes]   TX SYN     : %s:%s (RCE, *bad csum)\n", sent,
+             cfg.rhost, cfg.rport);
   close(sock1);
   // ===========================================================================
 

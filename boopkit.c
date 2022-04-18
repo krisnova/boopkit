@@ -216,8 +216,7 @@ int main(int argc, char **argv) {
   clisetup(argc, argv);
   asciiheader();
   rootcheck(argc, argv);
-  boopprintf(
-      "  -> Logs                    : /sys/kernel/tracing/trace_pipe\n");
+  boopprintf("  -> Logs                    : /sys/kernel/tracing/trace_pipe\n");
 
   int loaded, err;
   struct bpf_object *bpobj;
