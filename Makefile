@@ -34,6 +34,7 @@ clean: ## Clean objects
 	rm -vf *.ll
 	rm -vf pr0be.skel*
 	rm -vf vmlinux.h
+	cd contrib && ls | grep -v dep | xargs rm -vfr
 
 .PHONY: boop
 boop:  ## Build trigger program
