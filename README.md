@@ -1,4 +1,41 @@
-![Screenshot from 2022-04-18 12-24-15](https://user-images.githubusercontent.com/13757818/163839421-a575dda4-6711-4437-ad43-1534a168e891.png)
+```
+================================================================
+
+   ██████╗  ██████╗  ██████╗ ██████╗ ██╗  ██╗██╗████████╗
+   ██╔══██╗██╔═══██╗██╔═══██╗██╔══██╗██║ ██╔╝██║╚══██╔══╝
+   ██████╔╝██║   ██║██║   ██║██████╔╝█████╔╝ ██║   ██║   
+   ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   
+   ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   
+   ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   
+   Author: Kris Nóva <kris@nivenly.com> Version 1.2.0
+   
+   IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+   LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+   EXEMPLARY, OR CONSEQUENTIAL DAMAGES.   
+
+   DO NOT ATTEMPT TO USE THE TOOLS TO VIOLATE THE LAW.
+   THE AUTHOR IS NOT RESPONSIBLE FOR ANY ILLEGAL ACTION.
+   MISUSE OF THE SOFTWARE, INFORMATION, OR SOURCE CODE
+   MAY RESULT IN CRIMINAL CHARGES.
+   
+   Use at your own risk.
+
+================================================================
+
+boopkit
+Linux rootkit and backdoor over eBPF.
+
+Usage: 
+boopkit [options]
+
+Options:
+-h, help           Display help and usage for boopkit.
+-i, interface      Interface name. lo, eth0, wlan0, etc
+-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.
+-p, payload        Search xCap for payload. No reverse conn.
+-q, quiet          Disable output.
+-x, reject         Source addresses to reject triggers from.
+```
 
 Linux backdoor, rootkit, and eBPF bypass tools.
 Remote command execution over raw TCP.
