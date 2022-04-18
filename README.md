@@ -11,6 +11,8 @@ Remote command execution over raw TCP.
 
 ##### Disclaimer
 
+Under active development! 
+
 > This is **NOT** an exploit! This requires prior privileged access on a server in order to work!
 > I am a professional security researcher. These are white hat tools used for research purposes only.
 > Use this responsibly. Never use this software illegally.
