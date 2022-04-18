@@ -49,7 +49,7 @@
 
 void usage() {
   asciiheader();
-  boopprintf("Boopkit.");
+  boopprintf("\nBoopkit.\n");
   boopprintf("Linux rootkit and backdoor. Built using eBPF.\n");
   boopprintf("\n");
   boopprintf("Usage: \n");
