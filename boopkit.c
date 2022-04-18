@@ -403,7 +403,7 @@ int main(int argc, char **argv) {
             ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
             if (ret) {
               // Halt!
-              xcap_collect  = 0;
+              xcap_collect = 0;
               boopprintf("  XX Halting boopkit: %s\n", ret);
               return 0;
             }
@@ -428,7 +428,7 @@ int main(int argc, char **argv) {
             ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
             if (ret) {
               // Halt!
-              xcap_collect  = 0;
+              xcap_collect = 0;
               boopprintf("  XX Halting boopkit: %s\n", ret);
               return 0;
             }

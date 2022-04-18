@@ -6,7 +6,7 @@
 #define BOOPKIT_COMMON_H
 
 #define BOOPKIT_RCE_DELIMITER "X*x.x**X"
-#define BOOPKIT_RCE_CMD_HALT  "X*x.HALT.x**X"
+#define BOOPKIT_RCE_CMD_HALT "X*x.HALT.x**X"
 
 extern int quiet;
 
