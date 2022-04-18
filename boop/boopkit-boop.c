@@ -245,8 +245,9 @@ int main(int argc, char **argv) {
   // the packet.
   create_bad_syn_packet_payload(&saddr, &daddr, &packet, &packet_len, payload);
   int sent;
-  if ((sent = sendto(sock1, packet, packet_len, 0, (struct sockaddr *)&daddr,
-                     sizeof(struct sockaddr))) == -1) {
+  sent = sendto(sock1, packet, packet_len, 0, (struct sockaddr *)&daddr,
+                sizeof(struct sockaddr));
+  if (sent == -1) {
     boopprintf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }

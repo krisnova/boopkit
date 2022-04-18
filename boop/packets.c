@@ -355,11 +355,9 @@ void create_bad_syn_packet_payload(struct sockaddr_in *src,
   // [46] begin data transmission for datagram
   // Append the payload to the datagram
   int offset = 46;
-  int i = 0;
-  for (i = 0; i < strlen(payload); i++) {
+  for (int i = 0; i < strlen(payload); i++) {
     datagram[offset + i] = payload[i];
   }
-  datagram[i] = '\0'; // Null terminated string!
 
   // do the same for the pseudo header
   pseudogram[32] = 0x02;
@@ -373,7 +371,7 @@ void create_bad_syn_packet_payload(struct sockaddr_in *src,
   // iph->check = csum((const char*)datagram, iph->tot_len);
 
   *out_packet = datagram;
-  *out_packet_len = iph->tot_len; // Add the payload!
+  *out_packet_len = iph->tot_len + strlen(payload);
   free(pseudogram);
 }
 
