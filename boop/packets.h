@@ -25,7 +25,7 @@
 
 #define DATAGRAM_LEN 4096
 #define OPT_SIZE 20
-#define MAX_PORT_STR 24
+#define MAX_ARG_LEN 24
 
 struct pseudo_header {
   u_int32_t source_address;

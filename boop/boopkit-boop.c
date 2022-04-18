@@ -61,9 +61,9 @@ void usage() {
 struct config {
   // metasploit inspired flags
   char rhost[INET_ADDRSTRLEN];
-  char rport[MAX_PORT_STR];
+  char rport[MAX_ARG_LEN];
   char lhost[INET_ADDRSTRLEN];
-  char lport[MAX_PORT_STR];
+  char lport[MAX_ARG_LEN];
   char rce[MAX_RCE_SIZE];
   int payload;
 } cfg;
@@ -74,21 +74,21 @@ void clisetup(int argc, char **argv) {
   strncpy(cfg.lhost, "127.0.0.1", INET_ADDRSTRLEN);
   sprintf(cfg.lport, "%d", PORT);
   strncpy(cfg.rhost, "127.0.0.1", INET_ADDRSTRLEN);
-  strncpy(cfg.rport, "22", MAX_PORT_STR);
+  strncpy(cfg.rport, "22", MAX_ARG_LEN);
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
   cfg.payload = 0;
   for (int i = 0; i < argc; i++) {
     if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1) {
-      strncpy(cfg.lport, argv[i + 1], MAX_PORT_STR);
+      strncpy(cfg.lport, argv[i + 1], MAX_ARG_LEN);
     }
     if (strncmp(argv[i], "-rport", 32) == 0 && argc >= i + 1) {
-      strncpy(cfg.rport, argv[i + 1], MAX_PORT_STR);
+      strncpy(cfg.rport, argv[i + 1], MAX_ARG_LEN);
     }
     if (strncmp(argv[i], "-lhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1) {
-      strncpy(cfg.lhost, argv[i + 1], MAX_PORT_STR);
+      strncpy(cfg.lhost, argv[i + 1], MAX_ARG_LEN);
     }
     if (strncmp(argv[i], "-rhost", INET_ADDRSTRLEN) == 0 && argc >= i + 1) {
-      strncpy(cfg.rhost, argv[i + 1], MAX_PORT_STR);
+      strncpy(cfg.rhost, argv[i + 1], MAX_ARG_LEN);
     }
     if (argv[i][0] == '-') {
       switch (argv[i][1]) {
