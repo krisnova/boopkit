@@ -34,9 +34,6 @@
 #include "common.h"
 // clang-format on
 
-
-
-
 // xcap_ring_buffer is the main thread safe packet ring buffer
 xcap_ip_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
 int xcap_pos = 0;      // The position of the ring buffer to write
@@ -100,6 +97,18 @@ void snapshot_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
 
 void *xcap(void *v_dev_name) {
   char *dev_name = (char *)v_dev_name;
+  char filter_exp[] = ""; // TCP Dump filter
+  pcap_t *handle;
+  char errbuf[PCAP_ERRBUF_SIZE];
+  struct bpf_program fp;
+  bpf_u_int32 mask;
+  bpf_u_int32 net;
+  struct pcap_pkthdr header;
+  struct ether_header *ep;
+  unsigned short ether_type;
+  int cycle = 0;
+  const u_char *packet;
+  struct ip *iph;
   boopprintf("  -> Starting xCap Interface : %s\n", dev_name);
 
   // Initialize ring buffer
@@ -112,29 +121,19 @@ void *xcap(void *v_dev_name) {
     xcap_ring_buffer[ii] = xpack;
   }
 
-  // TCP Dump filter
-  char filter_exp[] = "";
-  pcap_t *handle;
-  char errbuf[PCAP_ERRBUF_SIZE];
-  struct bpf_program fp;
-  bpf_u_int32 mask;
-  bpf_u_int32 net;
-  struct pcap_pkthdr header;
   if (pcap_lookupnet(dev_name, &net, &mask, errbuf) == -1) {
     boopprintf("Couldn't get netmask for device %s: %s\n", dev_name, errbuf);
     net = 0;
     mask = 0;
   }
 
-  /* Open the session in promiscuous mode */
+  // Open the session in promiscuous mode
   handle = pcap_open_live(dev_name, BUFSIZ, 1, 1000, errbuf);
   if (handle == NULL) {
     boopprintf("Couldn't open device %s: %s\n", dev_name, errbuf);
     return NULL;
   }
 
-  // TODO Manage filters!
-  // --- [ Filter ] ---
   if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
     boopprintf("Couldn't parse filter %s: %s\n", filter_exp,
                pcap_geterr(handle));
@@ -145,17 +144,10 @@ void *xcap(void *v_dev_name) {
                pcap_geterr(handle));
     return NULL;
   }
-  // --- [ Filter ] ---
 
   boopprintf("  -> xCap RingBuffer Started : %s\n", dev_name);
 
-  /* Search for RCE */
-  struct ether_header *ep;
-
-  unsigned short ether_type;
-  int cycle = 0;
-  const u_char *packet;
-  struct ip *iph;
+  // Capture network packets!
   while (xcap_collect) {
     packet = pcap_next(handle, &header);
     ep = (struct ether_header *)packet;
@@ -224,10 +216,6 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
     memcpy(to->packet, from->packet, from->header->caplen);
 
     // iph
-    struct in_addr src_in = from->iph->ip_src;
-    // boopprintf("[SNAP] IP Source Address = %s\n", inet_ntoa(src_in));
-    // boopprintf("[SNAP] IP Dest Address = %s\n", inet_ntoa((struct in_addr)
-    // from->iph->ip_dst));
     to->iph = malloc(sizeof(struct ip));
     memcpy(to->iph, from->iph, sizeof(struct ip));
 
