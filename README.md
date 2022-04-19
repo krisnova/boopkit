@@ -32,9 +32,10 @@ Options:
 -h, help           Display help and usage for boopkit.
 -i, interface      Interface name. lo, eth0, wlan0, etc
 -s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.
--p, payload        Search xCap for payload. No reverse conn.
+-r, reverse-conn   Attempt a reverse RCE lookup if no payload found.
 -q, quiet          Disable output.
 -x, reject         Source addresses to reject triggers from.
+
 ```
 
 Linux backdoor, rootkit, and eBPF bypass tools.
@@ -57,9 +58,9 @@ Remote command execution over raw TCP.
 Download and build boopkit.
 
 ```bash
-wget https://github.com/kris-nova/boopkit/archive/refs/tags/v1.2.0.tar.gz
-tar -xzf v1.2.0.tar.gz 
-cd boopkit-1.2.0/
+wget https://github.com/kris-nova/boopkit/archive/refs/tags/v1.3.0.tar.gz
+tar -xzf v1.3.0.tar.gz 
+cd boopkit-1.3.0/
 make
 sudo make install
 ```
