@@ -11,7 +11,7 @@ Remote trigger program for boopkit.
     ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   
     ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   
     ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   
-    Author: Kris Nóva <kris@nivenly.com> Version 1.2.0
+    Author: Kris Nóva <kris@nivenly.com> Version 1.3.0
     
     IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
     LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
@@ -40,7 +40,8 @@ Options:
 -9, halt/kill      Halt or kill the boopkit malware on a server.
 -q, quiet          Disable output.
 -c, execute        Remote command to exec : ls -la
--p, payload-only   Boop with only SYN. No reverse conn.
+-r, reverse-conn   Serve the RCE on lhost:lport after a boop.
 -h, help           Print help and usage.
+
 ```
 
