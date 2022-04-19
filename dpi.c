@@ -40,6 +40,52 @@ int xcap_pos = 0;      // The position of the ring buffer to write
 int xcap_collect = 1;  // While (xcap_collect) { /* events */ }
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+void xpack_dump(xcap_ip_packet *xpack) {
+  boopprintf("  -> Dumping Raw Xpack:\n");
+  unsigned char *packet = xpack->packet;
+  for (int j = 0; j < xpack->header->caplen; j++) {
+    boopprintf("%c", packet[j]);
+  }
+  boopprintf("\n");
+}
+
+void xcap_ring_buffer_dump(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
+  boopprintf("  -> Dumping Raw xCap Buffer:\n");
+  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+    struct xcap_ip_packet *xpack;
+    xpack = xbuff[i];
+    if (!xpack->captured || xpack->header->caplen < 1) {
+      continue;
+    }
+    xpack_dump(xpack);
+  }
+}
+
+void xcap_ring_buffer_free(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
+  boopprintf("  -> Free Ring Buffer\n");
+  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+    struct xcap_ip_packet *xpack;
+    xpack = xbuff[i];
+    xpack->captured = 0;
+    free(xpack->packet);
+    free(xpack->iph);
+    free(xpack->header);
+    free(xpack);
+  }
+}
+
+void xcap_ring_buffer_init(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
+  boopprintf("  -> Initalizing Ring Buffer\n");
+  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
+    struct xcap_ip_packet *xpack = malloc(sizeof(struct xcap_ip_packet));
+    xpack->packet = malloc(1);  // Init to 1 byte to begin!
+    xpack->iph = malloc(sizeof(struct ip));
+    xpack->header = malloc(sizeof(struct pcap_pkthdr));
+    xpack->captured = 0;
+    xbuff[i] = xpack;
+  }
+}
+
 int rce_filter(char *raw, char *rce) {
   char *target = NULL;
   char *start, *end;
@@ -61,40 +107,6 @@ int rce_filter(char *raw, char *rce) {
   return 0;
 }
 
-void xpack_dump(xcap_ip_packet *xpack) {
-  boopprintf("  -> Dumping Raw Xpack:\n");
-  unsigned char *packet = xpack->packet;
-  for (int j = 0; j < xpack->header->caplen; j++) {
-    boopprintf("%c", packet[j]);
-  }
-  boopprintf("\n");
-}
-
-void snapshot_dump(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
-  boopprintf("  -> Dumping Raw Snapshot:\n");
-  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
-    struct xcap_ip_packet *xpack;
-    xpack = snap[i];
-    if (!xpack->captured || xpack->header->caplen < 1) {
-      continue;
-    }
-    xpack_dump(xpack);  // printf
-  }
-}
-
-void xcap_ring_buffer_free(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
-  boopprintf("  -> Free Snapshot\n");
-  for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
-    struct xcap_ip_packet *xpack;
-    xpack = snap[i];
-    xpack->captured = 0;
-    free(xpack->packet);
-    free(xpack->iph);
-    free(xpack->header);
-    free(xpack);
-  }
-}
-
 void *xcap(void *v_dev_name) {
   char *dev_name = (char *)v_dev_name;
   char filter_exp[] = "";  // TCP Dump filter
@@ -112,14 +124,7 @@ void *xcap(void *v_dev_name) {
   boopprintf("  -> Starting xCap Interface : %s\n", dev_name);
 
   // Initialize ring buffer
-  for (int ii = 0; ii < XCAP_BUFFER_SIZE; ii++) {
-    struct xcap_ip_packet *xpack = malloc(sizeof(struct xcap_ip_packet));
-    xpack->packet = malloc(1);  // Init to 1 byte to begin!
-    xpack->iph = malloc(sizeof(struct ip));
-    xpack->header = malloc(sizeof(struct pcap_pkthdr));
-    xpack->captured = 0;
-    xcap_ring_buffer[ii] = xpack;
-  }
+  xcap_ring_buffer_init(xcap_ring_buffer);
 
   if (pcap_lookupnet(dev_name, &net, &mask, errbuf) == -1) {
     boopprintf("Couldn't get netmask for device %s: %s\n", dev_name, errbuf);
@@ -158,21 +163,11 @@ void *xcap(void *v_dev_name) {
     packet += sizeof(struct ether_header);
     iph = (struct ip *)packet;
 
-    // boopprintf("IP Ver = %d\n", iph->ip_v);
-    // boopprintf("IP Header len = %d\n", iph->ip_hl<<2);
-    // boopprintf("[PRE] IP Source Address = %s\n", inet_ntoa(iph->ip_src));
-    // boopprintf("[PRE] IP Dest Address = %s\n", inet_ntoa(iph->ip_dst));
-    // boopprintf("IP Packet size = %d\n", len-16);
-
     if (xcap_pos == XCAP_BUFFER_SIZE) {
-      // Start the ring buffer back at 0, and we have now
-      // completed a "cycle"
       xcap_pos = 0;
       cycle = 1;
     }
     if (cycle) {
-      // If we are cycling, free up the previous position in
-      // the ring buffer.
       pthread_mutex_lock(&lock);
       free(xcap_ring_buffer[xcap_pos]->packet);
       free(xcap_ring_buffer[xcap_pos]->iph);
@@ -195,10 +190,8 @@ void *xcap(void *v_dev_name) {
     pthread_mutex_unlock(&lock);
     xcap_pos++;
   }
-  // Initialize ring buffer
-  for (int ii = 0; ii <= XCAP_BUFFER_SIZE; ii++) {
-    free(xcap_ring_buffer[ii]);
-  }
+
+  xcap_ring_buffer_free(xcap_ring_buffer);
   pcap_close(handle);
   return NULL;
 }
@@ -210,6 +203,12 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
   for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *from = xcap_ring_buffer[i];
     struct xcap_ip_packet *to = malloc(sizeof(xcap_ip_packet));
+    if (!from->captured) {
+      continue;
+    }
+
+    // capture
+    to->captured = from->captured;
 
     // packet
     to->packet = malloc(from->header->caplen);
@@ -222,7 +221,6 @@ int snapshot(xcap_ip_packet *snap[XCAP_BUFFER_SIZE]) {
     // header
     to->header = malloc(sizeof(struct pcap_pkthdr));
     memcpy(to->header, from->header, sizeof(struct pcap_pkthdr));
-
     snap[i] = to;
   }
   pthread_mutex_unlock(&lock);
@@ -240,6 +238,7 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
   sleep(1);  // Wait for the kernel to catch up
   boopprintf("  -> Search xCap Ring Buffer: %s\n", search);
   xcap_ip_packet *snap[XCAP_BUFFER_SIZE];
+  xcap_ring_buffer_init(snap);
   snapshot(snap);  // Thread safe snapshot of the ring buffer!
   for (int i = 0; i < XCAP_BUFFER_SIZE; i++) {
     struct xcap_ip_packet *xpack;
@@ -266,19 +265,23 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
       if (found) {
         // xpack_dump(xpack);
         xcap_ring_buffer_free(snap);
+
+        // Flush the main ring buffer
+        xcap_ring_buffer_free(xcap_ring_buffer);
+        xcap_ring_buffer_init(xcap_ring_buffer);
         return 0;  // Money, Success, Fame, Glamour
       } else {
         boopprintf("  -> [FILTER FAILURE] No RCE in xCap!\n");
-        // snapshot_dump(snap);
+        // xcap_ring_buffer_dump(snap);
         xcap_ring_buffer_free(snap);  // Flush snapshot after RCE
-        // xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after
+         //xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after
         // RCE
         return 1;
       }
     }
   }
   boopprintf("  -> No RCE in xCap!\n");
-  // snapshot_dump(snap);
+  // xcap_ring_buffer_dump(snap);
   xcap_ring_buffer_free(snap);  // Flush snapshot after RCE
   // xcap_ring_buffer_free(xcap_ring_buffer); // Flush ring buffer after RCE
   return 1;
