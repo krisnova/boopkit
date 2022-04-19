@@ -56,7 +56,7 @@ format: ## Format the code
 	@clang-format -i -style=$(STYLE) *.c *.h
 	@clang-format -i -style=$(STYLE) boop/*.c boop/*.h
 
-build: ## Build boopkit userspace program
+build: boop ## Build boopkit userspace program
 	@echo "  ->  Building boopkit"
 	clang $(CFLAGS) $(LDFLAGS) $(LIBS) -o $(TARGET) boopkit.c common.c dpi.c -Wl,
 
