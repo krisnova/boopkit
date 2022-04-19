@@ -124,7 +124,6 @@ void xcap_ring_buffer_init(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   }
 }
 
-
 /**
  * rce_filter will filter an RCE value from in between
  * the BOOPKIT_RCE_DELIMITER
@@ -166,21 +165,21 @@ int rce_filter(char *raw, char *rce) {
  * @return
  */
 void *xcap(void *v_dev_name) {
-  char  *dev_name      = (char *)v_dev_name;
-  char  filter_exp[]   = "";
-  int   cycle          = 0;
+  char *dev_name = (char *)v_dev_name;
+  char filter_exp[] = "";
+  int cycle = 0;
 
-  pcap_t       *handle;
-  char         errbuf[PCAP_ERRBUF_SIZE];
-  bpf_u_int32  mask;
-  bpf_u_int32  net;
+  pcap_t *handle;
+  char errbuf[PCAP_ERRBUF_SIZE];
+  bpf_u_int32 mask;
+  bpf_u_int32 net;
 
-  struct   bpf_program   fp;
-  struct   pcap_pkthdr   header;
-  struct   ether_header  *ep;
-  unsigned short         ether_type;
-  const    u_char        *packet;
-  struct   ip            *iph;
+  struct bpf_program fp;
+  struct pcap_pkthdr header;
+  struct ether_header *ep;
+  unsigned short ether_type;
+  const u_char *packet;
+  struct ip *iph;
 
   boopprintf("  -> Starting xCap Interface : %s\n", dev_name);
 

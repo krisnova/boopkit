@@ -61,7 +61,7 @@ void usage() {
 /**
  * config is the CLI options that are used throughout boopkit
  */
- struct config {
+struct config {
   // metasploit inspired flags
   char rhost[INET_ADDRSTRLEN];
   char rport[MAX_ARG_LEN];
@@ -75,9 +75,9 @@ void usage() {
 
 /**
  * clisetup is used to initalize the program from the command line
- * 
- * @param argc 
- * @param argv 
+ *
+ * @param argc
+ * @param argv
  */
 void clisetup(int argc, char **argv) {
   strncpy(cfg.lhost, "127.0.0.1", INET_ADDRSTRLEN);
@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
   close(sock1);
   // ===========================================================================
 
-  if (cfg.synonly){
+  if (cfg.synonly) {
     return 0;
   }
 
