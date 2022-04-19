@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
   boopprintf("  -> *[Local]   : %s:%s\n", cfg.lhost, cfg.lport);
   boopprintf("  -> *[Remote]  : %s:%s\n", cfg.rhost, cfg.rport);
   if (cfg.payload) {
-    boopprintf("  -> *[Payload] : (RCE, *bad csum) SYN only!\n");
+    boopprintf("  -> *[Payload] : Sending (RCE, *bad csum) SYN only.\n");
   }
   printf("================================================================\n");
 
