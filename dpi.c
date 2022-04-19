@@ -124,6 +124,7 @@ void xcap_ring_buffer_init(xcap_ip_packet *xbuff[XCAP_BUFFER_SIZE]) {
   }
 }
 
+
 /**
  * rce_filter will filter an RCE value from in between
  * the BOOPKIT_RCE_DELIMITER

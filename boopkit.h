@@ -22,7 +22,6 @@
 
 #ifndef BOOPKIT_BOOPKIT_H
 #define BOOPKIT_BOOPKIT_H
-#include <linux/types.h>
 
 // MAX_RCE_SIZE is the maximum size of a boop command to execute.
 #define MAX_RCE_SIZE 1024
