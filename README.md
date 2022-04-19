@@ -7,7 +7,7 @@
    ██╔══██╗██║   ██║██║   ██║██╔═══╝ ██╔═██╗ ██║   ██║   
    ██████╔╝╚██████╔╝╚██████╔╝██║     ██║  ██╗██║   ██║   
    ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   
-   Author: Kris Nóva <kris@nivenly.com> Version 1.2.0
+   Author: Kris Nóva <kris@nivenly.com> Version 1.3.0
    
    IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
