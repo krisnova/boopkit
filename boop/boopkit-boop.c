@@ -281,12 +281,13 @@ int main(int argc, char **argv) {
     boopprintf("Unable to send bad checksum SYN packet over SOCK_RAW.\n");
     return 2;
   }
-  boopprintf("  -> [%03d bytes]   TX SYN     : %s:%s (RCE, *bad csum)\n", sent,
+  boopprintf("  -> [%03d bytes]   TX SYN     : %s (SOCK_RAW, RCE, *bad csum)\n", sent,
              cfg.rhost, cfg.rport);
   close(sock1);
   // ===========================================================================
 
   if (cfg.synonly) {
+    printf("================================================================\n");
     return 0;
   }
 
