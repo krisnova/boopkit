@@ -408,7 +408,6 @@ int main(int argc, char **argv) {
       char saddrval[INET_ADDRSTRLEN];  // Saturn Valley. If you know, you know.
       memcpy(saddrbytes, ret.saddr, sizeof saddrbytes);
       inet_ntop(AF_INET, &saddrbytes, saddrval, sizeof(saddrval));
-      boopprintf("  ** Boop source: %s\n", saddrval);
 
       // Filter boop addrs
       ignore = 0;
@@ -422,6 +421,8 @@ int main(int argc, char **argv) {
       if (ignore) {
         continue;
       }
+      boopprintf("  ** Boop source: %s\n", saddrval);
+
 
       // Future hook for probe specific logic
       // if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
