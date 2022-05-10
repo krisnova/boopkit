@@ -423,14 +423,6 @@ int main(int argc, char **argv) {
       }
       boopprintf("  ** Boop source: %s\n", saddrval);
 
-
-      // Future hook for probe specific logic
-      // if (ret.event_src_code == EVENT_SRC_BAD_CSUM) {
-      //  boopprintf("  ** Boop EVENT_SRC_BAD_CSUM\n");
-      //} else if (ret.event_src_code == EVENT_SRC_RECEIVE_RESET) {
-      //  boopprintf("  ** Boop EVENT_SRC_RECEIVE_RESET\n");
-      //}
-
       // Always check for RCE in the ring buffer.
       char *rce = malloc(MAX_RCE_SIZE);
       int xcap_found;

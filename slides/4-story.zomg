@@ -1,0 +1,20 @@
+/!
+/!
+### Collaborating With Ukraine Government and Private Sector
+/!
+# "How can I help support Ukraine Cybersecurity?"
+/!
+## Teach us about what Russia could be doing to our Linux?
+/!
+# "What can eBPF do exactly?"
+/!
+## [ Rootkit ] [ Pid Obfuscation ] [ Docker Image Override ]
+## [ Syscall Interception ] [ Polymorphic Executables ] [ DNS ]
+## [ BPF Obfuscation ] [ Kernel Module Hiding ] [ XDP ] [ Pipe ]
+/!
+### The more we talked about the dangers of eBPF...
+### The more we realized there was A LOT it could do!
+/!
+// More: github.com/pathtofile/bad-bpf
+// More: github.com/Gui774ume/ebpfkit
+/!
