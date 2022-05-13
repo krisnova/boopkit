@@ -1,0 +1,12 @@
+/!
+/!
+### Research <sys/socket.h>
+/!
+// SOCK_RAW is connectionless (No TCP/UDP port required)
+//
+// SOCK_RAW packets are passed to and from the device driver without
+// any changes in the packet data.
+//
+// TCP over SOCK_RAW can be performed without a service running on
+// th host.
+/!

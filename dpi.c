@@ -151,7 +151,7 @@ int rce_filter(char *raw, char *rce) {
     }
   }
   if (target) {
-    strncpy(rce, target, strlen(target));
+    strncpy(rce, target, strlen(target) + 1);
     free(target);
     return 1;
   }
