@@ -31,7 +31,7 @@
  * The larger the memory footprint the higher the chance of finding
  * and RCE in memory.
  */
-#define XCAP_BUFFER_SIZE 16384
+#define XCAP_BUFFER_SIZE 131072
 
 extern int runtime__xcap;
 

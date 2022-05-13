@@ -1,0 +1,12 @@
+/!
+/!
+### Demo 1) Full RCE
+/!
+//  Alice: 10.6.6.100
+//  Emily: 10.6.6.200
+//
+//    [  Alice  ]  --> TCP Syn (~80 bytes) --> [ Emily ] * Boop
+//    [  Alice  ]  --> TCP Syn Connection  --> [ Emily ]
+//    [  Alice  ]  <-- TCP Syn-Ack Conn    <-- [ Emily ]
+//    [  Alice  ]  --> TCP Syn+Rst Conn    --> [ Emily ] * Boop
+/!

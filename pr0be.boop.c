@@ -63,7 +63,7 @@ struct tcp_bad_csum_args_t {
 // size:28;   signed:0;
 //
 // print fmt: "src=%pISpc dest=%pISpc", REC->saddr, REC->daddr
-SEC("tracepoint/tcp/tcp_bad_csum")
+SEC("tp/tcp/tcp_bad_csum")
 int tcp_bad_csum(struct tcp_bad_csum_args_t *args) {
   struct event_boop_t ret;
   int saddrkey = 1;
@@ -111,7 +111,7 @@ struct tcp_receive_reset_args_t {
 // saddrv6=%pI6c daddrv6=%pI6c sock_cookie=%llx", __print_symbolic(REC->family,
 // { 2, "AF_INET" }, { 10, "AF_INET6" }), REC->sport, REC->dport, REC->saddr,
 // REC->daddr, REC->saddr_v6, REC->daddr_v6, REC->sock_cookie
-SEC("tracepoint/tcp/tcp_receive_reset")
+SEC("tp/tcp/tcp_receive_reset")
 int tcp_receive_reset(struct tcp_receive_reset_args_t *args) {
   int saddrkey = 1;
   struct event_boop_t ret;

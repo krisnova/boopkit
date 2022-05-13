@@ -1,0 +1,12 @@
+/!
+/!
+### Demo 2) Single Syn
+/!
+// Use case for Ukraine
+// One way TCP Syn to exploit a server over eBPF
+/!
+//  Alice: 10.6.6.100
+//  Emily: 10.6.6.200
+//
+//    [  Alice  ]  --> TCP Syn (~80 bytes) --> [ Emily ] * Boop
+/!

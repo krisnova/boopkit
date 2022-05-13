@@ -1,0 +1,17 @@
+/!
+/!
+## What is Boopkit?
+/!
+# An eBPF based rootkit written in C.
+/!
+### https://github.com/kris-nova/boopkit
+/!
+// TCP Client     :                    [boopkit-boop]
+// Malware Server :                    [boopkit]
+// Malware eBPF Probes:
+//   tp/tcp/tcp_bad_csum               [pr0be.boop]
+//   tp/tcp/tcp_receive_reset          [pr0be.boop]
+//   tp/syscalls/sys_enter_getdents64  [pr0be.safe]
+//   tp/syscalls/sys_exit_getdents64   [pr0be.safe]
+//
+/!
