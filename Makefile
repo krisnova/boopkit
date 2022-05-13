@@ -20,7 +20,7 @@
 # ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝
 #
 TARGET  := boopkit
-CFLAGS  ?= -I/usr/local/include
+CFLAGS  ?= -I/usr/local/include -g
 LDFLAGS ?=
 LIBS     = -lbpf -lelf -lpcap -lpthread
 STYLE    = Google

