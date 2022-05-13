@@ -24,7 +24,14 @@
 #ifndef BOOPKIT_DPI_H
 #define BOOPKIT_DPI_H
 
-#define XCAP_BUFFER_SIZE 64
+/**
+ * XCAP_BUFFER_SIZE is the size of the ring buffer for us to store
+ * packets in memory to search for an RCE.
+ *
+ * The larger the memory footprint the higher the chance of finding
+ * and RCE in memory.
+ */
+#define XCAP_BUFFER_SIZE 16384
 
 extern int runtime__xcap;
 

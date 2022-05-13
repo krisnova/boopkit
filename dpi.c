@@ -60,6 +60,8 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
  * xpack_dump is a debug method that is used to debug print
  * a single packet.
  *
+ * Dear non-linear time life Nóva, I love you for writing this.
+ *
  * @param xpack the packet to debug
  */
 void xpack_dump(xcap_ip_packet *xpack) {
@@ -219,6 +221,11 @@ void *xcap(void *v_dev_name) {
     packet += sizeof(struct ether_header);
     iph = (struct ip *)packet;
 
+    // Debug system for source addr
+    //char buf[INET_ADDRSTRLEN];
+    //inet_ntop(AF_INET, &iph->ip_src, buf, sizeof buf);
+    //boopprintf("IP Source: %s\n", buf);
+
     if (xcap_pos == XCAP_BUFFER_SIZE) {
       xcap_pos = 0;
       cycle = 1;
@@ -310,12 +317,22 @@ int xcaprce(char search[INET_ADDRSTRLEN], char *rce) {
     if (!xpack->captured) {
       continue;
     }
+
     char *xpack_saddr = inet_ntoa(xpack->iph->ip_src);
+    //boopprintf("xpack source addr: %s\n", xpack_saddr);
 
     char *ret = strstr(search, xpack_saddr);
     if (!ret) {
       continue;  // Filter packets not from our IP address
     }
+
+    // Ring Buffer Packet Debugging Time
+    //xpack_dump(xpack);
+
+    // Debug system for source addr
+    //char buf[INET_ADDRSTRLEN];
+    //inet_ntop(AF_INET, &xpack->iph->ip_src, buf, sizeof buf);
+    //boopprintf("IP Source: %s\n", buf);
 
     // Begin DPI
     unsigned char *packet = xpack->packet;
