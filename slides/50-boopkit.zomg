@@ -1,0 +1,16 @@
+/!
+/!
+### boopkit [options]
+/!
+// Options:
+// -h, help           Display help and usage for boopkit.
+// -i, interface      Interface name. lo, eth0, wlan0, etc
+// -s, sudo-bypass    Bypass sudo check. Breaks PID obfuscation.
+// -r, reverse-conn   Attempt reverse RCE lookup if no payload found.
+// -q, quiet          Disable output.
+// -x, reject         Source addresses to reject triggers from.
+// -p, protect        Protect from executing commands. Safe mode.
+//
+// # Run boopkit (as root) to hide itself and listen on eth0
+// boopkit -i eth0 -x 127.0.0.1 -x -q &
+/!

