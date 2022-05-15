@@ -1,0 +1,14 @@
+/!
+/!
+# [root@emily]: ~>#
+/!
+// Reverse shell from Alice -> Emily
+//
+// Alice (Client) 10.6.6.100
+// Emily (Server) 10.6.6.200
+/!
+### Bonus: Hidden PIDs on Emily
+/!
+### Bonus: Tracepoints on Emily
+/!
+/!

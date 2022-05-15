@@ -1,14 +1,14 @@
 /!
 /!
-### Research <sys/socket.h>
+# Research Hidden Pids (Obfuscation)
 /!
-// Booping existing services (nginx, kubernetes, ssh, etc)
+# unhide(8) linux.die.net/man/8/unhide
+//    unhide(8) is a forensic tool to find processes hidden by rootkits,
+//    Linux kernel modules or by other techniques. It detects hidden
+//    processes using three techniques:
 //
-// SOCK_RAW is connectionless (TCP/UDP port NOT required)
-//
-// SOCK_RAW packets are passed to and from the device driver without
-// any changes in the packet data.
-//
-// TCP over SOCK_RAW can be performed without a service running on
-// the host.
+# xpid(8) github.com/kris-nova/xpid
+//    Works like nmap(1), but for pids. A forensic tool to find processes
+//    based on certain circumstance on the filesystem at runtime. Uses
+//    proc(5), bpf(2), glibc(7), ptrace(2) and more to investigate processes.
 /!

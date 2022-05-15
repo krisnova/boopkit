@@ -1,13 +1,14 @@
 /!
 /!
-### Research (Network Hardware, Bad Checksum)
+# Research (Bad Checksum)
 /!
-// Bad Checksum with eBPF is very easy to trigger.
+// Bad checksums can "pass" through any TCP service!
 //
-// Most cloud providers (Tested: AWS) are liable to drop
-// malformed packets before they reach their destination.
+// Discovered by exploring TCP tracepoints
 //
-// This is why boopkit supports multiple boop methods.
+// AWS, Cloud Providers drop the packets*
+//
+// Boopkit now tries more than just bad checksum.
 //
 // A single SYN packet is VERY difficult because of network traversal.
 /!

@@ -1,0 +1,12 @@
+/!
+/!
+# Research eBPF (TCP)
+/!
+// TCP tracepoints have limited data (src, dst address)
+//
+// SEC("tp/tcp/tcp_bad_csum")
+//
+// field:__u8 saddr[sizeof(struct sockaddr_in6)];  offset:16; size:28; signed:0;
+// field:__u8 daddr[sizeof(struct sockaddr_in6)];  offset:44;
+//
+/!

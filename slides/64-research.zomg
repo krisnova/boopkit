@@ -1,0 +1,16 @@
+/!
+/!
+# Research eBPF (/sys)
+/!
+// [/sys]         Similar to /proc, but less of a "junk drawer"
+//
+// [/sys/fs/bpf]  Where the eBPF things happen!
+//   [maps.debug]   eBPF Maps  ( -> /proc/[pid]/fdinfo/*)
+//   [progs.debug]  eBPF Progs ( -> /proc/[pid]/fdinfo/*)
+//
+// [/sys/kernel/tracing/events] Go explore here!
+//   cd <something-interesting>
+//   echo 1 > enable
+//   cat /sys/kernel/tracing/trace_pipe
+/!
+/!

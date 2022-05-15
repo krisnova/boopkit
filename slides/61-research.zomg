@@ -1,13 +1,13 @@
 /!
 /!
-### Research (Network Hardware, Bad Checksum)
+# Research Hidden Pids (Obfuscation)
 /!
-// Bad Checksum with eBPF is very easy to trigger.
+// Hiding a pid is harder than it seems.
 //
-// Most cloud providers (Tested: AWS) are liable to drop
-// malformed packets before they reach their destination.
+// You should never trust ps(1), top(1), htop(1), etc
 //
-// This is why boopkit supports multiple boop methods.
-//
-// A single SYN packet is VERY difficult because of network traversal.
+// eBPF can mutate any system call
 /!
+
+
+

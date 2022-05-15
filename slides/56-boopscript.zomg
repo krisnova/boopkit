@@ -1,6 +1,6 @@
 /!
 /!
-### boopscript (Metasploit compatible bash)
+# boopscript (Metasploit compatible bash)
 /!
 // RHOST=${RHOST:-"10.6.6.200"}
 // RPORT=${RPORT:-"22"}

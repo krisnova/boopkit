@@ -1,0 +1,13 @@
+/!
+/!
+# Research Linux (Network)
+/!
+// 1.    [xdp]      Compiles to .o programs that can be attached to interfaces
+//                  Executed before incoming packet is passed to network stack.
+//                  Can occur before kernel module, eBPF mutation!
+// 2. [tracepoints] Happens everywhere in the kernel, order is important
+// 3. [tcpdump(1)]  Uses <pcap.h> (so does boopkit and wireshark)
+//                  "Off the wire" and more. Happens in the networking.
+// 4.  [iptables]   Very last, late to the party
+/!
+/!
