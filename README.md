@@ -1,3 +1,12 @@
+---
+
+Please help me become an independent programmer by donating directly to my `ko-fi` site below.
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D1D8CXLHZ) 
+
+---
+
+
 ```
 ================================================================
 
