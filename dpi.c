@@ -213,6 +213,7 @@ void *xcap(void *v_dev_name) {
 
   while (runtime__xcap) {
     packet = pcap_next(handle, &header);
+    if(!packet) continue;
     ep = (struct ether_header *)packet;
     ether_type = ntohs(ep->ether_type);
     if (ether_type != ETHERTYPE_IP) {
